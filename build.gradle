@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+}
+
+group 'org.uni-tuebingen.it'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+
+
+dependencies {
+    implementation 'org.json:json:20211205'
+
+    jar {
+        manifest {
+            attributes 'Main-Class': 'main.App'
+        }
+        from {
+            configurations.compileClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+        }
+    }
+}

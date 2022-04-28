@@ -1,10 +1,3 @@
-# TSSpredator-GUI
+# TSSpredator-java-code
 
-- virtualenv env
-- source env/scripts/activate
-- pip install flask
-- pip install python-dotenv
-- flask run
-
-- npm install
-- npm start
+java code als jar einbinden -> json an jar schicken

@@ -1,10 +1,11 @@
 from flask import Flask
+import parameter
 
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    return "Hello World"
+@app.route('/parameters/')
+def parameters():
+    return  parameter.getParameters()
 
 
 if __name__ == "__main__":

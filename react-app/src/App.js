@@ -6,16 +6,27 @@ import ParameterAllGroups from './components/ParameterAllGroups';
 import UploadFilesGroup from './components/UploadFilesGroup';
 import UploadFilesIndividually from './components/UploadFilesIndividually';
 import TextFieldGroup from './components/TextFieldGroup';
+import Parameter from './components/Parameter';
 
 function App() {
 
-  const [projectName, setProjectName] = useState();
+  const [projectName, setProjectName] = useState({});
   const [num, setNum] = React.useState(1); // initial für jeden spinner benutzt
-  const[parameters, setParameters] = useState({});
+  const [parameters, setParameters] = useState([{}]);
 
+  useEffect(() => {
+    fetch("/parameters/").then(
+      res => res.json())
+      .then(
+        parameters => {
+          setParameters(parameters)
+        })
+  }, []);
+
+  
 
   return (
-    <div>
+    <div>  
       <header className='header' style={{backgroundColor:'black'}}>
         <h1 style={{color:'white'}}>TSSpredator</h1>
       </header>
@@ -26,13 +37,8 @@ function App() {
             <input type="text" name="project-name" placeholder="Enter Project Name"/>
           </label>
 
-          <label  style={{display:'flex',flexDirection:'row'}}> Type of Study
-            <Combobox defaultValue="Copmarison of different strains/species" data={["Copmarison of different strains/species", "Comparison of different conditions"]}/>
-          </label>
-
-          <ParameterGroup parameters={[{"name": "Number of *Genomes*", "min":0, "max":10, "step":1, "value":1},
-                                       {"name": "Number of Replicates", "min":0, "max":10, "step":1, "value":1}]}/>
-
+          {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup}/>)}  
+         
         </div>
 
         <br></br>
@@ -83,14 +89,12 @@ function App() {
             </label>
           </div>
 
+          {(typeof parameters.parameterBox === 'undefined') ? (<p></p>) : (<ParameterAllGroups parameterGroups={parameters.parameterBox}/>)} 
 
-          <ParameterAllGroups parameterGroups={[{"name":"prediction", "parameters": [{"name": "step height", "min":0, "max":10, "step":1, "value":1}, {"name": "step height reduction", "min":0, "max":10, "step":2, "value":2}]},
-                                                {"name":"normalization", "parameters": [{"name": "normalization percentile", "min":0, "max":10, "step":1, "value":1}, {"name": "enrichment normalization percentile", "min":0, "max":10, "step":2, "value":2}]}]}/>
-                                                
+          <hr></hr>
 
         </div>
         
-
         <div style={{display:'flex',flexDirection:'row'}}>
           <button>Load</button>
           <p>or</p>
@@ -100,6 +104,7 @@ function App() {
         </div>
 
       </form>      
+    
     </div>
   )
 }

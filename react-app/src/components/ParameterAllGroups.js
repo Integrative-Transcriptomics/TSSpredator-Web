@@ -7,7 +7,7 @@ function ParameterAllGroups( { parameterGroups }) {
         return(
             <div className={group.name}>
             <h3> { group.name} </h3>
-            <ParameterGroup parameters={group.parameters}/>
+            {(typeof group.parameters === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={group.parameters}/>)} 
         </div>
         )
     })

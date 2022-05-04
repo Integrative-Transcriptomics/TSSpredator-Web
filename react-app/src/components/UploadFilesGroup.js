@@ -4,8 +4,8 @@ import UploadFile from './UploadFile';
 function UploadFilesGroup({files}) {
   return (
    
-    files.map(file => {
-            return <UploadFile file={file}/>
+    files.map((file, i) => {
+            return <UploadFile file={file} key={i}/>
     })
   );
 }

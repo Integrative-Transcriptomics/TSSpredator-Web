@@ -9,7 +9,7 @@ function UploadFilesIndividually({files}) {
         </label>
     
         <p>+ Upload Files individually</p>
-        <UploadFilesGroup files={files}/>
+        <UploadFilesGroup files={files} />
     </div>
   )
 }

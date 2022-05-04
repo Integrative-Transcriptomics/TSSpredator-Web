@@ -3,8 +3,8 @@ import TextField from './TextField';
 
 function TextFieldGroup({fields}) {
   return (
-    fields.map(field => {
-        return <TextField field={field}/>
+    fields.map((field,i) => {
+        return <TextField field={field} key={i}/>
     })
   );
 }

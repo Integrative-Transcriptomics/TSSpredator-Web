@@ -6,7 +6,8 @@ import ParameterAllGroups from './components/ParameterAllGroups';
 import UploadFilesGroup from './components/UploadFilesGroup';
 import UploadFilesIndividually from './components/UploadFilesIndividually';
 import TextFieldGroup from './components/TextFieldGroup';
-import Parameter from './components/Parameter';
+import Tabs from './components/Tabs';
+import './Tabs.css';
 
 function App() {
 
@@ -27,6 +28,7 @@ function App() {
 
   return (
     <div>  
+      
       <header className='header' style={{backgroundColor:'black'}}>
         <h1 style={{color:'white'}}>TSSpredator</h1>
       </header>
@@ -50,24 +52,7 @@ function App() {
 
           <UploadFilesGroup files={[{"name":"Output Data Path"}, {"name":"Alignment File"}]}/>
 
-          <label>
-            <input type="text" name="genome-1" placeholder="Genome 1"/>
-            <input type="text" name="genome-2" placeholder="Genome 2"/>
-            <hr></hr>
-          </label>
-
-          <TextFieldGroup fields={[{"name":"Alignment ID"}, {"name": "Output ID"}]} />
-
-          <UploadFilesIndividually files={[{"name":"Genome FASTA"}, {"name":"Genome Annotation"}]}/>
-            
-          <div className='replicates'>
-            <label>
-              <input type="text" name="replicate-1" value="Replicate 1"/>
-              <input type="text" name="replicate-2" value="Replicate 2"/>
-            </label>
-          </div>
-
-          <UploadFilesIndividually files={[{"name":"enriched plus"}, {"name":"enriched minus"}, {"name":"normal plus"}, {"name":"normal minus"}]}/>
+          <Tabs genomeNum={5} genome={true} replicateNum={2}/>
           
         </div>
 
@@ -100,11 +85,10 @@ function App() {
           <p>or</p>
           <button>Save</button>
           <p>Configuration</p>
-          <button>RUN</button>
+          <button type="submit">RUN</button>
         </div>
 
       </form>      
-    
     </div>
   )
 }

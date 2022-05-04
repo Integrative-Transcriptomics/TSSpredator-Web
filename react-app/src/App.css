@@ -1,0 +1,69 @@
+* {
+    box-sizing:border-box;
+    margin: 0;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+header {
+    background-color: black;
+    color: white;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.75);
+}
+
+input {
+    border: 1.5px solid #eee;
+    border-radius: 5px;
+    padding: 5px;
+    font-size: 0.8em;
+    box-sizing: border-box;
+    outline: none;
+}
+
+input[type=number] {
+    width: 70px;
+    text-align: center;
+}
+
+input:focus {
+    border: 1.5px solid blue;
+}
+
+.project-name {
+    border: none;
+    border-bottom: 2px solid black;
+    border-radius: 0;
+}
+
+.project-name:focus {
+    border: none;
+    border-bottom: 2px solid blue;
+    background-color: lightgrey;
+  }
+
+
+.form-container {
+    padding: 80px 10px;
+    margin: auto;
+    width: 50%;
+}
+
+.element {
+    margin: 10px auto;
+}
+
+.element-row {
+    display: flex;
+    flex-direction: row;
+}
+
+
+
+
+
+
+
+
+
+
+
+

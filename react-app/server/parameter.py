@@ -30,7 +30,7 @@ class ParameterCombo:
     def __init__(self, name, value, combo2):
         self.name = name
         self.value = value
-        self.combo2 = combo2     
+        self.combo2 = combo2  
 
 
 def defParamtersSetUpBox():
@@ -48,7 +48,7 @@ def defParameterPrediction():
     processing_site_factor = ParameterPreset("processing site factor", 0, None, 0.1, 1, 1.2, 1.5, 2, 3)
     step_length = ParameterConstant("step length", 0, None, 1, 0)
     base_height = ParameterConstant("base height", 0, None, 0.05, 0)
-    return [step_height, step_height_reduction, step_factor, step_factor_reduction, enrichment_factor, processing_site_factor, step_length, base_height]
+    return [step_height, step_factor, enrichment_factor, step_height_reduction, step_factor_reduction, processing_site_factor, step_length, base_height]
 
 def defParameterNorm():
     normalization_percentile = ParameterConstant("normalization percentile", 0, 1, 0.1, 0.9)
@@ -61,8 +61,8 @@ def defParameterCluster():
     return [tss_clustering_distance, cluster_method]
 
 def defParameterClass():
-    utr_length = ParameterConstant("UTR length", 0, None, 10, 1)
-    antisense_utr_length = ParameterConstant("antisense UTR length", 0, None, 10, 1)
+    utr_length = ParameterConstant("UTR length", 0, None, 10, 300)
+    antisense_utr_length = ParameterConstant("antisense UTR length", 0, None, 10, 100)
     return [utr_length, antisense_utr_length]
 
 

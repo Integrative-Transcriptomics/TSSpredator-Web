@@ -3,12 +3,12 @@ import UploadFilesGroup from './UploadFilesGroup'
 
 function UploadFilesIndividually({files}) {
   return (
-    <div className='upload-files-individually' style={{display:'flex',flexDirection:'column'}}>
+    <div>
         <label>
-            <input type="button" value="upload files together"/>
+            <input className='element' type="button" value="upload files together"/>
         </label>
     
-        <p>+ Upload Files individually</p>
+        <p className='element'>+ Upload Files individually</p>
         <UploadFilesGroup files={files} />
     </div>
   )

@@ -4,7 +4,7 @@ function UploadFile({ file }) {
   return (
     <div>
         <label> { file.name }
-            <input type="file" name={file.name} />
+            <input className='element' type="file" name={file.name} />
         </label>
     </div>
   )

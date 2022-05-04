@@ -4,7 +4,7 @@ function TextField({field}) {
   return (
     <div>
         <label> {field.name}
-            <input type="text" name={field.name}/>
+            <input className='element' type="text" name={field.name}/>
           </label>
     </div>
   )

@@ -1,0 +1,42 @@
+.grid-wrapper {
+    display: grid; 
+    padding: 5px;  
+    grid-template-columns: 1fr 1fr 1fr;
+    font-size: 80%;
+}
+
+
+.Prediction-grid {
+    grid-area: 1 / 1 / 5 / 4 ;
+    grid-column: span 3;
+    display: grid; 
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.Prediction-header, .Comparative-header {
+     grid-column: span 3;
+     text-align: center;
+}
+
+.Normalization-header, .Clustering-header, .Classification-header {
+    text-align: center;
+}
+
+.Normalization-grid {
+    grid-area: 5 / 1 / 8 / 2 ;
+}
+
+.Clustering-grid {
+    grid-area: 5 / 2 / 8 / 3 ;
+}
+
+.Classification-grid {
+    grid-area: 5 / 3 / 8 / 4 ;
+}
+
+.Comparative-grid {
+    grid-area: 8 / 1 / 10 / 4 ;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+

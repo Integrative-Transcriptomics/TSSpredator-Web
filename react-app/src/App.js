@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Combobox from "react-widgets/Combobox";
-import TabList from "react-tab-list";
 import ParameterGroup from './components/ParameterGroup';
 import ParameterAllGroups from './components/ParameterAllGroups';
 import UploadFilesGroup from './components/UploadFilesGroup';
-import UploadFilesIndividually from './components/UploadFilesIndividually';
-import TextFieldGroup from './components/TextFieldGroup';
 import Tabs from './components/Tabs';
 import './Tabs.css';
+import './App.css';
+import './Grid.css';
 
 function App() {
 
@@ -24,71 +23,66 @@ function App() {
         })
   }, []);
 
-  
 
   return (
     <div>  
       
-      <header className='header' style={{backgroundColor:'black'}}>
-        <h1 style={{color:'white'}}>TSSpredator</h1>
+      <header>
+        <h1>TSSpredator</h1>
       </header>
 
-      <form>
-        <div className='setup-box'>
-          <label>
-            <input type="text" name="project-name" placeholder="Enter Project Name"/>
-          </label>
-
-          {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup}/>)}  
-         
-        </div>
-
-        <br></br>
-        <br></br>
-
-        <div className='upload-data-box' style={{display:'flex',flexDirection:'column'}}>
-
-          <h3>Upload Data</h3>
-
-          <UploadFilesGroup files={[{"name":"Output Data Path"}, {"name":"Alignment File"}]}/>
-
-          <Tabs genomeNum={5} genome={true} replicateNum={2}/>
-          
-        </div>
-
-        <br></br>
-        <br></br>
-
-        <div className='parameters'>
-          <h3>+ Parameters</h3>
-          <hr></hr>
-
-          <div style={{display:'flex',flexDirection:'row'}}>
-            <label  style={{display:'flex',flexDirection:'row'}}> parameter preset
-              <Combobox defaultValue="default" data={["custom", "very specific", "more specific", "default", "more sensitive", "very sensitive"]}/>
+      <div className='form-container'>
+        <form>
+          <div>
+            <label >
+              <input className='element project-name' type="text" name="project-name" placeholder="Enter Project Name"/>
             </label>
 
-            <label  style={{display:'flex',flexDirection:'row'}}> 
-              <input type="checkbox" name="rna-seq-graph"/>
-              write rna-seq graph
-            </label>
+            {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup}/>)}  
           </div>
 
-          {(typeof parameters.parameterBox === 'undefined') ? (<p></p>) : (<ParameterAllGroups parameterGroups={parameters.parameterBox}/>)} 
+          <br></br>
+          <br></br>
 
-          <hr></hr>
+          <div>
+            <h3 className='element'>Upload Data</h3>
+            <UploadFilesGroup files={[{"name":"Output Data Path"}, {"name":"*Alignment File*"}]}/>
+            <Tabs genomeNum={5} genome={true} replicateNum={2}/>
+          </div>
 
-        </div>
-        
-        <div style={{display:'flex',flexDirection:'row'}}>
-          <button>Load</button>
-          <p>or</p>
-          <button>Save</button>
-          <p>Configuration</p>
-          <button type="submit">RUN</button>
-        </div>
+          <br></br>
+          <br></br>
 
-      </form>      
+          <div>
+            <h3 className='element'>+ Parameters</h3>
+            <hr></hr>
+
+            <div className='element-row'>
+              <label  className='element-row'> parameter preset
+                <Combobox defaultValue="default" data={["custom", "very specific", "more specific", "default", "more sensitive", "very sensitive"]}/>
+              </label>
+
+              <label  className='element-row'> 
+                <input type="checkbox" name="rna-seq-graph"/>
+                write rna-seq graph
+              </label>
+            </div>
+
+            {(typeof parameters.parameterBox === 'undefined') ? (<p></p>) : (<ParameterAllGroups parameterGroups={parameters.parameterBox}/>)} 
+
+            <hr></hr>
+          </div>
+          
+          <div className='element-row'>
+            <button>Load</button>
+            <p>or</p>
+            <button>Save</button>
+            <p>Configuration</p>
+            <button type="submit">RUN</button>
+          </div>
+
+        </form>      
+      </div>
     </div>
   )
 }

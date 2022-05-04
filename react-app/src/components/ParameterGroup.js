@@ -3,8 +3,8 @@ import Parameter from './Parameter';
 
 function ParameterGroup({ parameters }) {
   return (
-    parameters.map(parameter => {
-        return <Parameter key={parameter.name} parameter={parameter}/>
+    parameters.map((parameter,i) => {
+        return <Parameter key={i} parameter={parameter} />
     })
   );
 }

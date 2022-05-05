@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import TextFieldGroup from './TextFieldGroup';
 import UploadFilesIndividually from './UploadFilesIndividually';
 
-function Tabs({genomeNum, genome, replicateNum}) {
+function Tabs({genomeNum, genome, replicateNum, label}) {
 
   const [state, setState] = useState(1);
 
@@ -19,7 +19,8 @@ function Tabs({genomeNum, genome, replicateNum}) {
                [...Array(genomeNum)].map((x, i) => {
                 return (
                   <div className={state === (i+1) ? 'tab tab-active': 'tab'} key={(i+1)} onClick={() => {showTab((i+1))}}>
-                    {genome ? <input  className={state === (i+1) ? 'tab-input tab-input-active': 'tab-input'}  type="text" name={'genome-' + (i+1)} placeholder={'Genome ' + (i+1)}/>
+                    {genome ? <input  className={state === (i+1) ? 'tab-input tab-input-active': 'tab-input'}  
+                                      type="text" name={'genome-' + (i+1)} placeholder={label.charAt(0).toUpperCase() + label.slice(1) + " "+ (i+1)}/>
                             : ("Replicate " + String.fromCharCode(97 + i)) }
                   </div>
                 )

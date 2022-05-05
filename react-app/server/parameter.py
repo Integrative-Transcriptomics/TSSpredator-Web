@@ -38,7 +38,7 @@ class ParameterCombo:
 
 
 def defParamtersSetUpBox():
-    study_typ = ParameterCombo("Type of Study", "Comparison of different strains/species", "Comparison of different strains/species", "Comparison of different conditions", "setup")
+    study_typ = ParameterCombo("Type of Study", "genome", "Comparison of different strains/species", "Comparison of different conditions", "setup")
     number_genomes = ParameterConstant("Number of Genomes", 1, 100, 1, 1, "setup")
     number_replicates = ParameterConstant("Number of Replicates", 1, 26, 1, 1, "setup")
     return [study_typ, number_genomes, number_replicates]
@@ -82,7 +82,7 @@ def convertToJson(array):
     #jsonString="\"" +"\": {"
     jsonString=""
     for p in array:
-        jsonString += "\"" + (p.name).replace(" ", "") + "\":" + json.dumps(p.__dict__) + ","
+        jsonString += "\"" + (p.name).replace(" ", "").replace("-","") + "\":" + json.dumps(p.__dict__) + ","
 
     jsonString = jsonString[:-1] # letztes komma entfernen
     jsonString += "}"

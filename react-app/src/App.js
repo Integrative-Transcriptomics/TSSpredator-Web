@@ -25,9 +25,9 @@ function App() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    //console.log(parameters);
+    console.log(parameters);
     //console.log(parameterPreset);
-    console.log(rnaGraph);
+    //console.log(rnaGraph);
   }
 
   const handleParameters = (event) => {
@@ -58,9 +58,37 @@ function App() {
           }
         }));  
     }
+
+    if(name==="NumberofReplicates") {
+      setParameters(current => (
+        { ...current, 
+          parameterBox: { ...current.parameterBox, 
+              Comparative: {...current.parameterBox.Comparative,
+                matchingreplicates: {...current.parameterBox.Comparative.matchingreplicates, max: val}
+              }
+          }
+        }));   
+    }
+
+    if(name==="TypeofStudy") {
+      const newName = "Number of " + val.charAt(0).toUpperCase() + val.slice(1) + "s";
+      setParameters(current => (
+        { ...current, 
+          [directParent]: { ...current[directParent], 
+                 NumberofGenomes: {...current[directParent].NumberofGenomes , name:newName}
+                }
+        }));  
+        setParameters(current => (
+          { ...current, 
+            parameterBox: { ...current.parameterBox, 
+                Comparative: {...current.parameterBox.Comparative,
+                  allowedcrossgenomeshift: {...current.parameterBox.Comparative.allowedcrossgenomeshift, name:"allowed cross-" + val + " shift"}
+                }
+            }
+          }));   
+    }
   }
  
-
 
   return (
     <div>  
@@ -85,7 +113,13 @@ function App() {
           <div>
             <h3 className='element'>Upload Data</h3>
             <UploadFilesGroup files={[{"name":"Output Data Path"}, {"name":"*Alignment File*"}]}/>
-            <Tabs genomeNum={5} genome={true} replicateNum={2}/>
+            
+            {(typeof parameters.setup === 'undefined') 
+                ? (<p></p>) 
+                : (<Tabs genomeNum={parameters.setup.NumberofGenomes.value} genome={true} 
+                          label={parameters.setup.TypeofStudy.value} replicateNum={parameters.setup.NumberofReplicates.value}/>)}  
+
+            
           </div>
 
           <br></br>

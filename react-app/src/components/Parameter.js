@@ -16,8 +16,8 @@ function Parameter({ parameter, onChange}) {
       <div className="grid-parameter">
           <label className='element element-row'> {parameter.name}
             <select value={parameter.value} name={parameter.name} id={parameter.group} onChange={(e) => onChange(e)}>
-              <option value={parameter.combo1}>{parameter.combo1}</option>
-              <option value={parameter.combo2}>{parameter.combo2}</option>
+              <option value="genome">{parameter.combo1}</option>
+              <option value="condition">{parameter.combo2}</option>
             </select>
             
           </label>

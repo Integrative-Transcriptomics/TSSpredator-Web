@@ -1,13 +1,13 @@
 import React from 'react';
-import Combobox from "react-widgets/Combobox";
 
-function Parameter({ parameter}) {
+function Parameter({ parameter, onChange}) {
 
   if(!isNaN(parameter.value)) {
     return (
       <div className="grid-parameter">
-          <label> { parameter.name }
-              <input className='element' key={parameter.name} type="number" min={ parameter.min } max={ parameter.max } step={ parameter.step } value={ parameter.value } />
+          <label> {parameter.name}
+              <input className='element' type="number" name={parameter.name} id={parameter.group} key={parameter.name} min={parameter.min} max={parameter.max} step={parameter.step} defaultValue={parameter.value}
+                      onChange={(e) => onChange(e)}/>
           </label>
       </div>
     );
@@ -15,7 +15,11 @@ function Parameter({ parameter}) {
     return (
       <div className="grid-parameter">
           <label className='element element-row'> {parameter.name}
-            <Combobox key={parameter.name} defaultValue={parameter.value} data={[parameter.value, parameter.combo2]}/>
+            <select value={parameter.value} name={parameter.name} id={parameter.group} onChange={(e) => onChange(e)}>
+              <option value={parameter.combo1}>{parameter.combo1}</option>
+              <option value={parameter.combo2}>{parameter.combo2}</option>
+            </select>
+            
           </label>
       </div>
     );

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Combobox from "react-widgets/Combobox";
 import ParameterGroup from './components/ParameterGroup';
 import ParameterAllGroups from './components/ParameterAllGroups';
 import UploadFilesGroup from './components/UploadFilesGroup';
@@ -11,8 +10,9 @@ import './Grid.css';
 function App() {
 
   const [projectName, setProjectName] = useState({});
-  const [num, setNum] = React.useState(1); // initial für jeden spinner benutzt
   const [parameters, setParameters] = useState([{}]);
+  const [parameterPreset, setParameterPreset] = useState("default");
+  const [rnaGraph, setRnaGraph] = useState(false);
 
   useEffect(() => {
     fetch("/parameters/").then(
@@ -23,6 +23,44 @@ function App() {
         })
   }, []);
 
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    //console.log(parameters);
+    //console.log(parameterPreset);
+    console.log(rnaGraph);
+  }
+
+  const handleParameters = (event) => {
+    const name = (event.target.name).replaceAll(' ','');
+    const directParent = event.target.id;
+    let val;
+
+    if(name==="TypeofStudy" || name==="clustermethod") {
+      val = event.target.value;
+    } else {
+      val = event.target.valueAsNumber;
+    }
+
+    if(directParent === "setup") {     
+      setParameters(current => (
+        { ...current, 
+          [directParent]: { ...current[directParent], 
+                 [name]: {...current[directParent][name] , value:val}
+                }
+        }));   
+    } else {
+      setParameters(current => (
+        { ...current, 
+          parameterBox: { ...current.parameterBox, 
+              [directParent]: {...current.parameterBox[directParent],
+                  [name]: {...current.parameterBox[directParent][name], value:val}
+              }
+          }
+        }));  
+    }
+  }
+ 
+
 
   return (
     <div>  
@@ -32,13 +70,13 @@ function App() {
       </header>
 
       <div className='form-container'>
-        <form>
+        <form onSubmit={handleSubmit}>
           <div>
             <label >
-              <input className='element project-name' type="text" name="project-name" placeholder="Enter Project Name"/>
+              <input className='element project-name' type="text" name="project-name" placeholder="Enter Project Name" onChange={(e) => setProjectName(e.target.value)}/>
             </label>
 
-            {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup}/>)}  
+            {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup} onChange={(e) => handleParameters(e)}/>)}  
           </div>
 
           <br></br>
@@ -59,16 +97,23 @@ function App() {
 
             <div className='element-row'>
               <label  className='element-row'> parameter preset
-                <Combobox defaultValue="default" data={["custom", "very specific", "more specific", "default", "more sensitive", "very sensitive"]}/>
+                <select value={parameterPreset} name="parameter-preset" onChange={(e) => setParameterPreset(e.target.value)}>
+                  <option value="custom">custom</option>
+                  <option value="very specific">very specific</option>
+                  <option value="more specific">more specific</option>
+                  <option value="default">default</option>
+                  <option value="more sensitive">more sensitive</option>
+                  <option value="very sensitive">very sensitive</option>
+                </select>
               </label>
 
               <label  className='element-row'> 
-                <input type="checkbox" name="rna-seq-graph"/>
+                <input type="checkbox" name="rna-seq-graph" checked={rnaGraph} onChange={(e) => setRnaGraph(!rnaGraph)}/>
                 write rna-seq graph
               </label>
             </div>
 
-            {(typeof parameters.parameterBox === 'undefined') ? (<p></p>) : (<ParameterAllGroups parameterGroups={parameters.parameterBox}/>)} 
+           {(typeof parameters.parameterBox === 'undefined') ? (<p></p>) : (<ParameterAllGroups parameterGroups={parameters.parameterBox} onChange={(e) => handleParameters(e)}/>)}
 
             <hr></hr>
           </div>
@@ -78,7 +123,7 @@ function App() {
             <p>or</p>
             <button>Save</button>
             <p>Configuration</p>
-            <button type="submit">RUN</button>
+            <input type="submit" value="RUN"/>
           </div>
 
         </form>      

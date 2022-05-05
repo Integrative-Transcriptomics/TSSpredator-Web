@@ -1,14 +1,14 @@
 import React from 'react';
 import ParameterGroup from './ParameterGroup';
 
-function ParameterAllGroups( { parameterGroups }) {
+function ParameterAllGroups( { parameterGroups, onChange }) {
   return (
     <div className='grid-wrapper'>
-      {parameterGroups.map(group => {
+      {Object.keys(parameterGroups).map((e, i) => {
           return(
-              <div className={group.name + "-grid"}>
-                <h3 className={group.name + "-header"}> { group.name} </h3>
-                {(typeof group.parameters === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={group.parameters}/>)}
+              <div key={e} className={e + "-grid"}>
+                <h3 key={e} className={e + "-header"}> {e} </h3>
+                {(typeof parameterGroups[e]=== 'undefined') ? (<p></p>) : (<ParameterGroup key={i} parameters={parameterGroups[e]} onChange={(e) => onChange(e)} />)}
               </div>
           )
       })}

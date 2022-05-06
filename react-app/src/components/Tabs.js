@@ -2,26 +2,26 @@ import React, { useState } from "react";
 import TextFieldGroup from './TextFieldGroup';
 import UploadFilesIndividually from './UploadFilesIndividually';
 
-function Tabs({genomeNum, genome, replicateNum, label}) {
+function Tabs({genomes, genome, replicates, onChange}) {
 
   const [state, setState] = useState(1);
 
   const showTab = (index) => {
       setState(index);
   }
-
+  
   return (
-    
     <div className='container'>
-        
         <div className='tab-row'>
-            {
-               [...Array(genomeNum)].map((x, i) => {
+            {Object.keys(genomes).map((g, i) => {
+
                 return (
                   <div className={state === (i+1) ? 'tab tab-active': 'tab'} key={(i+1)} onClick={() => {showTab((i+1))}}>
+
                     {genome ? <input  className={state === (i+1) ? 'tab-input tab-input-active': 'tab-input'}  
-                                      type="text" name={'genome-' + (i+1)} placeholder={label.charAt(0).toUpperCase() + label.slice(1) + " "+ (i+1)}/>
-                            : ("Replicate " + String.fromCharCode(97 + i)) }
+                                      type="text" id={'genome' + (i+1)} name="name" placeholder={genomes[g].name}
+                                      onChange={(e) => onChange(e)}/>
+                            : genomes[g].name }
                   </div>
                 )
                })
@@ -30,15 +30,16 @@ function Tabs({genomeNum, genome, replicateNum, label}) {
 
         <div className='tab-content'>
             {
-               [...Array(genomeNum)].map((x, i) => {
+              Object.keys(genomes).map((g, i) => {
                 return (
                   <div className={state === (i+1) ? 'content content-active': 'content'} key={(i+1)}>
 
-                    {genome ? <><TextFieldGroup fields={[{"name":"Alignment ID"}, {"name": "Output ID"}]} />
-                                <UploadFilesIndividually files={[{"name":"Genome FASTA"}, {"name":"Genome Annotation"}]}/>
-                                <Tabs genomeNum={replicateNum} genome={false} />
+                    {genome ? <><TextFieldGroup fields={[{"name":"Alignment ID"}, {"name": "Output ID"}]} id={"genome" + (i+1)} onChange={(e) => onChange(e)}/>
+                                <UploadFilesIndividually files={[{"name":"Genome FASTA"}, {"name":"Genome Annotation"}]} id={"genome" + (i+1)} onChange={(e) => onChange(e)}/>
+                              {/*   <Tabs genomes={replicates} genome={false} onChange={(e) => onChange(e)} /> */}
                               </> :
-                                <UploadFilesIndividually files={[{"name":"enriched plus"}, {"name":"enriched minus"}, {"name":"normal plus"}, {"name":"normal minus"}]}/>}  
+                                <UploadFilesIndividually files={[{"name":"enriched plus"}, {"name":"enriched minus"}, {"name":"normal plus"}, {"name":"normal minus"}]}
+                                                            onChange={(e) => onChange(e)} />}  
                   </div>
                 )
                })

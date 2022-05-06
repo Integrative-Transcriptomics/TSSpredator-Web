@@ -1,7 +1,7 @@
 import React from 'react'
 import UploadFilesGroup from './UploadFilesGroup'
 
-function UploadFilesIndividually({files}) {
+function UploadFilesIndividually({files, id, onChange}) {
   return (
     <div>
         <label>
@@ -9,7 +9,7 @@ function UploadFilesIndividually({files}) {
         </label>
     
         <p className='element'>+ Upload Files individually</p>
-        <UploadFilesGroup files={files} />
+        <UploadFilesGroup files={files} id={id} onChange={(e) => onChange(e)} />
     </div>
   )
 }

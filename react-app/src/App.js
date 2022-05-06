@@ -12,6 +12,8 @@ function App() {
   const [parameters, setParameters] = useState([{}]);
   const [parameterPreset, setParameterPreset] = useState("default");
   const [rnaGraph, setRnaGraph] = useState(false);
+  const [genomes, setGenomes] = useState({"genome1":{"name":"Genome 1", "alignmentid":"", "outputid":"", "genomefasta":"", "genomeannotation":""}});
+  const [replicates, setReplicates] = useState({"genome1":{"replicate1":{"name":"Replicate a", "enrichedplus":"", "enrichedminus":"", "normalplus":"", "normalminus":""}}})
 
   /**
    * holt die Parameterwerte beim Start der Seite vom Server
@@ -26,13 +28,47 @@ function App() {
   }, []);
 
   /**
+   * GenomTabs dynamisch anpassen
+   */
+  useEffect(() => {
+    if(typeof parameters.setup !== 'undefined') {
+      setGenomes(current => (
+       {...current,
+          ["genome"+parameters.setup.NumberofGenomes.value]: 
+            {name: ["Genome "+parameters.setup.NumberofGenomes.value], alignmentid:"", outputid:"", genomefasta:"", genomeannotation:""}
+        }
+      ))
+    }
+  }, [parameters])
+
+  /**
+   * ReplicateTabs dynamisch anpassen
+   
+   useEffect(() => {
+    if(typeof parameters.setup !== 'undefined') {
+      setGenomes(current => (
+        {...current,
+          ["genome"+parameters.setup.NumberofReplicates.value]: {
+          ["replicate"]: 
+            {name: ["Replicate "+ String.fromCharCode(97 + parameters.setup.NumberofReplicates.value)], 
+            enrichedplus:"", enrichedminus:"", normalplus:"", normalminus:""}
+          }
+            
+        }
+      ))
+      console.log(parameters.setup.NumberofGenomes.value);
+    }
+  }, [parameters]) */
+
+  /**
    * RUN Button event
    */
   const handleSubmit = (event) => {
     event.preventDefault();
-    console.log(parameters);
+    //console.log(parameters);
     //console.log(parameterPreset);
     //console.log(rnaGraph);
+    console.log(genomes);
   }
 
   /**
@@ -155,6 +191,27 @@ function App() {
     } 
   } 
 
+
+  const handleTabs = (event) => {
+    
+    const name = event.target.name;
+    const id = event.target.id;
+    let value;
+  
+    if(name==="name" || name==="alignmentid" || name==="outputid") {
+      value = event.target.value;
+    } else {
+      value = event.target.files[0];
+    }
+
+    setGenomes(current => ({
+      ...current,
+      [id]:{...current[id], 
+           [name]: value}
+
+    }))
+  }
+
   return (
     <div>  
       
@@ -193,8 +250,9 @@ function App() {
       
             {(typeof parameters.setup === 'undefined') 
                 ? (<p></p>) 
-                : (<Tabs genomeNum={parameters.setup.NumberofGenomes.value} genome={true} 
-                          label={parameters.setup.TypeofStudy.value} replicateNum={parameters.setup.NumberofReplicates.value}/>)}  
+                : (<Tabs genomes={genomes} genome={true} 
+                         replicates={replicates}
+                          onChange={(e) => handleTabs(e)}/>)}  
 
             
           </div>

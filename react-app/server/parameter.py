@@ -5,16 +5,17 @@ import json
 
 # Parameter bei denen die werte sich je nach preset ändern
 class ParameterPreset:    
-    def __init__(self, name, min, max, step, very_specific, more_specific, value, more_sensitive, very_sensitive, group):
+    def __init__(self, name, min, max, step, very_specific, more_specific, default, more_sensitive, very_sensitive, value, group):
         self.name = name
         self.min = min
         self.max = max
         self.step = step
-        self.very_specific = very_specific
-        self.more_specific = more_specific
+        self.veryspecific = very_specific
+        self.morespecific = more_specific
+        self.default = default
+        self.moresensitive = more_sensitive
+        self.verysensitive = very_sensitive
         self.value = value
-        self.more_sensitive = more_sensitive
-        self.very_sensitive = very_sensitive
         self.group = group
 
 # Parameter bei denen die Werte sich nicht ändern
@@ -25,6 +26,11 @@ class ParameterConstant:
         self.max = max
         self.step = step
         self.value = value
+        self.veryspecific = value
+        self.morespecific = value
+        self.default = value
+        self.moresensitive = value
+        self.verysensitive = value
         self.group = group
 
 # für combo box
@@ -44,12 +50,12 @@ def defParamtersSetUpBox():
     return [study_typ, number_genomes, number_replicates]
 
 def defParameterPrediction():
-    step_height = ParameterPreset("step height", 0, None, 0.05, 1, 0.5, 0.3, 0.2, 0.1, "Prediction")
-    step_height_reduction = ParameterPreset("step height reduction", 0, None, 0.05, 0.5, 0.2, 0.2, 0.15, 0.09, "Prediction")
-    step_factor = ParameterPreset("step factor", 1, None, 0.1, 2, 2, 2, 1.5, 1, "Prediction")
-    step_factor_reduction = ParameterPreset("step factor reduction", 0, None, 0.1, 0.5, 0.5, 0.5, 0.5, 0, "Prediction")
-    enrichment_factor = ParameterPreset("enrichment factor", 0, None, 0.1, 3, 2, 2, 1.5, 1, "Prediction")
-    processing_site_factor = ParameterPreset("processing site factor", 0, None, 0.1, 1, 1.2, 1.5, 2, 3, "Prediction")
+    step_height = ParameterPreset("step height", 0, None, 0.05, 1, 0.5, 0.3, 0.2, 0.1, 0.3, "Prediction")
+    step_height_reduction = ParameterPreset("step height reduction", 0, None, 0.05, 0.5, 0.2, 0.2, 0.15, 0.09, 0.2, "Prediction")
+    step_factor = ParameterPreset("step factor", 1, None, 0.1, 2, 2, 2, 1.5, 1, 2, "Prediction")
+    step_factor_reduction = ParameterPreset("step factor reduction", 0, None, 0.1, 0.5, 0.5, 0.5, 0.5, 0, 0.5, "Prediction")
+    enrichment_factor = ParameterPreset("enrichment factor", 0, None, 0.1, 3, 2, 2, 1.5, 1, 2, "Prediction")
+    processing_site_factor = ParameterPreset("processing site factor", 0, None, 0.1, 1, 1.2, 1.5, 2, 3, 1.5, "Prediction")
     step_length = ParameterConstant("step length", 0, None, 1, 0, "Prediction")
     base_height = ParameterConstant("base height", 0, None, 0.05, 0, "Prediction")
     return [step_height, step_factor, enrichment_factor, step_height_reduction, step_factor_reduction, processing_site_factor, step_length, base_height]

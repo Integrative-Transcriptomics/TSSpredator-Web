@@ -1,7 +1,7 @@
 import React from 'react';
 import ParameterGroup from './ParameterGroup';
 
-function ParameterAllGroups( { parameterGroups, onChange }) {
+function ParameterAllGroups( { parameterGroups, preset, onChange }) {
   return (
     <div className='grid-wrapper'>
       {Object.keys(parameterGroups).map((e, i) => {

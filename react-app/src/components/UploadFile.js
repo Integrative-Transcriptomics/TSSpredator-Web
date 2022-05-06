@@ -1,6 +1,6 @@
 import React from 'react'
 
-function UploadFile({ file }) {
+function UploadFile({ file, studyType }) {
   return (
     <div>
         <label> { file.name }

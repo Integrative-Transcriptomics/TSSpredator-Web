@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ParameterGroup from './components/ParameterGroup';
 import ParameterAllGroups from './components/ParameterAllGroups';
-import UploadFilesGroup from './components/UploadFilesGroup';
 import Tabs from './components/Tabs';
 import './Tabs.css';
 import './App.css';
@@ -14,6 +13,9 @@ function App() {
   const [parameterPreset, setParameterPreset] = useState("default");
   const [rnaGraph, setRnaGraph] = useState(false);
 
+  /**
+   * holt die Parameterwerte beim Start der Seite vom Server
+   */
   useEffect(() => {
     fetch("/parameters/").then(
       res => res.json())
@@ -23,13 +25,20 @@ function App() {
         })
   }, []);
 
+  /**
+   * RUN Button event
+   */
   const handleSubmit = (event) => {
     event.preventDefault();
-    //console.log(parameters);
-    console.log(parameterPreset);
+    console.log(parameters);
+    //console.log(parameterPreset);
     //console.log(rnaGraph);
   }
 
+  /**
+   * Wenn ein Parameter verändert wird, wird der useState von setParameters angepass
+   * Wenn der Parameter andere Parameter beeinflusst wird des auch geändert
+   */
   const handleParameters = (event) => {
     const name = (event.target.name).replaceAll(' ','');
     const directParent = event.target.id;
@@ -42,63 +51,60 @@ function App() {
       val = event.target.valueAsNumber;
     }
 
-    // für setup box
-    if(directParent === "setup") {     
-      setParameters(current => (
-        { ...current, 
-          [directParent]: { ...current[directParent], 
-                 [name]: {...current[directParent][name] , value:val}
-                }
-        }));  
-    // für parameter Box (tiefere Verschachtelung)     
+    if(directParent === "setup") {   
+      updateSetupBox(directParent, name, 'value', val);  
     } else {
-      setParameters(current => (
-        { ...current, 
-          parameterBox: { ...current.parameterBox, 
-              [directParent]: {...current.parameterBox[directParent],
-                  [name]: {...current.parameterBox[directParent][name], value:val}
-              }
-          }
-        }));  
-        checkPreset(val, name);
+      updateParameterBox(directParent, name, 'value',val);
+      checkPreset(val, name);
     }
 
     // wenn Anzahl Replicate verändert wird, muss maximum vom Parameter 'matching replicates' angepasst werden
     if(name==="NumberofReplicates") {
-      setParameters(current => (
-        { ...current, 
-          parameterBox: { ...current.parameterBox, 
-              Comparative: {...current.parameterBox.Comparative,
-                matchingreplicates: {...current.parameterBox.Comparative.matchingreplicates, max: val}
-              }
-          }
-        }));   
+      updateParameterBox('Comparative', 'matchingreplicates','max', val);
     }
 
     // je nach Study Type müssen Genome/Condition Beschriftungen angepasst werden
     if(name==="TypeofStudy") {
       const newName = "Number of " + val.charAt(0).toUpperCase() + val.slice(1) + "s";
       // Number of Genomes/Conditions
-      setParameters(current => (
-        { ...current, 
-          [directParent]: { ...current[directParent], 
-                 NumberofGenomes: {...current[directParent].NumberofGenomes , name:newName}
-                }
-        }));  
-        // allowed cross-genome/condition shift
-        setParameters(current => (
-          { ...current, 
-            parameterBox: { ...current.parameterBox, 
-                Comparative: {...current.parameterBox.Comparative,
-                  allowedcrossgenomeshift: {...current.parameterBox.Comparative.allowedcrossgenomeshift, name:"allowed cross-" + val + " shift"}
-                }
-            }
-          }));   
+      updateSetupBox(directParent, 'NumberofGenomes', 'name', newName);
+        
+      // allowed cross-genome/condition shift
+      updateParameterBox('Comparative', 'allowedcrossgenomeshift', 'name', "allowed cross-" + val + " shift");
     }
   }
 
-  const checkPreset = (value, parameterName) => {
+  /**
+   * update Wert eines Parameters in der parameter box
+   */
+  const updateParameterBox =(parent, node, element, value) => {
+    setParameters(current => (
+      { ...current, 
+        parameterBox: { ...current.parameterBox, 
+            [parent]: {...current.parameterBox[parent],
+                [node]: {...current.parameterBox[parent][node], [element]:value}
+            }
+        }
+      }));  
+  }
 
+  /**
+   * update Wert eines Parameters in der setup box
+   */
+  const updateSetupBox =(parent, node, element, value) => {
+    setParameters(current => (
+      { ...current, 
+        [parent]: { ...current[parent], 
+               [node]: {...current[parent][node] , [element]:value}
+              }
+      }));  
+  }
+
+  /**
+   * wenn Parameter verändert wird, wird überprüft ob die Werte der Parameter einem
+   * parameter preset entsprechen und dieser wird dann abgeändert
+   */
+  const checkPreset = (value, parameterName) => {
     const names = ['stepheight', 'stepheightreduction', 'stepfactor', 'stepfactorreduction', 'enrichmentfactor', 'processingsitefactor'];
     const values = ['default', 'more sensitive', 'more specific', 'very sensitive', 'very specific'];
     const match=[];
@@ -113,6 +119,7 @@ function App() {
       }
     })
 
+    // restlichen Parameter überprüfen
     if(match.length === 0) {
       setParameterPreset('custom');
     } else {
@@ -133,6 +140,9 @@ function App() {
     }
   }
 
+  /**
+   * passt Parameter entsprechend des ausgewählten parameter presets an
+   */
   const handleParameterPreset = (event) => {
     setParameterPreset(event.target.value);
     const preset = (event.target.value).replace(' ','');
@@ -140,14 +150,7 @@ function App() {
     if(typeof parameters.parameterBox !== 'undefined' && event.target.value !== 'custom') {
       const names = ['stepheight', 'stepheightreduction', 'stepfactor', 'stepfactorreduction', 'enrichmentfactor', 'processingsitefactor'];
       names.map((name) => {
-        setParameters(current => (
-          { ...current, 
-            parameterBox: { ...current.parameterBox, 
-                Prediction: {...current.parameterBox.Prediction,
-                    [name]: {...current.parameterBox.Prediction[name], value:parameters.parameterBox.Prediction[name][preset]}
-                }
-            }
-          }));  
+        updateParameterBox('Prediction', name, 'value', parameters.parameterBox.Prediction[name][preset]);
       })
     } 
   } 
@@ -187,9 +190,7 @@ function App() {
                   </label>
                  </div>} 
 
-           
-            
-            
+      
             {(typeof parameters.setup === 'undefined') 
                 ? (<p></p>) 
                 : (<Tabs genomeNum={parameters.setup.NumberofGenomes.value} genome={true} 

@@ -5,7 +5,8 @@ import json
 
 # Parameter bei denen die werte sich je nach preset ändern
 class ParameterPreset:    
-    def __init__(self, name, min, max, step, very_specific, more_specific, default, more_sensitive, very_sensitive, value, group):
+    def __init__(self, key, name, min, max, step, very_specific, more_specific, default, more_sensitive, very_sensitive, value, group):
+        self.key=key
         self.name = name
         self.min = min
         self.max = max
@@ -20,7 +21,8 @@ class ParameterPreset:
 
 # Parameter bei denen die Werte sich nicht ändern
 class ParameterConstant:
-    def __init__(self, name, min, max, step, value, group):
+    def __init__(self, key, name, min, max, step, value, group):
+        self.key=key
         self.name = name
         self.min = min
         self.max = max
@@ -35,7 +37,8 @@ class ParameterConstant:
 
 # für combo box
 class ParameterCombo:
-    def __init__(self, name, value, combo1, combo2, group):
+    def __init__(self, key, name, value, combo1, combo2, group):
+        self.key=key
         self.name = name
         self.value = value
         self.combo1 = combo1
@@ -44,42 +47,42 @@ class ParameterCombo:
 
 
 def defParamtersSetUpBox():
-    study_typ = ParameterCombo("Type of Study", "genome", "Comparison of different strains/species", "Comparison of different conditions", "setup")
-    number_genomes = ParameterConstant("Number of Genomes", 1, 100, 1, 1, "setup")
-    number_replicates = ParameterConstant("Number of Replicates", 1, 26, 1, 1, "setup")
+    study_typ = ParameterCombo("typeofstudy","Type of Study", "genome", "Comparison of different strains/species", "Comparison of different conditions", "setup")
+    number_genomes = ParameterConstant("numberofgenomes","Number of Genomes", 1, 100, 1, 1, "setup")
+    number_replicates = ParameterConstant("numberofreplicates","Number of Replicates", 1, 26, 1, 1, "setup")
     return [study_typ, number_genomes, number_replicates]
 
 def defParameterPrediction():
-    step_height = ParameterPreset("step height", 0, None, 0.05, 1, 0.5, 0.3, 0.2, 0.1, 0.3, "Prediction")
-    step_height_reduction = ParameterPreset("step height reduction", 0, None, 0.05, 0.5, 0.2, 0.2, 0.15, 0.09, 0.2, "Prediction")
-    step_factor = ParameterPreset("step factor", 1, None, 0.1, 2, 2, 2, 1.5, 1, 2, "Prediction")
-    step_factor_reduction = ParameterPreset("step factor reduction", 0, None, 0.1, 0.5, 0.5, 0.5, 0.5, 0, 0.5, "Prediction")
-    enrichment_factor = ParameterPreset("enrichment factor", 0, None, 0.1, 3, 2, 2, 1.5, 1, 2, "Prediction")
-    processing_site_factor = ParameterPreset("processing site factor", 0, None, 0.1, 1, 1.2, 1.5, 2, 3, 1.5, "Prediction")
-    step_length = ParameterConstant("step length", 0, None, 1, 0, "Prediction")
-    base_height = ParameterConstant("base height", 0, None, 0.05, 0, "Prediction")
+    step_height = ParameterPreset("stepheight","step height", 0, None, 0.05, 1, 0.5, 0.3, 0.2, 0.1, 0.3, "Prediction")
+    step_height_reduction = ParameterPreset("stepheightreduction","step height reduction", 0, None, 0.05, 0.5, 0.2, 0.2, 0.15, 0.09, 0.2, "Prediction")
+    step_factor = ParameterPreset("stepfactor", "step factor", 1, None, 0.1, 2, 2, 2, 1.5, 1, 2, "Prediction")
+    step_factor_reduction = ParameterPreset("stepfactorreduction","step factor reduction", 0, None, 0.1, 0.5, 0.5, 0.5, 0.5, 0, 0.5, "Prediction")
+    enrichment_factor = ParameterPreset("enrichmentfactor","enrichment factor", 0, None, 0.1, 3, 2, 2, 1.5, 1, 2, "Prediction")
+    processing_site_factor = ParameterPreset("processingsitefactor", "processing site factor", 0, None, 0.1, 1, 1.2, 1.5, 2, 3, 1.5, "Prediction")
+    step_length = ParameterConstant("steplength","step length", 0, None, 1, 0, "Prediction")
+    base_height = ParameterConstant("baseheight","base height", 0, None, 0.05, 0, "Prediction")
     return [step_height, step_factor, enrichment_factor, step_height_reduction, step_factor_reduction, processing_site_factor, step_length, base_height]
 
 def defParameterNorm():
-    normalization_percentile = ParameterConstant("normalization percentile", 0, 1, 0.1, 0.9, "Normalization")
-    enrichment_normalization_percentile = ParameterConstant("enrichment normalization percentile", 0, 1, 0.1, 0.5, "Normalization")
+    normalization_percentile = ParameterConstant("normalizationpercentile","normalization percentile", 0, 1, 0.1, 0.9, "Normalization")
+    enrichment_normalization_percentile = ParameterConstant("enrichmentnormalizationpercentile","enrichment normalization percentile", 0, 1, 0.1, 0.5, "Normalization")
     return [normalization_percentile, enrichment_normalization_percentile]
 
 def defParameterCluster():
-    tss_clustering_distance = ParameterConstant("TSS clustering distance", 0, 100, 1, 3, "Clustering")
-    cluster_method = ParameterCombo("cluster method", "HIGHEST", "HIGHEST", "FIRST", "Clustering")
+    tss_clustering_distance = ParameterConstant("tssclusteringdistance","TSS clustering distance", 0, 100, 1, 3, "Clustering")
+    cluster_method = ParameterCombo("clustermethod","cluster method", "HIGHEST", "HIGHEST", "FIRST", "Clustering")
     return [tss_clustering_distance, cluster_method]
 
 def defParameterClass():
-    utr_length = ParameterConstant("UTR length", 0, None, 10, 300, "Classification")
-    antisense_utr_length = ParameterConstant("antisense UTR length", 0, None, 10, 100, "Classification")
+    utr_length = ParameterConstant("utrlength","UTR length", 0, None, 10, 300, "Classification")
+    antisense_utr_length = ParameterConstant("antisenseutrlength","antisense UTR length", 0, None, 10, 100, "Classification")
     return [utr_length, antisense_utr_length]
 
 
 def defParameterComparative():
-    allowed_cross_genome_shift = ParameterConstant("allowed cross-genome shift", 0, 100, 1, 1, "Comparative")
-    allowed_cross_replicate_shift = ParameterConstant("allowed cross-replicate shift", 0, 100, 1, 1, "Comparative")
-    matching_replicates = ParameterConstant("matching replicates", 1, 1, 1, 1, "Comparative") #maximum ist die anzahl der replicates!!!!!
+    allowed_cross_genome_shift = ParameterConstant("allowedcrossgenomeshift","allowed cross-genome shift", 0, 100, 1, 1, "Comparative")
+    allowed_cross_replicate_shift = ParameterConstant("allowedcrossreplicateshift","allowed cross-replicate shift", 0, 100, 1, 1, "Comparative")
+    matching_replicates = ParameterConstant("matchingreplicates","matching replicates", 1, 1, 1, 1, "Comparative") #maximum ist die anzahl der replicates!!!!!
     return [allowed_cross_genome_shift, allowed_cross_replicate_shift, matching_replicates]
 
 
@@ -88,7 +91,8 @@ def convertToJson(array):
     #jsonString="\"" +"\": {"
     jsonString=""
     for p in array:
-        jsonString += "\"" + (p.name).replace(" ", "").replace("-","") + "\":" + json.dumps(p.__dict__) + ","
+       
+        jsonString += "\"" + p.key + "\":" + json.dumps(p.__dict__) + ","
 
     jsonString = jsonString[:-1] # letztes komma entfernen
     jsonString += "}"

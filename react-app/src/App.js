@@ -13,8 +13,12 @@ function App() {
   const [parameterPreset, setParameterPreset] = useState("default");
   const [rnaGraph, setRnaGraph] = useState(false);
   const [genomes, setGenomes] = useState([{"genome1":{"name":"Genome 1", "placeholder": "Genome 1", "alignmentid":"", "outputid":"", "genomefasta":"", "genomeannotation":""}}]);
-  const [replicates, setReplicates] = useState({"genome1":{"replicate1":{"name":"Replicate a", "enrichedplus":"", "enrichedminus":"", "normalplus":"", "normalminus":""}}})
-
+  const [replicates, setReplicates] = useState([{"genome1":[{"replicatea":{"name":"Replicate a", "enrichedplus":"", "enrichedminus":"", "normalplus":"", "normalminus":""}}]}]);
+  // wenn neuer Genom Tab hinzugeügt wird: replicateTemplate benutzen um replicates zu updaten
+  const [replicateTemplate, setReplicateTemplate] = useState([{"replicatea":{"name":"Replicate a", "enrichedplus":"", "enrichedminus":"", "normalplus":"", "normalminus":""}}]);
+  // template für ein replicate
+  const repTemplate = "{\"replicate0\":{\"name\":\"Replicate 0\", \"enrichedplus\":\"\", \"enrichedminus\":\"\", \"normalplus\":\"\", \"normalminus\":\"\"}}";
+  const [alignmentFile, setAlignmentFile] = useState("");
 
   /**
    * RUN Button event
@@ -24,7 +28,10 @@ function App() {
     //console.log(parameters);
     //console.log(parameterPreset);
     //console.log(rnaGraph);
-    console.log(genomes);
+    //console.log(genomes);
+    //console.log(replicates);
+    //console.log(replicateTemplate)
+    console.log(alignmentFile);
   }
 
   /**
@@ -41,15 +48,15 @@ function App() {
 
 
   /**
-   * Wenn ein Parameter verändert wird, wird der useState von setParameters angepass
-   * Wenn der Parameter andere Parameter beeinflusst wird des auch geändert
+   * Anpassung des useStates des veränderten Parameter p
+   * weitere Parameter die von p abhängig sind werden auch verändert
    */
   const handleParameters = (event) => {
     const name = event.target.name;
     const directParent = event.target.id;
     let val;
 
-    // wenn combobox darf value keine Nummer sein
+    // combobox: value nicht als Nummer speichern
     if(name==="typeofstudy" || name==="clustermethod") {
       val = event.target.value;
     } else {
@@ -63,14 +70,38 @@ function App() {
       checkPreset(val, name);
     }
 
-    // wenn Anzahl Replicate verändert wird, muss maximum vom Parameter 'matching replicates' angepasst werden
     if(name==="numberofreplicates") {
+      // maximum vom Parameter 'matching replicates' anpassen
       updateParameterBox('Comparative', 'matchingreplicates','max', val);
+
+      // Replicate Tabs anpassen
+      const repLetter = String.fromCharCode(96 + val);
+      const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
+    
+      if(val > replicateTemplate.length) {
+        // Template anpassen
+        replicateTemplate.push(newRep);
+        setReplicateTemplate(replicateTemplate);
+        
+        // Replicates für vorhandene Genome anpassen
+        for (var i = 0; i < replicates.length; i++) {
+         replicates[i]['genome'+(i+1)].push(newRep);
+        }        
+        setReplicates(replicates);
+
+      } else if (val < replicateTemplate.length) {
+        replicateTemplate.pop();
+        setReplicateTemplate(replicateTemplate);
+        // Replicates für vorhandene Genome
+        for (var j = 0; j < replicates.length; j++) {
+          replicates[j]['genome'+(j+1)].pop();
+         }        
+         setReplicates(replicates);
+      }      
     }
 
-    // Genom Tab anzahl anpassen
+    
     if(name==="numberofgenomes") {
-     
       // Tab hinzugefügt: Genome Objekt hinzufügen
       const genomeName = (parameters.setup.typeofstudy.value).charAt(0).toUpperCase() + (parameters.setup.typeofstudy.value).slice(1) + " " + val;
       if(val > Object.keys(genomes).length) {
@@ -80,20 +111,27 @@ function App() {
                {name: genomeName, placeholder: genomeName, alignmentid:"", outputid:"", genomefasta:"", genomeannotation:""}
            }]
          ))
+         // Replicates: neues Genom hinzufügen
+         replicates.push({["genome"+val]: [...replicateTemplate]});
+         setReplicates(replicates);
+        
       // Tab entfernt: Genom Objekt entfernen   
       } else if (val < Object.keys(genomes).length) {
         genomes.pop();
         setGenomes(genomes);
+        // Replicates: Genom entfernen
+        replicates.pop();
+        setReplicates(replicates);
       }
     }
 
-    // je nach Study Type müssen Genome/Condition Beschriftungen angepasst werden
+    // Genome/Condition Beschriftungen anpassen
     if(name==="typeofstudy") {
       const newName = "Number of " + val.charAt(0).toUpperCase() + val.slice(1) + "s";
       // Number of Genomes/Conditions
       updateSetupBox('numberofgenomes', 'name', newName);
 
-      // Genom Tabs
+      // Genome/Condition Tabs
       genomes.map((g,i) => (
         g['genome'+(i+1)].placeholder = val.charAt(0).toUpperCase() + val.slice(1) + " " + (i+1)
       ))
@@ -131,8 +169,7 @@ function App() {
   }
 
   /**
-   * wenn Parameter verändert wird, wird überprüft ob die Werte der Parameter einem
-   * parameter preset entsprechen und dieser wird dann abgeändert
+   * überprüft ob ein Parameter preset mit den aktuellen Parameter Werten vorliegt
    */
   const checkPreset = (value, parameterName) => {
     const names = ['stepheight', 'stepheightreduction', 'stepfactor', 'stepfactorreduction', 'enrichmentfactor', 'processingsitefactor'];
@@ -141,8 +178,8 @@ function App() {
 
     if(!names.includes(parameterName)) {return;}
 
-    values.map((val) => {
-      const v = val.replace(' ','');
+    values.forEach((val) => {
+      const v = val.replace(' ','')
       // veränderter Parameter übereinstimmung mit voreinstellung?
       if(parameters.parameterBox.Prediction[parameterName][v] === value) {
         match.push(val);
@@ -153,15 +190,15 @@ function App() {
     if(match.length === 0) {
       setParameterPreset('custom');
     } else {
-      names.map((name) => {
+      names.forEach((name) => {
         if(name !== parameterName) {
-          match.map((mat) => {
+          match.forEach((mat) => {
             const v = mat.replace(' ','');
             if(parameters.parameterBox.Prediction[name][v] !== parameters.parameterBox.Prediction[name].value) {
               match.pop(mat);
             }
           })
-        }
+        } 
       })
     }
 
@@ -179,19 +216,18 @@ function App() {
 
     if(typeof parameters.parameterBox !== 'undefined' && event.target.value !== 'custom') {
       const names = ['stepheight', 'stepheightreduction', 'stepfactor', 'stepfactorreduction', 'enrichmentfactor', 'processingsitefactor'];
-      names.map((name) => {
+      names.forEach((name) => {
         updateParameterBox('Prediction', name, 'value', parameters.parameterBox.Prediction[name][preset]);
       })
     } 
   } 
 
 /**
- * Wert im Genom Tab geändert
+ * Wert im Genom/Replicate Tab abspeichern
  */
   const handleTabs = (event) => {
     
     const name = event.target.name;
-    const id = parseInt(event.target.id);
     let value;
   
     if(name==="name" || name==="alignmentid" || name==="outputid") {
@@ -200,9 +236,20 @@ function App() {
       value = event.target.files[0];
     }
 
-    genomes[id]['genome'+(id+1)][name] = value;
-    setGenomes([...genomes]);
+    // für replicates
+    if(name==="enrichedplus" || name==="enrichedminus" || name==="normalplus" || name==="normalminus") {
+      const id = event.target.id;
+      const genIdx = parseInt(id.charAt(0)) + 1;
+      const repIdx = parseInt(id.charAt(2));
+      const letter = String.fromCharCode(97 + repIdx);
+      replicates[id[0]]['genome'+genIdx][repIdx]['replicate'+letter][name] = value;
 
+    // für genomes
+    } else {
+      const id = parseInt(event.target.id);
+      genomes[id]['genome'+(id+1)][name] = value;
+      setGenomes([...genomes]);
+    }
   }
 
   return (
@@ -221,37 +268,20 @@ function App() {
             {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup} onChange={(e) => handleParameters(e)}/>)}  
           </div>
 
-          <br></br>
-          <br></br>
-
           <div>
             <h3 className='element'>Upload Data</h3>
-            <div >
-              <label> Output Data Path
-                <input className='element' type="file" name="Output Data Path" />
-              </label>
-            </div>
 
             {(typeof parameters.setup === 'undefined') 
               ? (<p></p>) 
-              :  <div style={parameters.setup.typeofstudy.value==="genome" ? {display:'flex'}:{display:'none'}}>
-                  <label > Alignment File
-                    <input className='element' type="file" name="Alignment File" />
-                  </label>
-                 </div>} 
-
-      
-            {(typeof parameters.setup === 'undefined') 
-                ? (<p></p>) 
-                : (<Tabs genomes={genomes} genome={true} 
-                         replicates={replicates}
-                         onChange={(e) => handleTabs(e)}/>)}  
-
-            
+              :  <>
+                  <div style={parameters.setup.typeofstudy.value==="genome" ? {display:'flex'}:{display:'none'}}>
+                    <label > Alignment File
+                      <input className='element' type="file" name="Alignment File" onChange={(e) => setAlignmentFile(e.target.files[0])}/>
+                    </label>
+                  </div>
+                  <Tabs genomes={genomes} genome={true} replicates={replicates} onChange={(e) => handleTabs(e)}/> </>
+            } 
           </div>
-
-          <br></br>
-          <br></br>
 
           <div>
             <h3 className='element'>+ Parameters</h3>

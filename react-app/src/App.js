@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ParameterGroup from './components/ParameterGroup';
 import ParameterAllGroups from './components/ParameterAllGroups';
 import Tabs from './components/Tabs';
+import DropzoneGroup from './components/DropzoneGroup';
 import './css/Tabs.css';
 import './css/App.css';
 import './css/Grid.css';
@@ -19,6 +20,7 @@ function App() {
   // template für ein replicate
   const repTemplate = "{\"replicate0\":{\"name\":\"Replicate 0\", \"enrichedplus\":\"\", \"enrichedminus\":\"\", \"normalplus\":\"\", \"normalminus\":\"\"}}";
   const [alignmentFile, setAlignmentFile] = useState("");
+
 
   /**
    * RUN Button event
@@ -252,9 +254,14 @@ function App() {
     }
   }
 
+  const saveFiles = (files) => {
+    console.log(files);
+  }
+
+
   return (
     <div>  
-      
+
       <header>
         <h1>TSSpredator</h1>
       </header>
@@ -279,9 +286,12 @@ function App() {
                       <input className='element' type="file" name="Alignment File" onChange={(e) => setAlignmentFile(e.target.files[0])}/>
                     </label>
                   </div>
-                  <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value} onChange={(e) => handleTabs(e)}/> </>
+                  <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value} 
+                        onChange={(e) => handleTabs(e)} saveFiles={(e) => saveFiles(e)}/> </>
             } 
           </div>
+
+          
 
           <div>
             <h3 className='element'>+ Parameters</h3>
@@ -321,7 +331,7 @@ function App() {
           </div>
 
         </form>      
-      </div>
+      </div> 
     </div>
   )
 }

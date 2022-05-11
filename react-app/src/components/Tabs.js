@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import TextFieldGroup from './TextFieldGroup';
 import UploadFilesIndividually from './UploadFilesIndividually';
 
-function Tabs({genomes, genome, replicates, whichGenome, onChange}) {
+function Tabs({genomes, genome, replicates, whichGenome, studyType, onChange}) {
 
   const [state, setState] = useState(1);
 
@@ -34,8 +34,8 @@ function Tabs({genomes, genome, replicates, whichGenome, onChange}) {
                 return (
                   <div className={state === (i+1) ? 'content content-active': 'content'} key={(i+1)}>
 
-                    {genome ? <><TextFieldGroup fields={[{"name":"Alignment ID"}, {"name": "Output ID"}]} id={i} onChange={(e) => onChange(e)}/>
-                                <UploadFilesIndividually files={[{"name":"Genome FASTA"}, {"name":"Genome Annotation"}]} id={i} onChange={(e) => onChange(e)}/>
+                    {genome ? <><TextFieldGroup fields={[{"name":"Alignment ID"}, {"name": "Output ID"}]} studyType={studyType} id={i} onChange={(e) => onChange(e)}/>
+                                <UploadFilesIndividually files={[{"name":"Genome FASTA"}, {"name":"Genome Annotation"}]} studyType={studyType} id={i} onChange={(e) => onChange(e)}/>
                                 <Tabs genomes={replicates[i]['genome'+(i+1)]} genome={false} whichGenome={i} onChange={(e) => onChange(e)} /> 
                               </> :
                                 <UploadFilesIndividually files={[{"name":"enriched plus"}, {"name":"enriched minus"}, {"name":"normal plus"}, {"name":"normal minus"}]}

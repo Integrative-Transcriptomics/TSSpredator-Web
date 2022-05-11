@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import ParameterGroup from './components/ParameterGroup';
 import ParameterAllGroups from './components/ParameterAllGroups';
 import Tabs from './components/Tabs';
-import './Tabs.css';
-import './App.css';
-import './Grid.css';
+import './css/Tabs.css';
+import './css/App.css';
+import './css/Grid.css';
 
 function App() {
 
@@ -279,7 +279,7 @@ function App() {
                       <input className='element' type="file" name="Alignment File" onChange={(e) => setAlignmentFile(e.target.files[0])}/>
                     </label>
                   </div>
-                  <Tabs genomes={genomes} genome={true} replicates={replicates} onChange={(e) => handleTabs(e)}/> </>
+                  <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value} onChange={(e) => handleTabs(e)}/> </>
             } 
           </div>
 

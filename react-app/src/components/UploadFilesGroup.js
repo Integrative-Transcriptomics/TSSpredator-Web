@@ -1,11 +1,11 @@
 import React from 'react';
 import UploadFile from './UploadFile';
 
-function UploadFilesGroup({files, id, onChange}) {
+function UploadFilesGroup({files, id, studyType, onChange}) {
   return (
    
     files.map((file, i) => {
-            return <UploadFile file={file} key={i} id={id} onChange={(e) => onChange(e)}/>
+            return <UploadFile file={file} key={i} id={id} studyType={studyType} onChange={(e) => onChange(e)}/>
     })
   );
 }

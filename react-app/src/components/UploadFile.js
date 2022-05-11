@@ -1,10 +1,17 @@
 import React from 'react'
 
-function UploadFile({ file, id, onChange }) {
+function UploadFile({ file, id, studyType, onChange }) {
+
+  let disabled = false;
+
+  if(studyType === 'condition' && id > 0) {
+    disabled = true;
+  }
+
   return (
     <div>
         <label> { file.name }
-            <input className='element' type="file" name={(file.name).toLowerCase().replace(' ', '')} id={id} onChange={(e) => onChange(e)} />
+            <input disabled={disabled} className='element' type="file" name={(file.name).toLowerCase().replace(' ', '')} id={id} onChange={(e) => onChange(e)} />
         </label>
     </div>
   )

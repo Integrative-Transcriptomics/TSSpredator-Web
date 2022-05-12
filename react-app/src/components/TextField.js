@@ -1,5 +1,12 @@
 import React from 'react';
 
+/** ersellt einzelnes Text Feld mit Label
+ * 
+ * @param field:  inzelnes Feld als Objekt
+ * @param id: id des Genom/Replicate Tabs
+ * @param handleTabs: Funktion um Eingaben in Textfeldern des Genom Tabs anzuspeichern
+ * @param studyType: 'condtion' oder 'genome'
+ */
 function TextField({field, id, studyType, handleTabs}) {
 
   let disabled = false;

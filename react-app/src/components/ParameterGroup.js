@@ -1,11 +1,16 @@
 import React from 'react';
 import Parameter from './Parameter';
 
-function ParameterGroup({parameters, onChange}) {
-  
+/** erstellt Parametergruppe 
+ * 
+ * @param parameters: Gruppe an Paramtern 
+ * @param onChange: Funktion, um Parameter bei Änderungen abzuspeichern 
+ */
+function ParameterGroup({ parameters, onChange }) {
+
   return (
     Object.keys(parameters).map((e, i) => {
-      return <Parameter key={i} parameter={parameters[e]} onChange={(e) => onChange(e)}/>
+      return <Parameter key={i} parameter={parameters[e]} onChange={(e) => onChange(e)} />
     }));
 }
 

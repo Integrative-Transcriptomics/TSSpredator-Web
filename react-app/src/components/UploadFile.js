@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import DropzoneGroup from './DropzoneGroup';
 
+/** erstellt Komponente die einen individuellen upload buttons für Element enthält
+ * 
+ * @param file: Objekt -> enthält unter anderem Name der File für die ein upload Feld erstellt werden soll
+ * @param id: id des Genom/Replicate Tabs
+ * @param studyType: 'condtion' oder 'genome'
+ * @param genomes: Objekt -> Genome/Replicates
+ * @param handleTabs: Funktion um Eingaben in Textfeldern des Genom Tabs anzuspeichern
+ * @param saveFiles: Funktion um Dateien des drag n drop abzuspeichern
+ */
 function UploadFile({ file, id, studyType, genomes, saveFiles }) {
 
   const [drop, setDrop] = useState(false);

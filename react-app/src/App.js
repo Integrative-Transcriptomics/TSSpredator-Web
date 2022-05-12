@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import ParameterGroup from './components/ParameterGroup';
 import ParameterAllGroups from './components/ParameterAllGroups';
 import Tabs from './components/Tabs';
-import DropzoneGroup from './components/DropzoneGroup';
 import './css/Tabs.css';
 import './css/App.css';
 import './css/Grid.css';
@@ -92,6 +91,7 @@ function App() {
         setReplicates(replicates);
 
       } else if (val < replicateTemplate.length) {
+        // Template anpasssen
         replicateTemplate.pop();
         setReplicateTemplate(replicateTemplate);
         // Replicates für vorhandene Genome
@@ -238,20 +238,15 @@ function App() {
   }
 
   /**
-   * speichert Dateien vom drag n drop file upload in genome/replicate useState ab
+   * speichert Dateien vom drag n drop file upload in genome/replicate ab
    */
   const saveFiles = (event) => {
         
-    let gId;
-    let rId;
     if(typeof event.files.genomefasta !== 'undefined') {
-      gId = event.files.genomefasta.id;
-      genomes[gId]['genome'+(gId+1)].genomefasta = event.files.genomefasta.file;
+      saveGenomes(event.files.genomefasta.id, event.files.genomefasta.file, 'genomefasta');
     }
-
     if(typeof event.files.genomeannotation !== 'undefined') {
-      gId = event.files.genomeannotation.id;
-      genomes[gId]['genome'+(gId+1)].genomeannotation = event.files.genomeannotation.file;
+      saveGenomes(event.files.genomeannotation.id, event.files.genomeannotation.file, 'genomeannotation');
     }
 
     if(typeof event.files.enrichedforward !== 'undefined') {
@@ -269,6 +264,14 @@ function App() {
      
     setGenomes([...genomes]);  
     setReplicates([...replicates]);
+  }
+
+
+  /**
+   * speichert Datei im Genom Tab ab
+   */
+  const saveGenomes = (gId, file, node) => {
+    genomes[gId]['genome'+(gId+1)][node] = file;
   }
 
   /**
@@ -316,8 +319,6 @@ function App() {
             } 
           </div>
 
-          
-
           <div>
             <h3 className='element'>+ Parameters</h3>
             <hr></hr>
@@ -355,7 +356,6 @@ function App() {
             <button type="button" onClick={(e) => handleSubmit(e)}>RUN</button>
           </div>
 
-   
       </div> 
     </div>
   )

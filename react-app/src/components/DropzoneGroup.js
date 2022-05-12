@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import Dropzone from './Dropzone';
 
-function DropzoneGroup({dropzones, onChange, saveFiles}) {
+function DropzoneGroup({dropzones, closePopup, saveFiles}) {
 
     const [files, setFiles] = useState({'files':{}});
 
@@ -9,9 +9,14 @@ function DropzoneGroup({dropzones, onChange, saveFiles}) {
         setFiles(current => (
             {...current,
                 files: {...current.files,
-                        [file.name]: file}
+                        [(file.name).toLowerCase().replace(' ', '')]: file}
             }
         ))
+    }
+
+    const save = (event) => {
+        saveFiles(event);
+        closePopup(event);
     }
 
     return (
@@ -22,8 +27,8 @@ function DropzoneGroup({dropzones, onChange, saveFiles}) {
                     return <Dropzone dropzone={dropzone} key={i} onChange={(e) => updateFiles(e)}/>
                    
                 })}
-                <span className="popup-close" onClick={(e) => onChange(e)}>x</span>
-                <button type='button' onClick={(e) => saveFiles(files)}>Save Files</button>
+                <span className="popup-close" onClick={(e) => closePopup(e)}>x</span>
+                <button type='button' onClick={(e) => save(files)}>Save Files</button>
             </div>
         </div>
         )

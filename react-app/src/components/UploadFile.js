@@ -1,19 +1,30 @@
-import React from 'react'
+import React, {useState} from 'react';
+import DropzoneGroup from './DropzoneGroup';
 
-function UploadFile({ file, id, studyType, onChange }) {
+function UploadFile({ file, id, studyType, genomes, saveFiles }) {
+
+  const [drop, setDrop] = useState(false);
+  file.id = id;
 
   let disabled = false;
-
   if(studyType === 'condition' && id > 0) {
     disabled = true;
   }
 
+  const label = (file.name).toLowerCase().replace(' ', '');  
+
   return (
-    <div>
+    <>
+    {drop && <DropzoneGroup dropzones={[file]} closePopup={(e) => setDrop(!drop)} saveFiles={(e) => saveFiles(e)}/> }
+
+    <div className='element-row'>
         <label> { file.name }
-            <input disabled={disabled} className='element' type="file" name={(file.name).toLowerCase().replace(' ', '')} id={id} onChange={(e) => onChange(e)} />
+            <button disabled={disabled} className='element' type="file" name={label} id={id} onClick={(e) => setDrop(!drop)}>Upload File</button>
+            {typeof genomes[id]['genome'+(id+1)][label].file === 'undefined' ? <></> : genomes[id]['genome'+(id+1)][label].file.path}
         </label>
+       
     </div>
+    </>
   )
 }
 

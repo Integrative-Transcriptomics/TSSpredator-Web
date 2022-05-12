@@ -30,10 +30,10 @@ function App() {
     //console.log(parameters);
     //console.log(parameterPreset);
     //console.log(rnaGraph);
-    //console.log(genomes);
+    console.log(genomes);
     //console.log(replicates);
     //console.log(replicateTemplate)
-    console.log(alignmentFile);
+    //console.log(alignmentFile);
   }
 
   /**
@@ -254,8 +254,24 @@ function App() {
     }
   }
 
-  const saveFiles = (files) => {
-    console.log(files);
+  /**
+   * speichert Dateien vom drag n drop file upload
+   */
+  const saveFiles = (event) => {
+        
+    let id;
+    if(typeof event.files.genomefasta !== 'undefined') {
+      id = event.files.genomefasta.id;
+      genomes[id]['genome'+(id+1)].genomefasta = event.files.genomefasta;
+    }
+
+    if(typeof event.files.genomeannotation !== 'undefined') {
+      id = event.files.genomeannotation.id;
+      genomes[id]['genome'+(id+1)].genomeannotation = event.files.genomeannotation;
+    }
+     
+    setGenomes(genomes);  
+ 
   }
 
 
@@ -287,7 +303,7 @@ function App() {
                     </label>
                   </div>
                   <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value} 
-                        onChange={(e) => handleTabs(e)} saveFiles={(e) => saveFiles(e)}/> </>
+                        handleTabs={(e) => handleTabs(e)} saveFiles={(e) => saveFiles(e)}/> </>
             } 
           </div>
 

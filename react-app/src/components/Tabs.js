@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import TextFieldGroup from './TextFieldGroup';
 import UploadFilesIndividually from './UploadFilesIndividually';
-import DropzoneGroup from "./DropzoneGroup";
 
-function Tabs({genomes, genome, replicates, whichGenome, studyType, onChange, saveFiles}) {
+function Tabs({genomes, genome, replicates, whichGenome, studyType, handleTabs, saveFiles}) {
 
   const [state, setState] = useState(1);
-  const [drop, setDrop] = useState(false);
-
+  
   const showTab = (index) => {
       setState(index);
   }
@@ -22,9 +20,6 @@ function Tabs({genomes, genome, replicates, whichGenome, studyType, onChange, sa
  
   return (
     <>
-    {drop && <DropzoneGroup dropzones={dropzones} 
-                 onChange={(e) => setDrop(!drop)} saveFiles={(e) => saveFiles(e)}/> }
-
     <div className='container'>
         <div className='tab-row'>
 
@@ -34,7 +29,7 @@ function Tabs({genomes, genome, replicates, whichGenome, studyType, onChange, sa
 
                   {genome ? <input  className={state === (i+1) ? 'tab-input tab-input-active': 'tab-input'}  
                                     type="text" id={i} name="name" placeholder={genomes[i]['genome'+(i+1)].placeholder}
-                                    onChange={(e) => onChange(e)}/>
+                                    onChange={(e) => handleTabs(e)}/>
                           : "Replicate " + String.fromCharCode(97 + i)}
                 </div>
               )
@@ -48,14 +43,14 @@ function Tabs({genomes, genome, replicates, whichGenome, studyType, onChange, sa
                 return (
                   <div className={state === (i+1) ? 'content content-active': 'content'} key={(i+1)}>
 
-                    {genome ? <><TextFieldGroup fields={dropzones} studyType={studyType} id={i} onChange={(e) => onChange(e)}/>
-                                <UploadFilesIndividually files={[{"name":"Genome FASTA"}, {"name":"Genome Annotation"}]} studyType={studyType} id={i} 
-                                                          onChange={(e) => onChange(e)} uploadFiles={() => setDrop(!drop)}/>
-                                <Tabs genomes={replicates[i]['genome'+(i+1)]} genome={false} whichGenome={i} onChange={(e) => onChange(e)} uploadFiles={() => setDrop(!drop)} /> 
+                    {genome ? <><TextFieldGroup fields={[{"name":"Alignment ID"}, {"name":"Output ID"}]} studyType={studyType} id={i} onChange={(e) => handleTabs(e)}/>
+                                <UploadFilesIndividually files={dropzones} studyType={studyType} id={i} genomes={genomes}
+                                                          handleTabs={(e) => handleTabs(e)} saveFiles={(e) => saveFiles(e)}/>
+                               {/*  <Tabs genomes={replicates[i]['genome'+(i+1)]} genome={false} whichGenome={i} onChange={(e) => onChange(e)} uploadFiles={() => setDrop(!drop)} /> */}
                               </> :
                                 <UploadFilesIndividually files={dropzones}
                                                          id={[whichGenome, i]}
-                                                         onChange={(e) => onChange(e)} uploadFiles={() => setDrop(!drop)}/>}  
+                                                         onChange={(e) => handleTabs(e)}/>}  
                   </div>
                 )
                })

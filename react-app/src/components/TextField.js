@@ -1,6 +1,6 @@
 import React from 'react';
 
-function TextField({field, id, studyType, onChange}) {
+function TextField({field, id, studyType, handleTabs}) {
 
   let disabled = false;
   let value = "";
@@ -15,7 +15,8 @@ function TextField({field, id, studyType, onChange}) {
   return (
     <div>
         <label> {field.name}
-            <input disabled={disabled} className='element' type="text" name={(field.name).toLowerCase().replace(' ', '')} value={value} id={id} onChange={(e) => onChange(e)}/>
+            <input disabled={disabled} className='element' type="text" name={(field.name).toLowerCase().replace(' ', '')} defaultValue={value} id={id} 
+                    onChange={(e) => handleTabs(e)}/>
           </label>
     </div>
   )

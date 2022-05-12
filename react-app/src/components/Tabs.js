@@ -22,7 +22,6 @@ function Tabs({genomes, genome, replicates, whichGenome, studyType, handleTabs, 
     <>
     <div className='container'>
         <div className='tab-row'>
-
           {genomes.map((g,i) => {                                
               return (
                 <div className={state === (i+1) ? 'tab tab-active': 'tab'} key={(i+1)} onClick={() => {showTab((i+1))}}>
@@ -43,14 +42,13 @@ function Tabs({genomes, genome, replicates, whichGenome, studyType, handleTabs, 
                 return (
                   <div className={state === (i+1) ? 'content content-active': 'content'} key={(i+1)}>
 
-                    {genome ? <><TextFieldGroup fields={[{"name":"Alignment ID"}, {"name":"Output ID"}]} studyType={studyType} id={i} onChange={(e) => handleTabs(e)}/>
+                    {genome ? <><TextFieldGroup fields={[{"name":"Alignment ID"}, {"name":"Output ID"}]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)}/>
                                 <UploadFilesIndividually files={dropzones} studyType={studyType} id={i} genomes={genomes}
                                                           handleTabs={(e) => handleTabs(e)} saveFiles={(e) => saveFiles(e)}/>
-                               {/*  <Tabs genomes={replicates[i]['genome'+(i+1)]} genome={false} whichGenome={i} onChange={(e) => onChange(e)} uploadFiles={() => setDrop(!drop)} /> */}
+                                 <Tabs genomes={replicates[i]['genome'+(i+1)]} genome={false} whichGenome={i} 
+                                        handleTabs={(e) => handleTabs(e)} saveFiles={(e) => saveFiles(e)} /> 
                               </> :
-                                <UploadFilesIndividually files={dropzones}
-                                                         id={[whichGenome, i]}
-                                                         onChange={(e) => handleTabs(e)}/>}  
+                                <UploadFilesIndividually files={dropzones} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)} saveFiles={(e) => saveFiles(e)}/>}  
                   </div>
                 )
                })

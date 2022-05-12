@@ -14,11 +14,11 @@ function App() {
   const [parameterPreset, setParameterPreset] = useState("default");
   const [rnaGraph, setRnaGraph] = useState(false);
   const [genomes, setGenomes] = useState([{"genome1":{"name":"Genome 1", "placeholder": "Genome 1", "alignmentid":"", "outputid":"", "genomefasta":"", "genomeannotation":""}}]);
-  const [replicates, setReplicates] = useState([{"genome1":[{"replicatea":{"name":"Replicate a", "enrichedplus":"", "enrichedminus":"", "normalplus":"", "normalminus":""}}]}]);
+  const [replicates, setReplicates] = useState([{"genome1":[{"replicatea":{"name":"Replicate a", "enrichedforward":"", "enrichedreverse":"", "normalforward":"", "normalreverse":""}}]}]);
   // wenn neuer Genom Tab hinzugeügt wird: replicateTemplate benutzen um replicates zu updaten
-  const [replicateTemplate, setReplicateTemplate] = useState([{"replicatea":{"name":"Replicate a", "enrichedplus":"", "enrichedminus":"", "normalplus":"", "normalminus":""}}]);
+  const [replicateTemplate, setReplicateTemplate] = useState([{"replicatea":{"name":"Replicate a", "enrichedforward":"", "enrichedreverse":"", "normalforward":"", "normalreverse":""}}]);
   // template für ein replicate
-  const repTemplate = "{\"replicate0\":{\"name\":\"Replicate 0\", \"enrichedplus\":\"\", \"enrichedminus\":\"\", \"normalplus\":\"\", \"normalminus\":\"\"}}";
+  const repTemplate = "{\"replicate0\":{\"name\":\"Replicate 0\", \"enrichedforward\":\"\", \"enrichedreverse\":\"\", \"normalforward\":\"\", \"normalreverse\":\"\"}}";
   const [alignmentFile, setAlignmentFile] = useState("");
 
 
@@ -30,8 +30,8 @@ function App() {
     //console.log(parameters);
     //console.log(parameterPreset);
     //console.log(rnaGraph);
-    console.log(genomes);
-    //console.log(replicates);
+    //console.log(genomes);
+    console.log(replicates);
     //console.log(replicateTemplate)
     //console.log(alignmentFile);
   }
@@ -225,53 +225,63 @@ function App() {
   } 
 
 /**
- * Wert im Genom/Replicate Tab abspeichern
+ * speichert Eingaben in Textfeldern vom Genome Tab ab
  */
   const handleTabs = (event) => {
     
     const name = event.target.name;
-    let value;
-  
-    if(name==="name" || name==="alignmentid" || name==="outputid") {
-      value = event.target.value;
-    } else {
-      value = event.target.files[0];
-    }
+    const value = event.target.value;
+    const id = parseInt(event.target.id);
 
-    // für replicates
-    if(name==="enrichedplus" || name==="enrichedminus" || name==="normalplus" || name==="normalminus") {
-      const id = event.target.id;
-      const genIdx = parseInt(id.charAt(0)) + 1;
-      const repIdx = parseInt(id.charAt(2));
-      const letter = String.fromCharCode(97 + repIdx);
-      replicates[id[0]]['genome'+genIdx][repIdx]['replicate'+letter][name] = value;
-
-    // für genomes
-    } else {
-      const id = parseInt(event.target.id);
-      genomes[id]['genome'+(id+1)][name] = value;
-      setGenomes([...genomes]);
-    }
+    genomes[id]['genome'+(id+1)][name] = value;
+    setGenomes([...genomes]);
   }
 
   /**
-   * speichert Dateien vom drag n drop file upload
+   * speichert Dateien vom drag n drop file upload in genome/replicate useState ab
    */
   const saveFiles = (event) => {
         
-    let id;
+    let gId;
+    let rId;
     if(typeof event.files.genomefasta !== 'undefined') {
-      id = event.files.genomefasta.id;
-      genomes[id]['genome'+(id+1)].genomefasta = event.files.genomefasta;
+      gId = event.files.genomefasta.id;
+      genomes[gId]['genome'+(gId+1)].genomefasta = event.files.genomefasta.file;
     }
 
     if(typeof event.files.genomeannotation !== 'undefined') {
-      id = event.files.genomeannotation.id;
-      genomes[id]['genome'+(id+1)].genomeannotation = event.files.genomeannotation;
+      gId = event.files.genomeannotation.id;
+      genomes[gId]['genome'+(gId+1)].genomeannotation = event.files.genomeannotation.file;
+    }
+
+    if(typeof event.files.enrichedforward !== 'undefined') {
+      saveReplicates(event.files.enrichedforward.id[0], event.files.enrichedforward.id[1], event.files.enrichedforward.file, 'enrichedforward');
+    }
+    if(typeof event.files.enrichedreverse !== 'undefined') {
+      saveReplicates(event.files.enrichedreverse.id[0], event.files.enrichedreverse.id[1], event.files.enrichedreverse.file, 'enrichedreverse');
+    }
+    if(typeof event.files.normalforward !== 'undefined') {
+      saveReplicates(event.files.normalforward.id[0], event.files.normalforward.id[1], event.files.normalforward.file, 'normalforward');
+    }
+    if(typeof event.files.normalreverse !== 'undefined') {
+      saveReplicates(event.files.normalreverse.id[0], event.files.normalreverse.id[1], event.files.normalreverse.file, 'normalreverse');
     }
      
-    setGenomes(genomes);  
- 
+    setGenomes([...genomes]);  
+    setReplicates([...replicates]);
+  }
+
+  /**
+   * speichert Datei im Replicate Tab ab
+   * gId: Genom Id, an welcher Stelle im replicate array
+   * rId: Replicate Id
+   */
+  const saveReplicates = (gId, rId, file, node) => {
+    const replicate ='replicate' + String.fromCharCode(97 + rId);
+
+    let newValue = {...replicates[gId]['genome'+(gId+1)][rId][replicate]};
+    newValue[node] = file;
+    replicates[gId]['genome'+(gId+1)][rId] = {[replicate]: newValue};
   }
 
 
@@ -283,7 +293,6 @@ function App() {
       </header>
 
       <div className='form-container'>
-        <form onSubmit={handleSubmit}>
           <div>
             <label >
               <input className='element project-name' type="text" name="project-name" placeholder="Enter Project Name" onChange={(e) => setProjectName(e.target.value)}/>
@@ -343,10 +352,10 @@ function App() {
             <p>or</p>
             <button>Save</button>
             <p>Configuration</p>
-            <input type="submit" value="RUN"/>
+            <button type="button" onClick={(e) => handleSubmit(e)}>RUN</button>
           </div>
 
-        </form>      
+   
       </div> 
     </div>
   )

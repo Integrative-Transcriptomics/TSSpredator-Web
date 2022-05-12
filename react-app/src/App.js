@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ParameterGroup from './components/ParameterGroup';
 import ParameterAllGroups from './components/ParameterAllGroups';
 import Tabs from './components/Tabs';
+import DropzoneGroup from './components/DropzoneGroup';
 import './css/Tabs.css';
 import './css/App.css';
 import './css/Grid.css';
@@ -19,6 +20,8 @@ function App() {
   // template für ein replicate
   const repTemplate = "{\"replicate0\":{\"name\":\"Replicate 0\", \"enrichedforward\":\"\", \"enrichedreverse\":\"\", \"normalforward\":\"\", \"normalreverse\":\"\"}}";
   const [alignmentFile, setAlignmentFile] = useState("");
+  // drag n drop für alignment file
+  const [drop, setDrop] = useState(false);
 
 
   /**
@@ -30,9 +33,9 @@ function App() {
     //console.log(parameterPreset);
     //console.log(rnaGraph);
     //console.log(genomes);
-    console.log(replicates);
+    //console.log(replicates);
     //console.log(replicateTemplate)
-    //console.log(alignmentFile);
+    console.log(alignmentFile);
   }
 
   /**
@@ -291,6 +294,9 @@ function App() {
   return (
     <div>  
 
+      {drop && <DropzoneGroup dropzones={[{ "name": "Alignment File", "value": "Alignment File" }]} closePopup={(e) => setDrop(!drop)} 
+                              saveFiles={(e) => setAlignmentFile(e.files.alignmentfile.file)} />}
+
       <header>
         <h1>TSSpredator</h1>
       </header>
@@ -311,7 +317,8 @@ function App() {
               :  <>
                   <div style={parameters.setup.typeofstudy.value==="genome" ? {display:'flex'}:{display:'none'}}>
                     <label > Alignment File
-                      <input className='element' type="file" name="Alignment File" onChange={(e) => setAlignmentFile(e.target.files[0])}/>
+                      <button className='element' type="button" name="Alignment File" onClick={() => setDrop(!drop)}>Upload File</button>
+                      {alignmentFile.path}
                     </label>
                   </div>
                   <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value} 

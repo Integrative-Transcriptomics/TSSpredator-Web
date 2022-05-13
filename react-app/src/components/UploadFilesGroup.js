@@ -9,13 +9,12 @@ import UploadFile from './UploadFile';
  * @param studyType: 'condtion' oder 'genome'
  * @param genomes: Objekt -> Genome/Replicates
  * @param handleTabs: Funktion um Eingaben in Textfeldern des Genom Tabs anzuspeichern
- * @param saveFiles: Funktion um Dateien des drag n drop abzuspeichern
  */
-function UploadFilesGroup({ files, id, studyType, genomes, handleTabs, saveFiles }) {
+function UploadFilesGroup({ files, id, studyType, genomes, handleTabs }) {
   return (
 
     files.map((file, i) => {
-      return <UploadFile file={file} key={i} id={id} studyType={studyType} genomes={genomes} handleTabs={(e) => handleTabs(e)} saveFiles={(e) => saveFiles(e)} />
+      return <UploadFile file={file} key={i} id={id} studyType={studyType} genomes={genomes} handleTabs={(e) => handleTabs(e)} />
     })
   );
 }

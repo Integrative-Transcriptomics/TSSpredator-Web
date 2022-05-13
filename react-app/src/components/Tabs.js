@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import TextFieldGroup from './TextFieldGroup';
 import UploadFilesIndividually from './UploadFilesIndividually';
+import PopupWindow from "./PopupWindow";
 
 /** erzeugt die Genom Tabs und replicate Tabs
  * 
@@ -10,11 +11,10 @@ import UploadFilesIndividually from './UploadFilesIndividually';
  * @param whichGenome: wenn replicate Tab erstellt wird -> Genomindex: also in welchem Genom Tab die replicates sich befinden
  * @param studyType: 'condition' oder 'genome'
  * @param handleTabs: Funktion um Eingaben in Textfeldern des Genom Tabs anzuspeichern
- * @param saveFiles: Funktion um Dateien des drag n drop abzuspeichern
  * @returns 
  */
 
-function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs, saveFiles }) {
+function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs }) {
 
   // dynamisch Tabs hinzufügen/entfernen
   const [state, setState] = useState(1);
@@ -23,16 +23,23 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
     setState(index);
   }
 
+  // popop Fenster für 'upload files together'
+  const [popup, setPopup] = useState(false);
+
   // Namen der Dateien die pro Tab hochgeladen werden müssen
-  let dropzones;
+  let fileNames;
   if (genome) {
-    dropzones = [{ "name": "Genome FASTA", "value": "Genome FASTA" }, { "name": "Genome Annotation", "value": "Genome Annotation" }]
+    fileNames = [{ "name": "Genome FASTA", "value": "Genome FASTA" }, { "name": "Genome Annotation", "value": "Genome Annotation" }]
   } else {
-    dropzones = [{ "name": "enriched forward", "value": "enriched forward" }, { "name": "enriched reverse", "value": "enriched reverse" },
-    { "name": "normal forward", "value": "normal forward" }, { "name": "normal reverse", "value": "normal reverse" }]
+    fileNames = [{ "name": "enriched forward", "value": "enriched forward" }, { "name": "enriched reverse", "value": "enriched reverse" },
+                 { "name": "normal forward", "value": "normal forward" }, { "name": "normal reverse", "value": "normal reverse" }]
   }
 
   return (
+    <>
+
+    {popup && <PopupWindow closePopup={(e) => setPopup(!popup)}/>}
+
     <div className='container'>
       <div className='tab-row'>
         {genomes.map((g, i) => {
@@ -53,18 +60,17 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
             <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 
               {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID" }, { "name": "Output ID" }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
-                          <UploadFilesIndividually files={dropzones} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)} 
-                                                    saveFiles={(e) => saveFiles(e)} />
-                          <Tabs genomes={replicates[i]['genome' + (i + 1)]} genome={false} whichGenome={i} handleTabs={(e) => handleTabs(e)} 
-                                saveFiles={(e) => saveFiles(e)} />
+                          <button type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
+                          <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)} />
+                          <Tabs genomes={replicates[i]['genome' + (i + 1)]} genome={false} whichGenome={i} handleTabs={(e) => handleTabs(e)} />
                         </> 
-                      : <UploadFilesIndividually files={dropzones} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)} 
-                                                  saveFiles={(e) => saveFiles(e)} />}
+                      : <UploadFilesIndividually files={fileNames} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)} />}
             </div>
           )})
         }
       </div>
     </div>
+    </>
   )
 }
 

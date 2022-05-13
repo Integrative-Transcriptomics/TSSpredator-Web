@@ -8,14 +8,15 @@
     border: 1px solid black;
     padding: 0;
     margin: 0;
+    z-index: 1;
   }
-  
+
   .tab-row {
     display: flex;
     padding: 0;
     margin: 0;
+    z-index: 1;
   }
-
   .tab {
     padding: 10px;
     justify-content: center;
@@ -25,17 +26,16 @@
     border-bottom: 1px solid black;
     box-sizing: content-box;
     position: relative;
+    z-index: 1;
   }
-
   .tab:not(:last-child){
     border-right: 1px solid black;
   }
-  
   .tab-active {
     background: white;
     border-bottom: 1px solid transparent;
+    z-index: 1;
   }
-
   .tab-input {
     padding: 5px;
     justify-content: center;
@@ -46,23 +46,21 @@
     border: 0px;
     background-color: lightgrey;
   }
-
   .tab-input-active {
       background-color: white;
+      z-index: 1;
   }
-    
-
-
   .tab-content {
     flex-grow : 1;
+    z-index: 1;
   }
-
   .content {
     background: white;
     padding: 5px;
     display: none;
+    z-index: 1;
   }
-  
   .content-active {
     display: block;
+    z-index: 1;
   }

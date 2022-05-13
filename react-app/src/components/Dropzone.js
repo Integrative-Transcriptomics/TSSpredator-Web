@@ -1,23 +1,39 @@
-import React, {useCallback} from 'react';
-import {useDropzone} from 'react-dropzone';
+import React, { useCallback, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
+import Draggable from 'react-draggable';
 
-function Dropzone({dropzone, onChange}) {
+function Dropzone({label}) {
 
-    const onDrop = useCallback((acceptedFiles) => {
-        acceptedFiles.forEach((file) => {
-          dropzone.value = file.name;
-          const id = dropzone.id;
-          onChange({'id':id, 'file':file, 'name':dropzone.name});
-        });
-    }, []);
+  const [items, setItems] = useState([]);
 
-    const {getRootProps, getInputProps} = useDropzone({onDrop});
-    
-    return (
-        <div className="dropzone"  {...getRootProps()}>
-          <input {...getInputProps()}/>
-          <p>{dropzone.value}</p>
-        </div>
-    )
+  const onDrop = useCallback(acceptedFiles => {
+    acceptedFiles.forEach((file) => {
+      setItems(current => (
+        [...current, file]
+      ))
+    });
+
+  }, [])
+  const { getRootProps, getInputProps } = useDropzone({ onDrop, noClick: true })
+
+  console.log(items)
+
+  return (
+    <div className='dropzone'{...getRootProps()}>
+      <input {...getInputProps()} />
+      <p className='drag-text'>{items.length > 0 ? <></>:label }</p>
+      {items.map((item, i) => {
+        return (
+          <Draggable >
+            <div className='drag-box'>
+              <div style={{whiteSpace: "nowrap"}}>{typeof item === 'undefined' ? <></> : item.path}</div>
+            </div>
+          </Draggable>
+        )
+      })}
+
+    </div>
+
+  )
 }
 export default Dropzone

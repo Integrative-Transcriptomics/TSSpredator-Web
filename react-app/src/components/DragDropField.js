@@ -30,7 +30,7 @@ function DragDropField({ label, currentFiles, handleCurrentFiles }) {
     return (
 
         <div className='drag-drop-zone' onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)} onDragLeave={(e) => handleDragLeave(e)}>
-            <p>{label}</p>
+            {currentFiles.length === 0 ?  <p>{label}</p> : <></>}
 
             { typeof currentFiles !== 'undefined' ? 
               currentFiles.map(n => {

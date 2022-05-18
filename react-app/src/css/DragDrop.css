@@ -1,130 +1,162 @@
 .popup {
-    position: fixed;
-    top:0;
-    left:0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    background-color: rgba(0, 0, 0, 0.2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2;
-  }
-  .popup-inner {
-    padding: 10px;
-    height: 70%;
-    width: 60%;
-    background: white;
-    border-radius: 10px;
-    z-index: 2;
-  }
-  .popup-header {
-    padding: 5px;
-    color:rgba(0,0,0, 0.7);
-    border-bottom: 1px solid rgba(0,0,0, 0.25);
-    height: 8%;
-    width: 100%;
-    text-align: center;
-    z-index: 2;
-  }
-  .popup-columns {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    height: 85%;
-    width: 100%;
-  }
-  .dropzone {
-    border: 1px dashed rgba(0,0,0, 0.7);
-    margin: 2%;
-    border-radius: 5px;
-    height: 90%;
-    width: 95%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    /*overflow: auto;*/
-    z-index: 2;
-  }
-  /* Boxen die dropzones enthalten*/
-  .drop-box {
-    padding: 2px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    border: 1px solid black;
-    border-radius: 5px;
-  }
-  /* überschrift der drop box + drop box*/
-  .drop-box-column {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 40%;
-    height: 95%;
-    margin: 10px;
-  }
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background-color: rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
 
-  .popup-footer {
-    border-top: 1px solid rgba(0,0,0, 0.25);
-    padding: 5px;
-    height: 8%;
-    width: 100%;
-    z-index: 2;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
- /* einzelne drag elemente*/
-  .drag-box {
-    margin: 2px;
-    background-color: black;
-    width: 95%;
-    height: 35;
-    color: white;
-  
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2;
-    cursor: grab;
-  }
+.popup-inner {
+  padding: 10px;
+  height: 70%;
+  width: 60%;
+  background: white;
+  border-radius: 10px;
+  z-index: 2;
+}
+
+.popup-header {
+  padding: 5px;
+  color: rgba(0, 0, 0, 0.7);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  height: 8%;
+  width: 100%;
+  text-align: center;
+  z-index: 2;
+}
+
+.popup-columns {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 85%;
+  width: 100%;
+}
+
+.dropzone {
+  border: 1px dashed rgba(0, 0, 0, 0.7);
+  margin: 2%;
+  border-radius: 5px;
+  height: 90%;
+  width: 95%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  /*overflow: auto;*/
+  z-index: 2;
+}
+
+/* Boxen die dropzones enthalten*/
+.drop-box {
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  border: 1px solid black;
+  border-radius: 5px;
+}
+
+/* überschrift der drop box + drop box*/
+.drop-box-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 40%;
+  height: 95%;
+  margin: 10px;
+}
+
+.popup-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.25);
+  padding: 5px;
+  height: 8%;
+  width: 100%;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* einzelne drag elemente*/
+.drag-box {
+  margin: 2px;
+  background-color: black;
+  width: 95%;
+  height: 35;
+  color: white;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  cursor: grab;
+}
 
 .drag-drop-zone {
-    padding: 2rem;
-    text-align: center;
-    background: #07F;
-    border-radius: 0.5rem;
-    height: 90%;
-    width: 95%;
-    box-shadow: 5px 5px 10px #C0C0C0;
-    z-index: 2;
-  }
-  .drag-drop-zone p {
-    color: #FFF;
-    z-index: 2;
-  }
-  .drag-drop-zone.inside-drag-area {
-   opacity: 0.7;
-   z-index: 2;
-  }
-  .dropped-files li {
-    color: #07F;
-    padding: 3px;
-    text-align: left;
-    font-weight: bold;
-    z-index: 2;
-  }
+  padding: 2rem;
+  text-align: center;
+  background: #07F;
+  border-radius: 0.5rem;
+  height: 90%;
+  width: 95%;
+  box-shadow: 5px 5px 10px #C0C0C0;
+  z-index: 2;
+}
 
-  .container-drag {
-      background-color: red;
-  }
+.drag-drop-zone p {
+  color: #FFF;
+  z-index: 2;
+}
+
+.drag-drop-zone.inside-drag-area {
+  opacity: 0.7;
+  z-index: 2;
+}
+
+.dropped-files li {
+  color: #07F;
+  padding: 3px;
+  text-align: left;
+  font-weight: bold;
+  z-index: 2;
+}
+
+.container-drag {
+  background-color: red;
+}
+
+/* arrows to flip through replicates*/
+.arrows {
+  width: 8px;
+  height: 8px;
+  border-color: black;
+  margin-top: 6%;
+}
+.arrows:hover {
+  border-color: rgba(0, 0, 0, 0.5);
+}
+.prev {
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+  transform: rotate(45deg);
+}
+
+.next {
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+  transform: rotate(-135deg);
+}

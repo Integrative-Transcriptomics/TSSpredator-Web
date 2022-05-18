@@ -38,7 +38,7 @@ function DropFiles({ handleFiles }) {
     return (
 
         <div className='drag-drop-zone' onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)} onDragLeave={(e) => handleDragLeave(e)}>
-            <p>Drop your file for Genome X here</p>
+            {names.length === 0 ?  <p>Drop your file for Genome X here and drag them into the corresponding field</p> : <></>}
 
             {typeof names === 'undefined' ? <></> :
                 names.map(name => {

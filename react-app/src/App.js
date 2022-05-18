@@ -5,6 +5,7 @@ import Tabs from './components/Tabs';
 import './css/Tabs.css';
 import './css/App.css';
 import './css/Grid.css';
+import './css/DragDrop.css';
 
 function App() {
 

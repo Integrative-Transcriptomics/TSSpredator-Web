@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import DragDropField from './DragDropField';
+import ReplicateColumn from './ReplicateColumn';
 
+/**
+ * popup window for file upload -> button: upload files together
+ */
 function PopupWindow({ closePopup }) {
 
     // saves all uploaded files
@@ -22,11 +26,11 @@ function PopupWindow({ closePopup }) {
     // add item to drop container
     const handleAdd = (event, state, set) => {
         // for upload container -> drop several files at the same time
-        if(Array.isArray(event)) {
-            set([...state, ...event]);  
+        if (Array.isArray(event)) {
+            set([...state, ...event]);
         } else {
             set([...state, event]);
-        }   
+        }
     }
     // remove item from drop ciontainer
     const handleRemove = (event, oldState) => {
@@ -62,6 +66,7 @@ function PopupWindow({ closePopup }) {
                     state = upload;
                     set = setUpload;
                     break;
+                default: break;
             }
             const temp = state.filter(name => name !== event);
             set([...temp]);
@@ -75,10 +80,10 @@ function PopupWindow({ closePopup }) {
                 <h3 className='popup-header'>Upload Files - Genome X</h3>
 
                 <div className='popup-columns'>
-
-                    <div className='drop-box-column'>
+                    
+                    <div className='drop-box-column column-active'>
                         <DragDropField label='Drop your file for Genome X here and drag them into the corresponding field' currentFiles={upload} state='upload'
-                                        handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)}/>
+                            handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)} />
 
                     </div>
 
@@ -86,35 +91,22 @@ function PopupWindow({ closePopup }) {
                         <h4>{'------------->'}</h4>
                     </div>
 
-                    <div className='drop-box-column'>
+                    <div className='drop-box-column column-active'>
                         <h4>Genome Files</h4>
                         <div className='drop-box'>
                             <DragDropField label='Genome FASTA' currentFiles={genomeFasta} state='genomeFasta'
-                                handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)}/>
+                                handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)} />
                             <DragDropField label='Genome Annotation' currentFiles={genomeAnn} state='genomeAnn'
-                                handleAdd={(e) => handleAdd(e, genomeAnn, setGenomeAnn)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)}/>
+                                handleAdd={(e) => handleAdd(e, genomeAnn, setGenomeAnn)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)} />
                         </div>
                     </div>
-                    <div className='drop-box-column'>
-                        <div className='element-row'>
-                            <div className="arrows prev" onClick={(e) => console.log('click')}></div>
-                            <h4> Replicate A </h4>
-                            <div className="arrows next" onClick={(e) => console.log('click')}></div>
-                        </div>
 
+                    <ReplicateColumn handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)}
+                        handleAddEF={(e) => handleAdd(e, enrichF, setEnrichF)} currentEF={enrichF}
+                        handleAddER={(e) => handleAdd(e, enrichR, setEnrichR)} currentER={enrichR}
+                        handleAddNF={(e) => handleAdd(e, normalF, setNormalF)} currentNF={normalF}
+                        handleAddNR={(e) => handleAdd(e, normalR, setNormalR)} currentNR={normalR} /> 
 
-                        <div className='drop-box'>
-                            <DragDropField label='enriched forward' currentFiles={enrichF} state='enrichF'
-                                handleAdd={(e) => handleAdd(e, enrichF, setEnrichF)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)}/>
-                            <DragDropField label='enriched reverse' currentFiles={enrichR} state='enrichR' s
-                                handleAdd={(e) => handleAdd(e, enrichR, setEnrichR)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)} />
-                            <DragDropField label='normal forward' currentFiles={normalF} state='normalF'
-                                handleAdd={(e) => handleAdd(e, normalF, setNormalF)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)}/>
-                            <DragDropField label='normal reverse' currentFiles={normalR} state='normalR'
-                                handleAdd={(e) => handleAdd(e, normalR, setNormalR)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)}/>
-
-                        </div>
-                    </div>
                 </div>
                 <div className='popup-footer'>
                     <button type='button' onClick={(e) => closePopup(e)}>Cancel</button>

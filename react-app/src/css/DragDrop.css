@@ -68,16 +68,30 @@
   border: 1px solid black;
   border-radius: 5px;
 }
+.drop-box-rep {
+  display: none;
+}
+
+.replicate-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 90%;
+  height: 100%;
+}
 
 /* überschrift der drop box + drop box*/
 .drop-box-column {
-  display: flex;
+  display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 40%;
+  width: 80%;
   height: 95%;
   margin: 10px;
+}
+.column-active {
+  display: flex;
 }
 
 .popup-footer {
@@ -145,6 +159,7 @@
   height: 8px;
   border-color: black;
   margin-top: 6%;
+  cursor: pointer;
 }
 .arrows:hover {
   border-color: rgba(0, 0, 0, 0.5);

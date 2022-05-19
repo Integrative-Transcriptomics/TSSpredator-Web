@@ -1,19 +1,36 @@
 import React from 'react';
 
-function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, handleFiles }) {
+/**
+ * creates a drop container
+ * @param label: description of the container
+ * @param state: the state of the container -> in which the items in the container are stored
+ * @param currentFiles: the items that are currently in the container
+ * @param handleAdd: adds a item to the current container
+ * @param handleRemove: removes the item from the old container, after it was dropped into the current one
+ * @param handleFiles: saves all uploaded files
+ * @param index: for all containers for replicate files -> index = which replicate, starting by 0
+ */
+
+function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, handleFiles, index }) {
 
     const handleDragStart = (event) => {
         event.dataTransfer.setData('name', event.target.dataset.name);
-        // state ans setState to remove item out of old drop container
+        // set state to remove item out of old drop container
         event.dataTransfer.setData('state', state);
+        // for the replicates
+        if (typeof index !== 'undefined') {
+            event.dataTransfer.setData('index', index);
+        }
     }
 
     // dragged item over drop container
     const handleDragOver = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
+        // only one file per field, exeption: upload box
+        if (state === 'upload' || currentFiles.length === 0 || typeof currentFiles[0] === 'undefined') {
+            event.preventDefault();
+            event.stopPropagation();
+        }
     }
-
 
     // dragged item dropped into drop container
     const handleDrop = (event) => {
@@ -21,20 +38,27 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
         event.stopPropagation();
         const newFiles = [...event.dataTransfer.files];
 
-        if(newFiles.length === 0 ) {
+        // no new file uploaded, just a item moved from a different container
+        if (newFiles.length === 0) {
             handleAdd(event.dataTransfer.getData('name'));
 
             // remove item from old drop container
             const oldState = event.dataTransfer.getData('state');
             const name = event.dataTransfer.getData('name');
-            handleRemove(name, oldState);
+            const index = event.dataTransfer.getData('index');
 
+            if (index.length > 0) {
+                handleRemove(name, oldState, parseInt(index));
+            } else {
+                handleRemove(name, oldState);
+            }
+            // new files uploaded    
         } else {
             const names = [];
             newFiles.forEach(file => {
-                handleFiles(file);
                 names.push(file.name);
             });
+            handleFiles(newFiles);
             handleAdd(names);
         }
     }
@@ -42,16 +66,16 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
     return (
 
         <div className='drag-drop-zone' onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)} >
-            {currentFiles.length === 0 ?  <p>{label}</p> : <></>}
+            {currentFiles.length === 0 || typeof currentFiles[0] === 'undefined' ? <p>{label}</p> : <></>}
 
-            { typeof currentFiles !== 'undefined' ? 
-              currentFiles.map((n,i) => {
-                return (
-                    <div draggable className='drag-box' key={n} data-name={n} onDragStart={(e) => handleDragStart(e)} id={i}>
-                        {n}
-                    </div>
-                )
-            }) : <></>}
+            {typeof currentFiles !== 'undefined' ?
+                currentFiles.map((n, i) => {
+                    return (
+                        <div draggable className='drag-box' key={n + i} data-name={n} onDragStart={(e) => handleDragStart(e)} id={i}>
+                            {n}
+                        </div>
+                    )
+                }) : <></>}
         </div>
 
     )

@@ -2,15 +2,26 @@ import React, { useState } from 'react';
 import DragDropField from './DragDropField';
 
 /**
- * replicate column in the popup window
- * use arrows to flip through different replicates
+ * replicate column in the popup window, use arrows to flip through different replicates
+ * 
+ * @param handleRemove: removes item from drop container after it was moved into a new container
+ * @param handleFiles: saves all uploaded files
+ * @param handleAddEF: adds a draggable item to a enriched forward container
+ * @param handleAddER: adds a draggable item to a enriched reverse container
+ * @param handleAddNF: adds a draggable item to a normal forward container
+ * @param handleAddNR: adds a draggable item to a normal reverse container
+ * @param currentEF: items that currently are in a enriched forward container
+ * @param currentER: items that currently are in a enriched reverse container
+ * @param currentNF: items that currently are in a normal forward container
+ * @param currentNR: items that currently are in a normal reverse container
+ * @param numRep: number of replicates
  */
-function ReplicateColumn({ handleRemove, handleFiles, handleAddEF, handleAddER, handleAddNF, handleAddNR, currentEF, currentER, currentNF, currentNR }) {
+function ReplicateColumn({ handleRemove, handleFiles, handleAddEF, handleAddER, handleAddNF, handleAddNR, currentEF, currentER, currentNF, currentNR, numRep }) {
 
     // show correct replicate column
     const [state, setState] = useState(0);
-    const numRep = 3;
 
+    // action for left arrow
     const flipLeft = (index) => {
         const idx = index - 1;
         if (idx < 0) {
@@ -20,10 +31,10 @@ function ReplicateColumn({ handleRemove, handleFiles, handleAddEF, handleAddER, 
         }
     }
 
+    // action for right arrow
     const flipRight = (index) => {
         const idx = index + 1;
         if (idx > numRep - 1) {
-
             setState(0);
         } else {
             setState(idx);
@@ -41,28 +52,24 @@ function ReplicateColumn({ handleRemove, handleFiles, handleAddEF, handleAddER, 
                             <div className="arrows next" onClick={() => flipRight(i)}></div>
                         </div>
                         <div className={state === i ? 'drop-box' : 'drop-box-rep'} >
-                            <DragDropField label='enriched forward' currentFiles={currentEF} state='enrichF'
-                                handleAdd={(e) => handleAddEF(e)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)} />
+                            <DragDropField label='enriched forward' currentFiles={[currentEF[i]]} state='enrichF' index={i}
+                                handleAdd={(e) => handleAddEF(e, i)} handleRemove={(e, s, idx) => handleRemove(e, s, idx)} handleFiles={(e) => handleFiles(e)} />
 
-                            <DragDropField label='enriched reverse' currentFiles={currentER} state='enrichR' s
-                                handleAdd={(e) => handleAddER(e)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)} />
+                            <DragDropField label='enriched reverse' currentFiles={[currentER[i]]} state='enrichR' index={i}
+                                handleAdd={(e) => handleAddER(e, i)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} />
 
-                            <DragDropField label='normal forward' currentFiles={currentNF} state='normalF'
-                                handleAdd={(e) => handleAddNF(e)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)} />
+                            <DragDropField label='normal forward' currentFiles={[currentNF[i]]} state='normalF' index={i}
+                                handleAdd={(e) => handleAddNF(e, i)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} />
 
-                            <DragDropField label='normal reverse' currentFiles={currentNR} state='normalR'
-                                handleAdd={(e) => handleAddNR(e)} handleRemove={(e, s) => handleRemove(e, s)} handleFiles={(e) => handleFiles(e)} />
+                            <DragDropField label='normal reverse' currentFiles={[currentNR[i]]} state='normalR' index={i}
+                                handleAdd={(e) => handleAddNR(e, i)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} />
 
                         </div>
                     </div>
                 )
             })}
-
         </div>
-
     )
-
-
 }
 
 export default ReplicateColumn

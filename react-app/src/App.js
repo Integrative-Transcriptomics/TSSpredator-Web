@@ -20,6 +20,8 @@ function App() {
   // template für ein replicate
   const repTemplate = "{\"replicate0\":{\"name\":\"Replicate 0\", \"enrichedforward\":\"\", \"enrichedreverse\":\"\", \"normalforward\":\"\", \"normalreverse\":\"\"}}";
   const [alignmentFile, setAlignmentFile] = useState("");
+ // number of replicates
+  const [numRep, setnumRep] = useState(1);
 
 
   /**
@@ -73,6 +75,7 @@ function App() {
     }
 
     if(name==="numberofreplicates") {
+      setnumRep(val);
       // maximum vom Parameter 'matching replicates' anpassen
       updateParameterBox('Comparative', 'matchingreplicates','max', val);
 
@@ -238,35 +241,7 @@ function App() {
     setGenomes([...genomes]);
   }
 
-  /**
-   * speichert Dateien vom drag n drop file upload in genome/replicate ab
-   */
-  const saveFiles = (event) => {
-        
-    if(typeof event.files.genomefasta !== 'undefined') {
-      saveGenomes(event.files.genomefasta.id, event.files.genomefasta.file, 'genomefasta');
-    }
-    if(typeof event.files.genomeannotation !== 'undefined') {
-      saveGenomes(event.files.genomeannotation.id, event.files.genomeannotation.file, 'genomeannotation');
-    }
-
-    if(typeof event.files.enrichedforward !== 'undefined') {
-      saveReplicates(event.files.enrichedforward.id[0], event.files.enrichedforward.id[1], event.files.enrichedforward.file, 'enrichedforward');
-    }
-    if(typeof event.files.enrichedreverse !== 'undefined') {
-      saveReplicates(event.files.enrichedreverse.id[0], event.files.enrichedreverse.id[1], event.files.enrichedreverse.file, 'enrichedreverse');
-    }
-    if(typeof event.files.normalforward !== 'undefined') {
-      saveReplicates(event.files.normalforward.id[0], event.files.normalforward.id[1], event.files.normalforward.file, 'normalforward');
-    }
-    if(typeof event.files.normalreverse !== 'undefined') {
-      saveReplicates(event.files.normalreverse.id[0], event.files.normalreverse.id[1], event.files.normalreverse.file, 'normalreverse');
-    }
-     
-    setGenomes([...genomes]);  
-    setReplicates([...replicates]);
-  }
-
+  
 
   /**
    * speichert Datei im Genom Tab ab
@@ -316,7 +291,7 @@ function App() {
                     </label>
                   </div>
                   <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value} 
-                        handleTabs={(e) => handleTabs(e)} /> 
+                        handleTabs={(e) => handleTabs(e)} numRep={numRep}/> 
                 </>
             } 
           </div>

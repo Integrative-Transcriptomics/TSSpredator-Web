@@ -2,19 +2,21 @@ import React from 'react';
 import UploadFile from './UploadFile';
 
 
-/** erstellt Komponente die die Gruppe an individuellen upload buttons für Elemente enthält
+/** creates a group of upload buttons with label
  * 
- * @param files: Objekt -> enthält unter anderem Name der File für die ein upload Feld erstellt werden soll
- * @param id: id des Genom/Replicate Tabs
- * @param studyType: 'condtion' oder 'genome'
- * @param genomes: Objekt -> Genome/Replicates
- * @param handleTabs: Funktion um Eingaben in Textfeldern des Genom Tabs anzuspeichern
+ * @param files: object -> file labels
+ * @param id: genome/replicate index
+ * @param studyType: 'condtion' or 'genome'
+ * @param genomes: object -> Genome/Replicates
+ * @param handleTabs: saves input in text fields of genome tab
+ * @param saveIndividualFile: saves a selected file
  */
-function UploadFilesGroup({ files, id, studyType, genomes, handleTabs }) {
+function UploadFilesGroup({ files, id, studyType, genomes, handleTabs, saveIndividualFile }) {
   return (
 
     files.map((file, i) => {
-      return <UploadFile file={file} key={i} id={id} studyType={studyType} genomes={genomes} handleTabs={(e) => handleTabs(e)} />
+      return <UploadFile file={file} key={i} id={id} studyType={studyType} genomes={genomes} handleTabs={(e) => handleTabs(e)} 
+                         saveIndividualFile={(e) => saveIndividualFile(e)}/>
     })
   );
 }

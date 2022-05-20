@@ -62,6 +62,21 @@ input:focus {
     flex-direction: row;
 }
 
+.button {
+    background-color: lightgrey;
+    padding: 2px;
+    margin-left: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+    border: 1px solid black;
+    border-radius: 5px;
+    font-size: 0.8rem;
+}
+.file-name {
+    font-size: 0.8rem;
+    color: rgba(0, 0, 0, 0.7);
+}
+
 
 
 

@@ -1,13 +1,14 @@
 import React from 'react';
 
 
-/** erstellt Komponente die einen individuellen upload buttons für Element enthält
+/** individual button for uploading a file 
  * 
- * @param file: Objekt -> enthält unter anderem Name der File für die ein upload Feld erstellt werden soll
+ * @param file: object -> field name 
  * @param id: id des Genom/Replicate Tabs
  * @param studyType: 'condtion' oder 'genome'
+ * @param saveIndividualFile: saves selected file
  */
-function UploadFile({ file, id, studyType }) {
+function UploadFile({ file, id, studyType, genomes, saveIndividualFile }) {
 
   let disabled = false;
   if (studyType === 'condition' && id > 0) {
@@ -16,14 +17,32 @@ function UploadFile({ file, id, studyType }) {
 
   const label = (file.name).toLowerCase().replace(' ', '');
 
+  let fileName;
+  let gIdx;
+  let rIdx;
+  // for replicate tab
+  if(Array.isArray(id)) {
+    rIdx = id[1];
+    let rep = "replicate" + String.fromCharCode(97 + rIdx)
+    fileName = genomes[rIdx][rep][label].name;
+  // for genome files
+  } else {
+    gIdx = id;
+    fileName = genomes[gIdx]['genome'+(gIdx+1)][label].name;
+  }
+
   return (
 
     <div className='element-row'>
-      <label> {file.name}
-        <input disabled={disabled} className='element' type="file" name={label} id={id} />
+      <label className='element-row'> {file.name}
 
+        <label className='element-row'>
+          <input disabled={disabled} className='element' type="file" name={label} id={id} style={{display:'none'}}
+                  onChange={(e) => saveIndividualFile(e)}/>
+          <p className='button'>Select File</p>
+          {typeof fileName === 'undefined' ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{fileName}</p>}
+        </label>
       </label>
-
     </div>
 
   )

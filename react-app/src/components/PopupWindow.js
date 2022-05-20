@@ -6,8 +6,9 @@ import ReplicateColumn from './ReplicateColumn';
  * popup window for file upload -> button: upload files together
  * @param closePopup: boolean for opening and closing the popup
  * @param numRep: number of replicates
+ * @param saveAllFiles: function to save files in the corresponding usestate in App.js
  */
-function PopupWindow({ closePopup, numRep }) {
+function PopupWindow({ closePopup, numRep, saveAllFiles }) {
 
     // saves all uploaded files
     const [allFiles, setAllFiles] = useState([]);
@@ -23,7 +24,7 @@ function PopupWindow({ closePopup, numRep }) {
     const [normalR, setNormalR] = useState({});
 
     // save all uploaded Files
-    const handleFiles = (event) => {
+    const handleNewFiles = (event) => {
         // check if file is already uploaded
         event.forEach((file, i) => {
             if (upload.includes(file.name)) {
@@ -34,9 +35,10 @@ function PopupWindow({ closePopup, numRep }) {
     }
     // add item to drop container
     const handleAdd = (event, state, set, index) => {
-
+       
         // for all non-replicate files
         if (typeof index === 'undefined') {
+            
             // for upload container -> drop several files at the same time
             if (Array.isArray(event)) {
                 set([...state, ...event]);
@@ -45,9 +47,17 @@ function PopupWindow({ closePopup, numRep }) {
             }
         // for replicate-files
         } else {
-            set(current => ({
-                ...current, [index]: event
-            }))
+            // when file is dropped directly in container
+            if (Array.isArray(event)) {
+                set(current => ({
+                    ...current, [index]: event[0]
+                }))
+            } else {
+                set(current => ({
+                    ...current, [index]: event
+                }))
+            }
+            
         }
     }
     // remove item from drop container
@@ -129,6 +139,7 @@ function PopupWindow({ closePopup, numRep }) {
                     Object.keys(normalF).forEach((key) => {
                         if (normalF[key] === file.name) {
                             normalForwardFiles[parseInt(key)] = file;
+                            numNF++;
                             return;
                         }
                     });
@@ -137,13 +148,14 @@ function PopupWindow({ closePopup, numRep }) {
                     Object.keys(normalR).forEach((key) => {
                         if (normalR[key] === file.name) {
                             normalReverseFiles[parseInt(key)] = file;
+                            numNR++;
                             return;
                         }
                     });
                 }
             }
         })
-
+        saveAllFiles(genomeFiles, enrichedForwardFiles, enrichedReverseFiles, normalForwardFiles, normalReverseFiles);
         closePopup(event);
     }
 
@@ -157,7 +169,7 @@ function PopupWindow({ closePopup, numRep }) {
 
                     <div className='drop-box-column column-active'>
                         <DragDropField label='Drop your file for Genome X here and drag them into the corresponding field' currentFiles={upload} state='upload'
-                            handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} />
+                            handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
 
                     </div>
 
@@ -169,13 +181,13 @@ function PopupWindow({ closePopup, numRep }) {
                         <h4>Genome Files</h4>
                         <div className='drop-box'>
                             <DragDropField label='Genome FASTA' currentFiles={genomeFasta} state='genomeFasta'
-                                handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} />
+                                handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
                             <DragDropField label='Genome Annotation' currentFiles={genomeAnn} state='genomeAnn'
-                                handleAdd={(e) => handleAdd(e, genomeAnn, setGenomeAnn)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} />
+                                handleAdd={(e) => handleAdd(e, genomeAnn, setGenomeAnn)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
                         </div>
                     </div>
 
-                    <ReplicateColumn handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} numRep={numRep}
+                    <ReplicateColumn handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} numRep={numRep}
                         handleAddEF={(e, i) => handleAdd(e, enrichF, setEnrichF, i)} currentEF={enrichF}
                         handleAddER={(e, i) => handleAdd(e, enrichR, setEnrichR, i)} currentER={enrichR}
                         handleAddNF={(e, i) => handleAdd(e, normalF, setNormalF, i)} currentNF={normalF}

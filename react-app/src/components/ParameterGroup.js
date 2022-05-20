@@ -6,11 +6,11 @@ import Parameter from './Parameter';
  * @param parameters: Gruppe an Paramtern 
  * @param onChange: Funktion, um Parameter bei Änderungen abzuspeichern 
  */
-function ParameterGroup({ parameters, onChange }) {
+function ParameterGroup({ parameters, onChange, grid }) {
 
   return (
     Object.keys(parameters).map((e, i) => {
-      return <Parameter key={i} parameter={parameters[e]} onChange={(e) => onChange(e)} />
+      return <Parameter key={i} parameter={parameters[e]} grid={grid} onChange={(e) => onChange(e)} />
     }));
 }
 

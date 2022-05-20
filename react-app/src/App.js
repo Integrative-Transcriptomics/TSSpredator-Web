@@ -115,7 +115,7 @@ function App() {
           [...current,
           {
             ["genome" + val]:
-            { name: genomeName, placeholder: genomeName, alignmentid: "", outputid: "", genomefasta: "", genomeannotation: "" }
+              { name: genomeName, placeholder: genomeName, alignmentid: "", outputid: "", genomefasta: "", genomeannotation: "" }
           }]
         ))
         // Replicates: neues Genom hinzufügen
@@ -323,38 +323,39 @@ function App() {
       </header>
 
       <div className='form-container'>
-        <div>
+        <div className='content-box'>
           <label >
-            <input className='element project-name' type="text" name="project-name" placeholder="Enter Project Name" onChange={(e) => setProjectName(e.target.value)} />
+            <input className='project-name' type="text" name="project-name" placeholder="Enter Project Name" onChange={(e) => setProjectName(e.target.value)} />
           </label>
-          {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup} onChange={(e) => handleParameters(e)} />)}
+          {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup} grid={false} onChange={(e) => handleParameters(e)} />)}
+        </div>
+
+        <div className='content-box'>
+          <h3 className='header'>Upload Data</h3>
+          <div className='margin-left'>
+            {(typeof parameters.setup === 'undefined')
+              ? <></>
+              : <>
+                <div className={parameters.setup.typeofstudy.value === "genome" ? 'show' : 'hidden'}>
+                  <label className='element-row'> Alignment File
+                    <input className='element hidden' type="file" onChange={(e) => setAlignmentFile(e.target.files[0])} />
+                    <p className='button'>Select File</p>
+                    {alignmentFile.length <= 0 ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{alignmentFile.name}</p>}
+                  </label>
+                </div>
+
+                <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value}
+                  handleTabs={(e) => handleTabs(e)} numRep={numRep} saveFiles={(g, ef, er, nf, nr, idx) => saveFiles(g, ef, er, nf, nr, idx)}
+                  saveIndividualFile={(e) => saveIndividualFile(e)} />
+              </>
+            }
+          </div>
+
+
         </div>
 
         <div>
-          <h3 className='element'>Upload Data</h3>
-
-          {(typeof parameters.setup === 'undefined')
-            ? (<p></p>)
-            : <>
-              <div style={parameters.setup.typeofstudy.value === "genome" ? { display: 'flex' } : { display: 'none' }}>
-
-                <label className='element-row'> Alignment File
-                  <input className='element' type="file"  style={{ display: 'none' }} onChange={(e) => setAlignmentFile(e.target.files[0])} />
-                  <p className='button'>Select File</p>
-                  {alignmentFile.length <= 0 ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{alignmentFile.name}</p>}
-                </label>
-
-               
-              </div>
-              <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value}
-                handleTabs={(e) => handleTabs(e)} numRep={numRep} saveFiles={(g, ef, er, nf, nr, idx) => saveFiles(g, ef, er, nf, nr, idx)}
-                saveIndividualFile={(e) => saveIndividualFile(e)} />
-            </>
-          }
-        </div>
-
-        <div>
-          <h3 className='element'>+ Parameters</h3>
+          <h3 className='header'>+ Parameters</h3>
           <hr></hr>
 
           <div className='element-row'>
@@ -377,7 +378,7 @@ function App() {
 
           {(typeof parameters.parameterBox === 'undefined')
             ? (<p></p>)
-            : (<ParameterAllGroups parameterGroups={parameters.parameterBox} onChange={(e) => handleParameters(e)} />)}
+            : (<ParameterAllGroups parameterGroups={parameters.parameterBox} grid={true} onChange={(e) => handleParameters(e)} />)}
 
           <hr></hr>
         </div>

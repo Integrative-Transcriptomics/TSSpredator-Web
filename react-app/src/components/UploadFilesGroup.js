@@ -11,14 +11,17 @@ import UploadFile from './UploadFile';
  * @param handleTabs: saves input in text fields of genome tab
  * @param saveIndividualFile: saves a selected file
  */
-function UploadFilesGroup({ files, id, studyType, genomes, handleTabs, saveIndividualFile }) {
+function UploadFilesGroup({ files, id, studyType, genomes, handleTabs, saveIndividualFile, show }) {
   return (
+    <div className='margin-left file-column'>
+      {files.map((file, i) => {
+        return <UploadFile file={file} key={i} id={id} studyType={studyType} genomes={genomes} handleTabs={(e) => handleTabs(e)}
+          saveIndividualFile={(e) => saveIndividualFile(e)} show={show} />
+      })
+      }
+    </div>
+  )
 
-    files.map((file, i) => {
-      return <UploadFile file={file} key={i} id={id} studyType={studyType} genomes={genomes} handleTabs={(e) => handleTabs(e)} 
-                         saveIndividualFile={(e) => saveIndividualFile(e)}/>
-    })
-  );
 }
 
 export default UploadFilesGroup

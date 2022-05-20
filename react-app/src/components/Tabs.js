@@ -39,6 +39,8 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
 
       <div className='container'>
         <div className='tab-row'>
+        {genome ? <></> :  <div className='left-line'></div>}
+       
           {genomes.map((g, i) => {
             return (
               <div className={state === (i + 1) ? 'tab tab-active' : 'tab'} key={(i + 1)} onClick={() => { setState((i + 1)) }}>
@@ -50,15 +52,16 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
             )
           })
           }
+          <div className="line"></div>
         </div>
-
-        <div className='tab-content'>
+        <div className={genome ? 'tab-content content-border' : 'tab-content'}>
+         
           {genomes.map((g, i) => {
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 
                 {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID" }, { "name": "Output ID" }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
-                  <button type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
+                  <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
                   <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)} 
                                             saveIndividualFile={(e) => saveIndividualFile(e)} />
                   <Tabs genomes={replicates[i]['genome' + (i + 1)]} genome={false} whichGenome={i} handleTabs={(e) => handleTabs(e)}

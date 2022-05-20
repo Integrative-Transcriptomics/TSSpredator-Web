@@ -7,24 +7,23 @@ import React from 'react';
  * @param handleTabs: Funktion um Eingaben in Textfeldern des Genom Tabs anzuspeichern
  * @param studyType: 'condtion' oder 'genome'
  */
-function TextField({field, id, studyType, handleTabs}) {
+function TextField({ field, id, studyType, handleTabs }) {
 
   let disabled = false;
   let value = "";
 
-  if(studyType === 'condition') {
+  if (studyType === 'condition') {
     disabled = true;
-    if(field.name === 'Alignment ID') {
-      value = id+1;
+    if (field.name === 'Alignment ID') {
+      value = id + 1;
     }
   }
 
   return (
-    <div>
-        <label> {field.name}
-            <input disabled={disabled} className='element' type="text" name={(field.name).toLowerCase().replace(' ', '')} defaultValue={value} id={id} 
-                    onChange={(e) => handleTabs(e)}/>
-          </label>
+    <div className='text-field-box'>
+      <label for={id}> {field.name}</label>
+      <input disabled={disabled} className='element' type="text" name={(field.name).toLowerCase().replace(' ', '')} defaultValue={value} id={id}
+        onChange={(e) => handleTabs(e)} />
     </div>
   )
 }

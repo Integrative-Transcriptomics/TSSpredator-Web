@@ -8,7 +8,7 @@ import React from 'react';
  * @param studyType: 'condtion' oder 'genome'
  * @param saveIndividualFile: saves selected file
  */
-function UploadFile({ file, id, studyType, genomes, saveIndividualFile }) {
+function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show }) {
 
   let disabled = false;
   if (studyType === 'condition' && id > 0) {
@@ -21,28 +21,26 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile }) {
   let gIdx;
   let rIdx;
   // for replicate tab
-  if(Array.isArray(id)) {
+  if (Array.isArray(id)) {
     rIdx = id[1];
     let rep = "replicate" + String.fromCharCode(97 + rIdx)
     fileName = genomes[rIdx][rep][label].name;
-  // for genome files
+    // for genome files
   } else {
     gIdx = id;
-    fileName = genomes[gIdx]['genome'+(gIdx+1)][label].name;
+    fileName = genomes[gIdx]['genome' + (gIdx + 1)][label].name;
   }
 
   return (
 
-    <div className='element-row'>
-      <label className='element-row'> {file.name}
-
-        <label className='element-row'>
-          <input disabled={disabled} className='element' type="file" name={label} id={id} style={{display:'none'}}
-                  onChange={(e) => saveIndividualFile(e)}/>
-          <p className='button'>Select File</p>
-          {typeof fileName === 'undefined' ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{fileName}</p>}
-        </label>
+    <div className={show ? 'show' : 'hidden'}>
+      <label className='element-row file-row' for={id}> {file.name}
+        <input disabled={disabled} className='element' type="file" name={label} id={id} style={{ display: 'none' }}
+          onChange={(e) => saveIndividualFile(e)} />
+        <p className='button file-button'>Select File</p>
+        {typeof fileName === 'undefined' ? <p className='file-name file-abs'>No file selected.</p> : <p className='file-name file-abs'>{fileName}</p>}
       </label>
+
     </div>
 
   )

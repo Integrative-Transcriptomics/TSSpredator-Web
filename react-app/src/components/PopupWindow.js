@@ -7,8 +7,9 @@ import ReplicateColumn from './ReplicateColumn';
  * @param closePopup: boolean for opening and closing the popup
  * @param numRep: number of replicates
  * @param saveAllFiles: function to save files in the corresponding usestate in App.js
+ * @param gIdx: current genome tab
  */
-function PopupWindow({ closePopup, numRep, saveAllFiles }) {
+function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx }) {
 
     // saves all uploaded files
     const [allFiles, setAllFiles] = useState([]);
@@ -163,12 +164,12 @@ function PopupWindow({ closePopup, numRep, saveAllFiles }) {
     return (
         <div className='popup'>
             <div className='popup-inner'>
-                <h3 className='popup-header'>Upload Files - Genome X</h3>
+                <h3 className='header popup-header'>Upload Files - Genome {gIdx}</h3>
 
                 <div className='popup-columns'>
 
                     <div className='drop-box-column column-active'>
-                        <DragDropField label='Drop your file for Genome X here and drag them into the corresponding field' currentFiles={upload} state='upload'
+                        <DragDropField label={'Drop your file for Genome ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
                             handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
 
                     </div>
@@ -195,8 +196,8 @@ function PopupWindow({ closePopup, numRep, saveAllFiles }) {
 
                 </div>
                 <div className='popup-footer'>
-                    <button type='button' onClick={(e) => closePopup(e)}>Cancel</button>
-                    <button type='button' onClick={(e) => saveFiles(e)}>Save</button>
+                    <button className='button' type='button' onClick={(e) => closePopup(e)}>Cancel</button>
+                    <button className='button' type='button' onClick={(e) => saveFiles(e)}>Save</button>
                 </div>
             </div>
         </div>

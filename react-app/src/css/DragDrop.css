@@ -16,7 +16,7 @@
 
 .popup-inner {
   padding: 10px;
-  height: 70%;
+  height: 75%;
   width: 60%;
   background: white;
   border-radius: 10px;
@@ -24,11 +24,10 @@
 }
 
 .popup-header {
-  padding: 5px;
-  color: rgba(0, 0, 0, 0.7);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
-  height: 8%;
-  width: 100%;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  margin-left: -0.6rem;
+  padding: 0.8rem 0;
+  width: 101.7%;
   text-align: center;
   z-index: 2;
 }
@@ -95,14 +94,14 @@
 }
 
 .popup-footer {
-  border-top: 1px solid rgba(0, 0, 0, 0.25);
-  padding: 5px;
-  height: 8%;
-  width: 100%;
+  border-top: 1px solid rgb(0,0,0,0.3);
+  padding: 1.5rem;
+  margin-left: -0.6rem;
+  width: 101.7%;
   z-index: 2;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 10% 10%;
+  grid-gap: 80%;
 }
 
 /* einzelne drag elemente*/

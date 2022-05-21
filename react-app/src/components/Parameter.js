@@ -11,22 +11,22 @@ function Parameter({ parameter, onChange, grid }) {
   if (!isNaN(parameter.value)) {
 
     return (
-      <div className={grid ? 'grid-parameter' : 'parameter-box margin-left'}>
-        <label className='element' for={parameter.group}> {parameter.name}</label>
+      <div className={grid ? 'parameter-grid' : 'parameter-box margin-left'}>
+        <label className='element'> {parameter.name}</label>
         <input className='element' type="number" name={parameter.key} id={parameter.group} key={parameter.key} min={parameter.min} max={parameter.max}
-                  step={parameter.step} value={parameter.value} onChange={(e) => onChange(e)} />
+          step={parameter.step} value={parameter.value} onChange={(e) => onChange(e)} />
       </div>
     );
 
-  // wenn Parameter keine Nummer ist select Feld (ComboBox)
+    // wenn Parameter keine Nummer ist select Feld (ComboBox)
   } else {
     return (
-      <div className={grid ? 'grid-parameter' : 'parameter-box margin-left'}>
-        <label className='element' for={parameter.group}> {parameter.name}</label>
-        <select className='element' value={parameter.value} name={parameter.key} id={parameter.group} onChange={(e) => onChange(e)}>
-            <option value="genome">{parameter.combo1}</option>
-            <option value="condition">{parameter.combo2}</option>
-          </select>
+      <div className={grid ? 'parameter-select' : 'parameter-box margin-left'}>
+        <label className='element'> {parameter.name}</label>
+        <select value={parameter.value} name={parameter.key} id={parameter.group} onChange={(e) => onChange(e)}>
+          <option value="genome">{parameter.combo1}</option>
+          <option value="condition">{parameter.combo2}</option>
+        </select>
       </div>
     );
   }

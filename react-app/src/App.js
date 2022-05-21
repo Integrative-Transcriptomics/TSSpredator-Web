@@ -23,6 +23,8 @@ function App() {
   // number of replicates
   const [numRep, setnumRep] = useState(1);
 
+  const [showParam, setShowParam] = useState(false);
+
 
   /**
    * RUN Button event
@@ -350,45 +352,41 @@ function App() {
               </>
             }
           </div>
-
-
         </div>
 
-        <div>
-          <h3 className='header'>+ Parameters</h3>
-          <hr></hr>
+        <div className='content-box'>
+          <h3 className='header click-param' onClick={(e) => setShowParam(!showParam)}>+ Parameters</h3>
 
-          <div className='element-row'>
-            <label className='element-row'> parameter preset
-              <select value={parameterPreset} name="parameter-preset" onChange={(e) => handleParameterPreset(e)}>
-                <option value="custom">custom</option>
-                <option value="very specific">very specific</option>
-                <option value="more specific">more specific</option>
-                <option value="default">default</option>
-                <option value="more sensitive">more sensitive</option>
-                <option value="very sensitive">very sensitive</option>
+          <div className={showParam ? 'show margin-left file-column' : 'hidden'}>
+
+            <div className='element-row'>
+              <label className='element preset-label' for='preset'> parameter preset</label>
+              <select className='param-preset' value={parameterPreset} name="parameter-preset" id='preset' onChange={(e) => handleParameterPreset(e)}>
+                  <option value="custom">custom</option>
+                  <option value="very specific">very specific</option>
+                  <option value="more specific">more specific</option>
+                  <option value="default">default</option>
+                  <option value="more sensitive">more sensitive</option>
+                  <option value="very sensitive">very sensitive</option>
               </select>
-            </label>
 
-            <label className='element-row'>
-              <input type="checkbox" name="rna-seq-graph" checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)} />
-              write rna-seq graph
-            </label>
+              <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)} />
+              <label className='element' for='check'>write rna-seq graph</label>
+            </div>
+
+            {(typeof parameters.parameterBox === 'undefined')
+              ? (<p></p>)
+              : (<ParameterAllGroups parameterGroups={parameters.parameterBox} grid={true} onChange={(e) => handleParameters(e)} />)}
           </div>
-
-          {(typeof parameters.parameterBox === 'undefined')
-            ? (<p></p>)
-            : (<ParameterAllGroups parameterGroups={parameters.parameterBox} grid={true} onChange={(e) => handleParameters(e)} />)}
-
-          <hr></hr>
         </div>
 
-        <div className='element-row'>
-          <button>Load</button>
+
+        <div className='footer'>
+          <button className='button load' type="button">Load</button>
           <p>or</p>
-          <button>Save</button>
+          <button className='button save' type="button">Save</button>
           <p>Configuration</p>
-          <button type="button" onClick={(e) => handleSubmit(e)}>RUN</button>
+          <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>RUN</button>
         </div>
 
       </div>

@@ -11,7 +11,9 @@ function ParameterGroup({ parameters, onChange, grid }) {
   return (
     Object.keys(parameters).map((e, i) => {
       return <Parameter key={i} parameter={parameters[e]} grid={grid} onChange={(e) => onChange(e)} />
-    }));
+    })
+
+  )
 }
 
 export default ParameterGroup

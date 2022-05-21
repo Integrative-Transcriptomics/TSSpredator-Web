@@ -1,3 +1,7 @@
+:root {
+    --gridColor: rgb(0,0,0,0.3);
+  }
+
 .grid-wrapper {
     display: grid; 
     padding: 5px;  
@@ -5,12 +9,12 @@
     font-size: 80%;
 }
 
-
 .Prediction-grid {
     grid-area: 1 / 1 / 5 / 4 ;
     grid-column: span 3;
     display: grid; 
     grid-template-columns: 1fr 1fr 1fr;
+    margin-bottom: 1rem;
 }
 
 .Prediction-header, .Comparative-header {
@@ -22,21 +26,65 @@
     text-align: center;
 }
 
+
 .Normalization-grid {
     grid-area: 5 / 1 / 8 / 2 ;
+    border-right: 1px solid var(--gridColor);
+    padding-bottom: 1rem;
 }
 
 .Clustering-grid {
     grid-area: 5 / 2 / 8 / 3 ;
+    border-right: 1px solid var(--gridColor);
+    padding-bottom: 1rem;
 }
 
 .Classification-grid {
     grid-area: 5 / 3 / 8 / 4 ;
+    padding-bottom: 1rem;
 }
 
 .Comparative-grid {
     grid-area: 8 / 1 / 10 / 4 ;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
+    
+}
+.parameter-grid {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 59% 41%;
+    margin-left: 0.5rem;
+}
+.parameter-select {
+    display: grid;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 45.5% 54.5%;
+    margin-left: 0.5rem;
+}
+.border-grid {
+    border-bottom: 1px solid var(--gridColor);
+    border-top: 1px solid var(--gridColor);
+    padding-bottom: 1rem;
+    padding-top: 1rem;
+    margin-bottom: 1rem;
+}
+.click-param {
+    cursor: pointer; 
+}
+.click-param:hover {
+    color:rgb(255, 140, 0)
+}
+.param-preset {
+    margin-left: 1rem;
+}
+.preset-label {
+    margin-left: 0.5rem;
+}
+input[type=checkbox] {
+    margin-left: 5rem;
+    margin-right: 0.5rem;
+    margin-top: 0.25rem;
 }
 

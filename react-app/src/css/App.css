@@ -1,3 +1,6 @@
+:root {
+    --mainColor: rgb(255, 160, 0);
+}
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,7 +9,7 @@
 }
 
 header {
-    background-color: rgb(255, 160, 0);
+    background-color: var(--mainColor);
     height: 2.6rem;
     color: white;
     box-shadow: 0 0.1rem 0.3rem rgb(136, 88, 0, 0.5);
@@ -28,13 +31,16 @@ input[type=number] {
     width: 4.5rem;
     text-align: center;
 }
+.text-field {
+    border: 1.5px solid rgb(220, 220, 220)
+}
 input:focus {
     border: 1.5px solid #4000ff;
 }
 
 .project-name {
     border: none;
-    border-bottom: 2px solid rgb(255, 160, 0);
+    border-bottom: 2px solid var(--mainColor);
     border-radius: 0;
     font-size: 1rem;
     font-weight: bold;
@@ -52,11 +58,11 @@ input:focus {
 }
 /* Microsoft Edge */
 ::-ms-input-placeholder {
-    color: red;
+    color: rgb(0, 0, 0, 0.4);
 }
 
 .form-container {
-    padding: 5rem 0;
+    padding: 3rem 0;
     margin: auto;
     width: 50%;
     z-index: 1;
@@ -86,7 +92,7 @@ input:focus {
 .header {
     font-size: 1.1rem;
     font-weight: bold;
-    color: rgb(255, 160, 0);
+    color: var(--mainColor);
     margin-bottom: 0.8rem;
 }
 
@@ -117,6 +123,11 @@ input:focus {
     color: rgba(0, 0, 0, 1);
     font-style: italic;
 }
+.file-box {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 18% 82%;
+}
 .hidden {
     display: none;
 }
@@ -140,14 +151,6 @@ input:focus {
     display: flex;
     flex-direction: column;
 }
-.file-button {
-    position: absolute;
-    left: 36%;
-}
-.file-abs {
-    position: absolute;
-    left: 43.5%;
-}
 .file-row {
     margin: 0.8rem 0;
 }
@@ -162,6 +165,7 @@ select {
     text-transform: uppercase;
     border: 1px solid transparent;  
     width: fit-content;
+    margin-bottom: 0.5rem;
 }
 select:hover {
     box-shadow: 0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
@@ -169,4 +173,27 @@ select:hover {
     cursor: pointer;
     background-color: rgb(240, 240, 240);
 }
+
+.run {
+    background-color: var(--mainColor);
+    color: white;
+    margin-left: 36rem;
+    font-weight: bold;
+    font-size: 1rem;
+}
+.footer {
+    margin-top: 3rem;
+    display: flex;
+    flex-direction: row;
+}
+.load {
+    margin-left: 0;
+}
+.load, .save {
+    margin-right: 1rem;
+}
+
+
+
+
 

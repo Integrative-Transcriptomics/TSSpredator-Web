@@ -12,7 +12,7 @@ function ParameterAllGroups({ parameterGroups, onChange, grid }) {
       {Object.keys(parameterGroups).map((e, i) => {
         return (
           <div key={e} className={e + "-grid"}>
-            <h3 key={e} className={e + "-header"}> {e} </h3>
+            <h3 key={e} className={e + "-header border-grid"}> {e} </h3>
             {(typeof parameterGroups[e] === 'undefined') ? (<p></p>) : (<ParameterGroup key={i} parameters={parameterGroups[e]} grid={grid} onChange={(e) => onChange(e)} />)}
           </div>
         )

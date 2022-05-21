@@ -35,7 +35,7 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
 
   return (
     <>
-      {popup && <PopupWindow closePopup={(e) => setPopup(!popup)} numRep={numRep} saveAllFiles={(g, ef, er, nf, nr) => saveFiles(g, ef, er, nf, nr, state -1)}/>}
+      {popup && <PopupWindow closePopup={(e) => setPopup(!popup)} numRep={numRep} gIdx={state} saveAllFiles={(g, ef, er, nf, nr) => saveFiles(g, ef, er, nf, nr, state -1)}/>}
 
       <div className='container'>
         <div className='tab-row'>

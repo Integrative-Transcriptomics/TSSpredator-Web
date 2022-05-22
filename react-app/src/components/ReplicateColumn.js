@@ -45,8 +45,8 @@ function ReplicateColumn({ handleRemove, handleFiles, handleAddEF, handleAddER, 
         <div className='replicate-container'>
             {[...Array(numRep)].map((g, i) => {
                 return (
-                    <div className={state === i ? 'drop-box-column column-active' : 'drop-box-column'} key={i}>
-                        <div className='element-row'>
+                    <div className={state === i ? 'replicate-column column-active' : 'replicate-column'} key={i}>
+                        <div className='row'>
                             <div className="arrows prev" onClick={() => flipLeft(i)}></div>
                             <h4> Replicate {String.fromCharCode(97 + i)} </h4>
                             <div className="arrows next" onClick={() => flipRight(i)}></div>

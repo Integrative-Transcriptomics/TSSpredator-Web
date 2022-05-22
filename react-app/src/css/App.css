@@ -1,5 +1,6 @@
 :root {
     --mainColor: rgb(255, 160, 0);
+    --complement: rgb(64, 0, 255);
 }
 * {
     box-sizing: border-box;
@@ -7,7 +8,10 @@
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: 100%;
 }
-
+.row {
+    display: flex;
+    flex-direction: row;
+}
 header {
     background-color: var(--mainColor);
     height: 2.6rem;
@@ -35,7 +39,7 @@ input[type=number] {
     border: 1.5px solid rgb(220, 220, 220)
 }
 input:focus {
-    border: 1.5px solid #4000ff;
+    border: 1.5px solid var(--complement);
 }
 
 .project-name {
@@ -49,7 +53,7 @@ input:focus {
 }
 .project-name:focus {
     border: none;
-    border-bottom: 2px solid rgb(64, 0, 255);
+    border-bottom: 2px solid var(--complement);
     background-color: rgb(245, 245, 255);
 }
 ::placeholder {
@@ -112,7 +116,7 @@ input:focus {
 }
 .button:hover {
     box-shadow: 0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
-    background-color:#4000ff;
+    background-color:var(--complement);
     color: white;
 }
 .all-files {
@@ -121,12 +125,21 @@ input:focus {
 .file-name {
     font-size: 0.8rem;
     color: rgba(0, 0, 0, 1);
+    width: 80%;
     font-style: italic;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 .file-box {
     width: 100%;
     display: grid;
     grid-template-columns: 18% 82%;
+}
+.file-box-align {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 13% 87%;
 }
 .hidden {
     display: none;
@@ -169,7 +182,7 @@ select {
 }
 select:hover {
     box-shadow: 0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
-    border:1px solid #4000ff;
+    border:1px solid var(--complement);
     cursor: pointer;
     background-color: rgb(240, 240, 240);
 }

@@ -22,9 +22,8 @@ function App() {
   const [alignmentFile, setAlignmentFile] = useState("");
   // number of replicates
   const [numRep, setnumRep] = useState(1);
-
+  // open/close parameters
   const [showParam, setShowParam] = useState(false);
-
 
   /**
    * RUN Button event
@@ -338,9 +337,10 @@ function App() {
             {(typeof parameters.setup === 'undefined')
               ? <></>
               : <>
-                <div className={parameters.setup.typeofstudy.value === "genome" ? 'show' : 'hidden'}>
-                  <label className='element-row'> Alignment File
-                    <input className='element hidden' type="file" onChange={(e) => setAlignmentFile(e.target.files[0])} />
+                <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'hidden'}>
+                  <p className='file-row'>Alignment File</p>
+                  <label className='element-row file-row' for='alignment-file'>
+                    <input className='element hidden' type="file" id='alignment-file' onChange={(e) => setAlignmentFile(e.target.files[0])} />
                     <p className='button'>Select File</p>
                     {alignmentFile.length <= 0 ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{alignmentFile.name}</p>}
                   </label>
@@ -362,12 +362,12 @@ function App() {
             <div className='element-row'>
               <label className='element preset-label' for='preset'> parameter preset</label>
               <select className='param-preset' value={parameterPreset} name="parameter-preset" id='preset' onChange={(e) => handleParameterPreset(e)}>
-                  <option value="custom">custom</option>
-                  <option value="very specific">very specific</option>
-                  <option value="more specific">more specific</option>
-                  <option value="default">default</option>
-                  <option value="more sensitive">more sensitive</option>
-                  <option value="very sensitive">very sensitive</option>
+                <option value="custom">custom</option>
+                <option value="very specific">very specific</option>
+                <option value="more specific">more specific</option>
+                <option value="default">default</option>
+                <option value="more sensitive">more sensitive</option>
+                <option value="very sensitive">very sensitive</option>
               </select>
 
               <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)} />

@@ -36,17 +36,17 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx }) {
     }
     // add item to drop container
     const handleAdd = (event, state, set, index) => {
-       
+
         // for all non-replicate files
         if (typeof index === 'undefined') {
-            
+
             // for upload container -> drop several files at the same time
             if (Array.isArray(event)) {
                 set([...state, ...event]);
             } else {
                 set([...state, event]);
             }
-        // for replicate-files
+            // for replicate-files
         } else {
             // when file is dropped directly in container
             if (Array.isArray(event)) {
@@ -58,7 +58,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx }) {
                     ...current, [index]: event
                 }))
             }
-            
+
         }
     }
     // remove item from drop container
@@ -169,13 +169,15 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx }) {
                 <div className='popup-columns'>
 
                     <div className='drop-box-column column-active'>
-                        <DragDropField label={'Drop your file for Genome ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
+                        <DragDropField label={'Drop your files for Genome ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
                             handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
-
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <h4>{'------------->'}</h4>
+                        <div class="long-arrow">
+                            <div class="arrow-line"></div>
+                            <div class="arrow-point"></div>
+                        </div>
                     </div>
 
                     <div className='drop-box-column column-active'>

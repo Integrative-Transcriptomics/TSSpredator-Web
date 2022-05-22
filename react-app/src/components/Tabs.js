@@ -24,6 +24,11 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
   // popup windows to upload all files together
   const [popup, setPopup] = useState(false);
 
+  // current tab is last tab and then tab number is decreased
+  if(state > genomes.length) {
+    setState(1)
+  }
+
   // names of the files that need to be uploaded
   let fileNames;
   if (genome) {
@@ -35,12 +40,12 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
 
   return (
     <>
-      {popup && <PopupWindow closePopup={(e) => setPopup(!popup)} numRep={numRep} gIdx={state} saveAllFiles={(g, ef, er, nf, nr) => saveFiles(g, ef, er, nf, nr, state -1)}/>}
+      {popup && <PopupWindow closePopup={(e) => setPopup(!popup)} numRep={numRep} gIdx={state} saveAllFiles={(g, ef, er, nf, nr) => saveFiles(g, ef, er, nf, nr, state - 1)} />}
 
       <div className='container'>
         <div className='tab-row'>
-        {genome ? <></> :  <div className='left-line'></div>}
-       
+          {genome ? <></> : <div className='left-line'></div>}
+
           {genomes.map((g, i) => {
             return (
               <div className={state === (i + 1) ? 'tab tab-active' : 'tab'} key={(i + 1)} onClick={() => { setState((i + 1)) }}>
@@ -55,20 +60,20 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
           <div className="line"></div>
         </div>
         <div className={genome ? 'tab-content content-border' : 'tab-content'}>
-         
+
           {genomes.map((g, i) => {
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 
                 {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID" }, { "name": "Output ID" }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
                   <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
-                  <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)} 
-                                            saveIndividualFile={(e) => saveIndividualFile(e)} />
+                  <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)}
+                    saveIndividualFile={(e) => saveIndividualFile(e)} />
                   <Tabs genomes={replicates[i]['genome' + (i + 1)]} genome={false} whichGenome={i} handleTabs={(e) => handleTabs(e)}
-                        saveIndividualFile={(e) => saveIndividualFile(e)}/>
+                    saveIndividualFile={(e) => saveIndividualFile(e)} />
                 </>
-                  : <UploadFilesIndividually files={fileNames} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)} 
-                                             saveIndividualFile={(e) => saveIndividualFile(e)}/>}
+                  : <UploadFilesIndividually files={fileNames} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)}
+                    saveIndividualFile={(e) => saveIndividualFile(e)} />}
               </div>
             )
           })

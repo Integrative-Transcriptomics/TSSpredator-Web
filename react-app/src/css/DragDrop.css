@@ -15,19 +15,18 @@
 }
 
 .popup-inner {
-  padding: 10px;
   height: 75%;
-  width: 60%;
+  width: 65%;
   background: white;
-  border-radius: 10px;
+  border-radius: 0.65rem;
   z-index: 2;
 }
 
 .popup-header {
   border-bottom: 1px solid rgba(0, 0, 0, 0.3);
-  margin-left: -0.6rem;
-  padding: 0.8rem 0;
-  width: 101.7%;
+  padding-top: 1rem;
+  height: 8%;
+  width: 100%;
   text-align: center;
   z-index: 2;
 }
@@ -35,50 +34,11 @@
 .popup-columns {
   display: flex;
   flex-direction: row;
-  justify-content: center;
   align-items: center;
-  height: 85%;
+  height: 80%;
   width: 100%;
+  margin-left: 1rem;
 }
-
-.dropzone {
-  border: 1px dashed rgba(0, 0, 0, 0.7);
-  margin: 2%;
-  border-radius: 5px;
-  height: 90%;
-  width: 95%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  overflow: auto;
-  z-index: 2;
-}
-
-/* Boxen die dropzones enthalten*/
-.drop-box {
-  padding: 2px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  border: 1px solid black;
-  border-radius: 5px;
-}
-.drop-box-rep {
-  display: none;
-}
-
-.replicate-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 90%;
-  height: 100%;
-}
-
 /* überschrift der drop box + drop box*/
 .drop-box-column {
   display: none;
@@ -87,78 +47,106 @@
   align-items: center;
   width: 80%;
   height: 95%;
-  margin: 10px;
+  margin: 0 0.5rem;
 }
-.column-active {
+
+/* Boxen die dropzones enthalten*/
+.drop-box {
+  padding-top: 0.5rem;
   display: flex;
+  flex-direction: column;
+  row-gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
 }
-
-.popup-footer {
-  border-top: 1px solid rgb(0,0,0,0.3);
-  padding: 1.5rem;
-  margin-left: -0.6rem;
-  width: 101.7%;
+.drop-box-rep {
+  display: none;
+}
+.drag-drop-zone {
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+  justify-content: center;
+  background: #e0e0e0;
+  border-radius: 0.5rem;
+  height: 100%;
+  width: 100%;
+  max-width:100%;
+  box-shadow: 0 0.1rem 0.2rem rgb(0, 0, 0, 0.5);
   z-index: 2;
-  display: grid;
-  grid-template-columns: 10% 10%;
-  grid-gap: 80%;
+  overflow: auto;
 }
 
+.drag-drop-zone p {
+  color: black;
+  z-index: 2;
+}
 /* einzelne drag elemente*/
 .drag-box {
   margin: 2px;
-  background-color: black;
-  width: 95%;
-  height: 35;
+  background-color: #4000ff;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width:100%;
+  height: fit-content;
   color: white;
-
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2;
   cursor: grab;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
-
-.drag-drop-zone {
-  padding: 2rem;
-  text-align: center;
-  background: #07F;
-  border-radius: 0.5rem;
-  height: 90%;
-  width: 95%;
-  box-shadow: 5px 5px 10px #C0C0C0;
-  z-index: 2;
-}
-
-.drag-drop-zone p {
-  color: #FFF;
-  z-index: 2;
-}
-
-.drag-drop-zone.inside-drag-area {
-  opacity: 0.7;
-  z-index: 2;
-}
-
-.dropped-files li {
-  color: #07F;
-  padding: 3px;
-  text-align: left;
-  font-weight: bold;
-  z-index: 2;
-}
-
-.container-drag {
+.in-zone {
   background-color: red;
 }
+.replicate-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  margin: 0;
+  margin-top: 1.8%;
+}
+.replicate-column {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 80%;
+  height:95%;
+}
+
+.popup-footer {
+  border-top: 1px solid rgb(0,0,0,0.3);
+  padding: 1.5rem 2rem;
+  height: 10%;
+  width: 100%;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 10% 10%;
+  grid-gap: 80%;
+}
+.column-active {
+  display: flex;
+}
+
 
 /* arrows to flip through replicates*/
 .arrows {
-  width: 8px;
-  height: 8px;
+  width: 0.7rem;
+  height: 0.7rem;
   border-color: black;
-  margin-top: 6%;
   cursor: pointer;
+  margin-top: 0.3rem;
 }
 .arrows:hover {
   border-color: rgba(0, 0, 0, 0.5);
@@ -167,10 +155,31 @@
   border-bottom: 1px solid;
   border-left: 1px solid;
   transform: rotate(45deg);
+  margin-right: 1rem;
 }
-
 .next {
   border-bottom: 1px solid;
   border-left: 1px solid;
   transform: rotate(-135deg);
+  margin-left: 1rem;
+}
+
+.long-arrow {
+  width: 7rem;
+  margin: 0.5rem;
+}
+.arrow-line {
+  margin-top: 0.6rem;
+  width: 6.2rem;
+  background: rgb(255, 160, 0);
+  height: 0.2rem;
+  float: left;
+}
+.arrow-point {
+  width: 0;
+  height: 0;
+  border-top: 0.8rem solid transparent;
+  border-bottom: 0.8rem solid transparent;
+  border-left: 0.8rem solid rgb(255, 160, 0);
+ float: right;
 }

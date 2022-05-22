@@ -65,13 +65,13 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
 
     return (
 
-        <div className='drag-drop-zone' onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)} >
+        <div className='drag-drop-zone' onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)}>
             {currentFiles.length === 0 || typeof currentFiles[0] === 'undefined' ? <p>{label}</p> : <></>}
 
             {typeof currentFiles !== 'undefined' ?
                 currentFiles.map((n, i) => {
                     return (
-                        <div draggable className='drag-box' key={n + i} data-name={n} onDragStart={(e) => handleDragStart(e)} id={i}>
+                        <div draggable className={typeof n === 'undefined' ? ' ' : 'drag-box'} key={n + i} data-name={n} onDragStart={(e) => handleDragStart(e)} id={i}>
                             {n}
                         </div>
                     )

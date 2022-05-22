@@ -68,7 +68,7 @@ input:focus {
 .form-container {
     padding: 3rem 0;
     margin: auto;
-    width: 50%;
+    width: 50.55%;
     z-index: 1;
 }
 .content-box {
@@ -204,6 +204,19 @@ select:hover {
 }
 .load, .save {
     margin-right: 1rem;
+}
+.disabled {
+    background-color: #e0e0e0;
+    cursor: default;
+}
+.disabled:hover {
+    background-color: #e0e0e0;
+    box-shadow: 0 0.1rem 0.3rem rgb(0, 0, 0, 0.5);
+    color: rgb(0, 0, 0, 0.8);
+}
+.disabled-field {
+    background-color: #e0e0e0;
+    color: black;
 }
 
 

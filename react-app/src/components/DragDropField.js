@@ -9,9 +9,10 @@ import React from 'react';
  * @param handleRemove: removes the item from the old container, after it was dropped into the current one
  * @param handleFiles: saves all uploaded files
  * @param index: for all containers for replicate files -> index = which replicate, starting by 0
+ * @param disabled: should field be disabled
  */
 
-function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, handleFiles, index }) {
+function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, handleFiles, index, disabled }) {
 
     const handleDragStart = (event) => {
         event.dataTransfer.setData('name', event.target.dataset.name);
@@ -26,9 +27,11 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
     // dragged item over drop container
     const handleDragOver = (event) => {
         // only one file per field, exeption: upload box
-        if (state === 'upload' || currentFiles.length === 0 || typeof currentFiles[0] === 'undefined') {
-            event.preventDefault();
-            event.stopPropagation();
+        if(!disabled) {
+            if (state === 'upload' || currentFiles.length === 0 || typeof currentFiles[0] === 'undefined') {
+                event.preventDefault();
+                event.stopPropagation();
+            }
         }
     }
 
@@ -65,7 +68,7 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
 
     return (
 
-        <div className='drag-drop-zone' onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)}>
+        <div className={disabled ? 'drag-drop-zone disabled-zone' : 'drag-drop-zone'} onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)}>
             {currentFiles.length === 0 || typeof currentFiles[0] === 'undefined' ? <p>{label}</p> : <></>}
 
             {typeof currentFiles !== 'undefined' ?

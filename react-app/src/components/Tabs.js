@@ -25,42 +25,56 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
   const [popup, setPopup] = useState(false);
 
   // current tab is last tab and then tab number is decreased
-  if(state > genomes.length) {
+  if (state > genomes.length) {
     setState(1)
   }
+
+  let disabled = false;
+  if (studyType === 'condition' && state > 1) {
+    disabled = true;
+  }
+
+  let tabClass;
 
   // names of the files that need to be uploaded
   let fileNames;
   if (genome) {
+    tabClass = 'tab'
     fileNames = [{ "name": "Genome FASTA", "value": "Genome FASTA" }, { "name": "Genome Annotation", "value": "Genome Annotation" }]
   } else {
+    tabClass = 'tab-rep'
     fileNames = [{ "name": "enriched forward", "value": "enriched forward" }, { "name": "enriched reverse", "value": "enriched reverse" },
     { "name": "normal forward", "value": "normal forward" }, { "name": "normal reverse", "value": "normal reverse" }]
   }
 
   return (
     <>
-      {popup && <PopupWindow closePopup={(e) => setPopup(!popup)} numRep={numRep} gIdx={state} saveAllFiles={(g, ef, er, nf, nr) => saveFiles(g, ef, er, nf, nr, state - 1)} />}
+      {popup && <PopupWindow closePopup={(e) => setPopup(!popup)} numRep={numRep} gIdx={state} disabled={disabled}
+        saveAllFiles={(g, ef, er, nf, nr) => saveFiles(g, ef, er, nf, nr, state - 1)} />}
 
       <div className='container'>
         <div className='tab-row'>
           {genome ? <></> : <div className='left-line'></div>}
-
           {genomes.map((g, i) => {
             return (
-              <div className={state === (i + 1) ? 'tab tab-active' : 'tab'} key={(i + 1)} onClick={() => { setState((i + 1)) }}>
+
+              <div className={state === (i + 1) ? tabClass + ' tab-active' : tabClass} key={(i + 1)} onClick={() => { setState((i + 1)) }}>
 
                 {genome ? <input className={state === (i + 1) ? 'tab-input tab-input-active' : 'tab-input'} type="text" id={i} name="name"
                   placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} />
                   : "Replicate " + String.fromCharCode(97 + i)}
               </div>
+
             )
           })
           }
-          <div className="line"></div>
         </div>
-        <div className={genome ? 'tab-content content-border' : 'tab-content'}>
 
+        <div className={genome ? 'tab-content content-border' : 'tab-content'}>
+          {genome ?  <div className={genomes.length > 8 ? "line line-top line"+(genomes.length % 8) : "line line"+(genomes.length % 8)}></div>
+                  :  <div className={"line line-rep rep-line"+(genomes.length % 7)}></div>
+          }
+         
           {genomes.map((g, i) => {
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>

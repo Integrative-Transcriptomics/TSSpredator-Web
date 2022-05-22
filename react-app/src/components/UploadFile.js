@@ -38,7 +38,7 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show }) 
       <label className='element-row file-row' for={id+'file'}> 
         <input disabled={disabled} className='element' type="file" name={label} id={id + 'file'} style={{ display: 'none' }}
           onChange={(e) => saveIndividualFile(e)} />
-        <p className='button'>Select File</p>
+        <p className={disabled ? 'button disabled' : 'button'}>Select File</p>
         {typeof fileName === 'undefined' ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{fileName}</p>}
       </label>
 

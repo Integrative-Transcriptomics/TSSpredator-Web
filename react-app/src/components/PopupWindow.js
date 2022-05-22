@@ -8,8 +8,9 @@ import ReplicateColumn from './ReplicateColumn';
  * @param numRep: number of replicates
  * @param saveAllFiles: function to save files in the corresponding usestate in App.js
  * @param gIdx: current genome tab
+ * @param disabled: studytype condition
  */
-function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx }) {
+function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
 
     // saves all uploaded files
     const [allFiles, setAllFiles] = useState([]);
@@ -183,9 +184,9 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx }) {
                     <div className='drop-box-column column-active'>
                         <h4>Genome Files</h4>
                         <div className='drop-box'>
-                            <DragDropField label='Genome FASTA' currentFiles={genomeFasta} state='genomeFasta'
+                            <DragDropField label={disabled ? 'no file needed' : 'Genome FASTA'} currentFiles={genomeFasta} state='genomeFasta' disabled={disabled}
                                 handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
-                            <DragDropField label='Genome Annotation' currentFiles={genomeAnn} state='genomeAnn'
+                            <DragDropField label={disabled ? 'no file needed' : 'Genome Annotation'} currentFiles={genomeAnn} state='genomeAnn' disabled={disabled}
                                 handleAdd={(e) => handleAdd(e, genomeAnn, setGenomeAnn)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
                         </div>
                     </div>

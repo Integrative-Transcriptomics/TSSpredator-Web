@@ -339,7 +339,7 @@ function App() {
               : <>
                 <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'hidden'}>
                   <p className='file-row'>Alignment File</p>
-                  <label className='element-row file-row' for='alignment-file'>
+                  <label className='element-row file-row' htmlFor='alignment-file'>
                     <input className='element hidden' type="file" id='alignment-file' onChange={(e) => setAlignmentFile(e.target.files[0])} />
                     <p className='button'>Select File</p>
                     {alignmentFile.length <= 0 ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{alignmentFile.name}</p>}
@@ -360,7 +360,7 @@ function App() {
           <div className={showParam ? 'show margin-left file-column' : 'hidden'}>
 
             <div className='element-row'>
-              <label className='element preset-label' for='preset'> parameter preset</label>
+              <label className='element preset-label' htmlFor='preset'> parameter preset</label>
               <select className='param-preset' value={parameterPreset} name="parameter-preset" id='preset' onChange={(e) => handleParameterPreset(e)}>
                 <option value="custom">custom</option>
                 <option value="very specific">very specific</option>
@@ -371,7 +371,7 @@ function App() {
               </select>
 
               <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)} />
-              <label className='element' for='check'>write rna-seq graph</label>
+              <label className='element' htmlFor='check'>write rna-seq graph</label>
             </div>
 
             {(typeof parameters.parameterBox === 'undefined')

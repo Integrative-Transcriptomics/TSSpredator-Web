@@ -85,6 +85,6 @@
 input[type=checkbox] {
     margin-left: 5rem;
     margin-right: 0.5rem;
-    margin-top: 0.25rem;
+    margin-top: -0.25rem;
 }
 

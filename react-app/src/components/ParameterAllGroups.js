@@ -1,10 +1,11 @@
 import React from 'react';
 import ParameterGroup from './ParameterGroup';
 
-/** erstellt Parametergruppe mit zugehöriger Überschrift
+/** creates group of parameters with header
  * 
- * @param parameterGroups: Gruppe an Paramtern 
- * @param onChange: Funktion, um Parameter bei Änderungen abzuspeichern 
+ * @param parameterGroups: group of parameters
+ * @param onChange: function to save change
+ * @param grid: true <-> parameter in parameter box, false <-> parameter in setup box
  */
 function ParameterAllGroups({ parameterGroups, onChange, grid }) {
   return (

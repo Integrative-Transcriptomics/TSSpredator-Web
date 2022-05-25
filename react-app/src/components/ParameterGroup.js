@@ -1,10 +1,11 @@
 import React from 'react';
 import Parameter from './Parameter';
 
-/** erstellt Parametergruppe 
+/** creates group of parameters
  * 
- * @param parameters: Gruppe an Paramtern 
- * @param onChange: Funktion, um Parameter bei Änderungen abzuspeichern 
+ * @param parameterGroups: group of parameters
+ * @param onChange: function to save change
+ * @param grid: true <-> parameter in parameter box, false <-> parameter in setup box
  */
 function ParameterGroup({ parameters, onChange, grid }) {
 

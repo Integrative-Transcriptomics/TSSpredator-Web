@@ -1,12 +1,12 @@
 import React from 'react';
 import TextField from './TextField';
 
-/** ersellt Komponente die eine Gruppe an Text Feldern enthält
+/** creates group of text fields
  * 
- * @param fields: Array -> einzelne Felder als Objekte
- * @param id: id des Genom/Replicate Tabs
- * @param handleTabs: Funktion um Eingaben in Textfeldern des Genom Tabs anzuspeichern
- * @param studyType: 'condtion' oder 'genome'
+ * @param fields: Array -> single fields as objects
+ * @param id: id of the  Genom/Replicate Tab
+ * @param studyType: 'condtion' or 'genome'
+ * @param handleTabs: saves input for text fiels
  */
 function TextFieldGroup({fields, id, handleTabs, studyType}) {
   return (

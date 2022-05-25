@@ -175,9 +175,9 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <div class="long-arrow">
-                            <div class="arrow-line"></div>
-                            <div class="arrow-point"></div>
+                        <div className="long-arrow">
+                            <div className="arrow-line"></div>
+                            <div className="arrow-point"></div>
                         </div>
                     </div>
 

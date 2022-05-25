@@ -1,9 +1,7 @@
 from json.encoder import INFINITY
 import json
 
-# für alle Parameter die mit einem Spinner oder Combo-box eingestellt werden
-
-# Parameter bei denen die werte sich je nach preset ändern
+# Parameter with specific presets
 class ParameterPreset:    
     def __init__(self, key, name, min, max, step, very_specific, more_specific, default, more_sensitive, very_sensitive, value, group):
         self.key=key
@@ -19,7 +17,7 @@ class ParameterPreset:
         self.value = value
         self.group = group
 
-# Parameter bei denen die Werte sich nicht ändern
+# Parameter without presets
 class ParameterConstant:
     def __init__(self, key, name, min, max, step, value, group):
         self.key=key
@@ -35,7 +33,7 @@ class ParameterConstant:
         self.verysensitive = value
         self.group = group
 
-# für combo box
+# combo box
 class ParameterCombo:
     def __init__(self, key, name, value, combo1, combo2, group):
         self.key=key
@@ -94,7 +92,7 @@ def convertToJson(array):
        
         jsonString += "\"" + p.key + "\":" + json.dumps(p.__dict__) + ","
 
-    jsonString = jsonString[:-1] # letztes komma entfernen
+    jsonString = jsonString[:-1] # remove last comma
     jsonString += "}"
     return jsonString
 
@@ -114,3 +112,4 @@ def getParameters():
     #print(jsonString)
 
 #getParameters()
+

@@ -1,13 +1,14 @@
 import React from 'react';
 
-/** erstellt einzelnen Parameter mit Label
+/** creates a parameter with label and input
  * 
- * @param parameter: Paramter
- * @param onChange: Funktion, um Parameter bei Änderungen abzuspeichern 
+ * @param parameter: parameter
+ * @param onChange: function to save change 
+ * @param grid: true <-> parameter in parameter box, false <-> parameter in setup box
  */
 function Parameter({ parameter, onChange, grid }) {
 
-  // wenn Parameter eine Nummer ist input=number Feld
+  // when parameter value is a number -> input=number
   if (!isNaN(parameter.value)) {
 
     return (
@@ -18,7 +19,7 @@ function Parameter({ parameter, onChange, grid }) {
       </div>
     );
 
-    // wenn Parameter keine Nummer ist select Feld (ComboBox)
+  // combobox
   } else {
     return (
       <div className={grid ? 'parameter-select' : 'parameter-box margin-left'}>

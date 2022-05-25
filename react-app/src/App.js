@@ -7,41 +7,34 @@ import './css/App.css';
 import './css/Grid.css';
 import './css/DragDrop.css';
 
+/**
+ * creates the main window and saves all inputs
+ */
+
 function App() {
 
   const [projectName, setProjectName] = useState({});
   const [parameters, setParameters] = useState([{}]);
   const [parameterPreset, setParameterPreset] = useState("default");
+  // checkbox
   const [rnaGraph, setRnaGraph] = useState(false);
   const [genomes, setGenomes] = useState([{ "genome1": { "name": "Genome 1", "placeholder": "Genome 1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": "" } }]);
   const [replicates, setReplicates] = useState([{ "genome1": [{ "replicatea": { "name": "Replicate a", "enrichedforward": "", "enrichedreverse": "", "normalforward": "", "normalreverse": "" } }] }]);
-  // wenn neuer Genom Tab hinzugeügt wird: replicateTemplate benutzen um replicates zu updaten
-  const [replicateTemplate, setReplicateTemplate] = useState([{ "replicatea": { "name": "Replicate a", "enrichedforward": "", "enrichedreverse": "", "normalforward": "", "normalreverse": "" } }]);
-  // template für ein replicate
-  const repTemplate = "{\"replicate0\":{\"name\":\"Replicate 0\", \"enrichedforward\":\"\", \"enrichedreverse\":\"\", \"normalforward\":\"\", \"normalreverse\":\"\"}}";
   const [alignmentFile, setAlignmentFile] = useState("");
+
+  // new GenomeTab: use replicateTemplate to update replicates
+  const [replicateTemplate, setReplicateTemplate] = useState([{ "replicatea": { "name": "Replicate a", "enrichedforward": "", "enrichedreverse": "", "normalforward": "", "normalreverse": "" } }]);
+  // template für a single replicate
+  const repTemplate = "{\"replicate0\":{\"name\":\"Replicate 0\", \"enrichedforward\":\"\", \"enrichedreverse\":\"\", \"normalforward\":\"\", \"normalreverse\":\"\"}}";
   // number of replicates
   const [numRep, setnumRep] = useState(1);
   // open/close parameters
   const [showParam, setShowParam] = useState(false);
 
-  /**
-   * RUN Button event
-   */
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    //console.log(parameters);
-    //console.log(parameterPreset);
-    //console.log(rnaGraph);
-    //console.log(genomes);
-    //console.log(replicates);
-    //console.log(replicateTemplate)
-    // console.log(alignmentFile);
-  }
 
   /**
-   * holt die Parameterwerte beim Start der Seite vom Server
-   */
+    * GETs Parameters from flask 
+    */
   useEffect(() => {
     fetch("/parameters/").then(
       res => res.json())
@@ -53,17 +46,49 @@ function App() {
 
 
   /**
-   * Anpassung des useStates des veränderten Parameter p
-   * weitere Parameter die von p abhängig sind werden auch verändert
+   * RUN Button event
+   */
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    sendData();
+  }
+
+  /**
+   * post input data to flask
+  */
+  function sendData() {
+    console.log(alignmentFile)
+    const formData = new FormData();
+    formData.append('file', genomes[0].genome1.genomefasta);
+    formData.append('projectName', JSON.stringify(projectName));
+    formData.append('paramters', JSON.stringify(parameters));
+    formData.append('parameterPreset', JSON.stringify(parameterPreset));
+    formData.append('rnaGraph', JSON.stringify(rnaGraph));
+    formData.append('genomes', JSON.stringify(genomes));
+    formData.append('replicates', JSON.stringify(replicates));
+    formData.append('alignmentFile', alignmentFile);
+
+    fetch('/input/', {
+      method: 'POST',
+      body: formData
+    }).then(response => response.json()).then((data) => console.log(data)).catch(err => console.log(err));
+
+  }
+
+
+  /**
+   * update useState of changed paramter p
+   * if other parameters are dependend on p they are also updated
    */
   const handleParameters = (event) => {
     const name = event.target.name;
     const directParent = event.target.id;
     let val;
 
-    // combobox: value nicht als Nummer speichern
+    // combobox
     if (name === "typeofstudy" || name === "clustermethod") {
       val = event.target.value;
+    // input=number -> save value as number
     } else {
       val = event.target.valueAsNumber;
     }
@@ -77,29 +102,31 @@ function App() {
 
     if (name === "numberofreplicates") {
       setnumRep(val);
-      // maximum vom Parameter 'matching replicates' anpassen
+      // update maximum of Parameter 'matching replicates'
       updateParameterBox('Comparative', 'matchingreplicates', 'max', val);
 
-      // Replicate Tabs anpassen
+      // update replicate tabs
       const repLetter = String.fromCharCode(96 + val);
       const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
 
+      // replicate added
       if (val > replicateTemplate.length) {
-        // Template anpassen
+        // update replicate template
         replicateTemplate.push(newRep);
         setReplicateTemplate(replicateTemplate);
 
-        // Replicates für vorhandene Genome anpassen
+        // update replicates 
         for (var i = 0; i < replicates.length; i++) {
           replicates[i]['genome' + (i + 1)].push(newRep);
         }
         setReplicates(replicates);
 
+      // replicate removed    
       } else if (val < replicateTemplate.length) {
-        // Template anpasssen
+        // update replicate template
         replicateTemplate.pop();
         setReplicateTemplate(replicateTemplate);
-        // Replicates für vorhandene Genome
+        // update replicates
         for (var j = 0; j < replicates.length; j++) {
           replicates[j]['genome' + (j + 1)].pop();
         }
@@ -109,7 +136,7 @@ function App() {
 
 
     if (name === "numberofgenomes") {
-      // Tab hinzugefügt: Genome Objekt hinzufügen
+      // add genom tab
       const genomeName = (parameters.setup.typeofstudy.value).charAt(0).toUpperCase() + (parameters.setup.typeofstudy.value).slice(1) + " " + val;
       if (val > Object.keys(genomes).length) {
         setGenomes(current => (
@@ -119,21 +146,21 @@ function App() {
               { name: genomeName, placeholder: genomeName, alignmentid: "", outputid: "", genomefasta: "", genomeannotation: "" }
           }]
         ))
-        // Replicates: neues Genom hinzufügen
+        // add new genome to replicates
         replicates.push({ ["genome" + val]: [...replicateTemplate] });
         setReplicates(replicates);
 
-        // Tab entfernt: Genom Objekt entfernen   
+      // remove genome tab   
       } else if (val < Object.keys(genomes).length) {
         genomes.pop();
         setGenomes(genomes);
-        // Replicates: Genom entfernen
+        // remove genome from replicates
         replicates.pop();
         setReplicates(replicates);
       }
     }
 
-    // Genome/Condition Beschriftungen anpassen
+    // update Genome/Condition label
     if (name === "typeofstudy") {
       const newName = "Number of " + val.charAt(0).toUpperCase() + val.slice(1) + "s";
       // Number of Genomes/Conditions
@@ -151,7 +178,7 @@ function App() {
   }
 
   /**
-   * update Wert eines Parameters in der parameter box
+   * update parameter value in parameter box
    */
   const updateParameterBox = (parent, node, element, value) => {
     setParameters(current => (
@@ -168,7 +195,7 @@ function App() {
   }
 
   /**
-   * update Wert eines Parameters in der setup box
+   * update parameter value in setup box
    */
   const updateSetupBox = (node, element, value) => {
     setParameters(current => (
@@ -182,7 +209,7 @@ function App() {
   }
 
   /**
-   * überprüft ob ein Parameter preset mit den aktuellen Parameter Werten vorliegt
+   * checks of parameter preset for current parameter values exists
    */
   const checkPreset = (value, parameterName) => {
     const names = ['stepheight', 'stepheightreduction', 'stepfactor', 'stepfactorreduction', 'enrichmentfactor', 'processingsitefactor'];
@@ -193,13 +220,13 @@ function App() {
 
     values.forEach((val) => {
       const v = val.replace(' ', '')
-      // veränderter Parameter übereinstimmung mit voreinstellung?
+      // matches changed parameter value with parameter preset
       if (parameters.parameterBox.Prediction[parameterName][v] === value) {
         match.push(val);
       }
     })
 
-    // restlichen Parameter überprüfen
+    // check remaining parameters
     if (match.length === 0) {
       setParameterPreset('custom');
     } else {
@@ -221,7 +248,7 @@ function App() {
   }
 
   /**
-   * passt Parameter entsprechend des ausgewählten parameter presets an
+   * updates parameters according to the chosen parameter preset
    */
   const handleParameterPreset = (event) => {
     setParameterPreset(event.target.value);
@@ -236,7 +263,7 @@ function App() {
   }
 
   /**
-   * speichert Eingaben in Textfeldern vom Genome Tab ab
+   * updates text input in genome tabs
    */
   const handleTabs = (event) => {
 
@@ -259,7 +286,7 @@ function App() {
     const file = event.target.files[0];
 
     // replicate
-    if (id.length > 1) {
+    if (id.length > 5) {
       saveReplicates(parseInt(id[0]), parseInt(id[2]), node, file);
       // genome
     } else {
@@ -338,7 +365,6 @@ function App() {
               ? <></>
               : <>
                 <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'file-box-align vis-hidden'}>
-                {/*<div className='file-box-align'>*/}
                   <p className='file-row'>Alignment File</p>
                   <label className='element-row file-row' htmlFor='alignment-file'>
                     <input className='element hidden' type="file" id='alignment-file' onChange={(e) => setAlignmentFile(e.target.files[0])} />

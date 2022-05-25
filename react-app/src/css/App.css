@@ -144,6 +144,9 @@ input:focus {
 .hidden {
     display: none;
 }
+.vis-hidden{
+    visibility:hidden;
+}
 .show {
     display: flex;
 }

@@ -66,9 +66,14 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
         }
     }
 
+    let className = 'drag-drop-zone';
+    if(state === 'upload') {
+        className += ' scroll';
+    } 
+
     return (
 
-        <div className={disabled ? 'drag-drop-zone disabled-zone' : 'drag-drop-zone'} onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)}>
+        <div className={disabled ? className + ' disabled-zone' : className} onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)}>
             {currentFiles.length === 0 || typeof currentFiles[0] === 'undefined' ? <p>{label}</p> : <></>}
 
             {typeof currentFiles !== 'undefined' ?

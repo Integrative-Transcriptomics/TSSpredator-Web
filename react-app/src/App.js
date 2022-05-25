@@ -337,7 +337,8 @@ function App() {
             {(typeof parameters.setup === 'undefined')
               ? <></>
               : <>
-                <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'hidden'}>
+                <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'file-box-align vis-hidden'}>
+                {/*<div className='file-box-align'>*/}
                   <p className='file-row'>Alignment File</p>
                   <label className='element-row file-row' htmlFor='alignment-file'>
                     <input className='element hidden' type="file" id='alignment-file' onChange={(e) => setAlignmentFile(e.target.files[0])} />

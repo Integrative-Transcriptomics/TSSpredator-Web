@@ -36,6 +36,7 @@
   flex-direction: row;
   align-items: center;
   height: 80%;
+  max-height: 80%;
   width: 100%;
   margin-left: 1rem;
 }
@@ -47,6 +48,7 @@
   align-items: center;
   width: 80%;
   height: 95%;
+  max-height: 95%;
   margin: 0 0.5rem;
 }
 
@@ -75,10 +77,14 @@
   background: #e0e0e0;
   border-radius: 0.5rem;
   height: 100%;
+  max-height: 100%;
   width: 100%;
   max-width:100%;
   box-shadow: 0 0.1rem 0.2rem rgb(0, 0, 0, 0.5);
   z-index: 2;
+}
+/*upload box*/ 
+.scroll {
   overflow: auto;
 }
 
@@ -109,6 +115,7 @@
 }
 .replicate-container {
   height: 100%;
+  max-height: 100%;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -123,6 +130,7 @@
   align-items: center;
   width: 80%;
   height:95%;
+  max-height: 95%;
 }
 
 .popup-footer {

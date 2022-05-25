@@ -49,10 +49,11 @@
 }
 
 .tab-input {
-  padding: 0.3rem;
+  padding: 0.3rem 0;
   justify-content: center;
   text-align: center;
-  width: 5rem;
+  width: 5.5rem;
+  max-width: 5.5rem;
   box-sizing: content-box;
   position: relative;
   border: 0px;

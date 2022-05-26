@@ -290,7 +290,7 @@ function App() {
       saveReplicates(parseInt(id[0]), parseInt(id[2]), node, file);
       // genome
     } else {
-      saveGenomes(parseInt(id), node, file);
+      saveGenomes(parseInt(id[0]), node, file);
     }
 
   }

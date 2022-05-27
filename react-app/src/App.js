@@ -57,19 +57,40 @@ function App() {
    * post input data to flask
   */
   function sendData() {
-    console.log(alignmentFile)
+    
     const formData = new FormData();
-    formData.append('file', genomes[0].genome1.genomefasta);
-    formData.append('projectName', JSON.stringify(projectName));
-    formData.append('paramters', JSON.stringify(parameters));
-    formData.append('parameterPreset', JSON.stringify(parameterPreset));
-    formData.append('rnaGraph', JSON.stringify(rnaGraph));
+
+    for(let i = 0; i < genomes.length; i++) {
+      const temp = genomes[i]['genome'+(i+1)]
+
+      formData.append('genomefasta', temp.genomefasta)
+      formData.append('genomeannotation', temp.genomeannotation)
+
+      const rep = replicates[i]['genome'+(i+1)]
+
+      for(let j = 0; j < rep.length; j++) {
+        const letter = String.fromCharCode(97 + j);
+        const temp1 =  rep[j]['replicate'+letter]
+
+        formData.append('enrichedforward', temp1.enrichedforward)
+        formData.append('enrichedreverse', temp1.enrichedreverse)
+        formData.append('normalforward', temp1.normalforward)
+        formData.append('normalreverse', temp1.normalreverse)
+      }
+    }
+
+    formData.append('alignmentfile', alignmentFile);
+    formData.append('projectname', JSON.stringify(projectName)); 
+    formData.append('parameters', JSON.stringify(parameters));
+    formData.append('parameterpreset', JSON.stringify(parameterPreset));
+    formData.append('rnagraph', JSON.stringify(rnaGraph));
     formData.append('genomes', JSON.stringify(genomes));
     formData.append('replicates', JSON.stringify(replicates));
-    formData.append('alignmentFile', alignmentFile);
+    
 
     fetch('/input/', {
       method: 'POST',
+     // headers: {'Content-Type': 'multipart/form-data'},
       body: formData
     }).then(response => response.json()).then((data) => console.log(data)).catch(err => console.log(err));
 
@@ -413,7 +434,7 @@ function App() {
           <p>or</p>
           <button className='button save' type="button">Save</button>
           <p>Configuration</p>
-          <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>RUN</button>
+          <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>Start TSS prediction</button>
         </div>
 
       </div>

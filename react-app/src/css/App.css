@@ -192,8 +192,9 @@ select:hover {
 
 .run {
     background-color: var(--mainColor);
+    max-width: 50rem;
     color: white;
-    margin-left: 36rem;
+    margin-left: 25rem;
     font-weight: bold;
     font-size: 1rem;
 }

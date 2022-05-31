@@ -86,6 +86,7 @@ function App() {
     formData.append('rnagraph', JSON.stringify(rnaGraph));
     formData.append('genomes', JSON.stringify(genomes));
     formData.append('replicates', JSON.stringify(replicates));
+    formData.append('replicateNum', JSON.stringify({'num': numRep}));
     
 
     fetch('/input/', {

@@ -8,6 +8,14 @@ import React from 'react';
  */
 function Parameter({ parameter, onChange, grid }) {
 
+  // for combo box
+  let value1 = 'genome';
+  let value2 = 'condition';
+  if(parameter.name === 'cluster method') {
+    value1 = parameter.combo1
+    value2 = parameter.combo2
+  }
+
   // when parameter value is a number -> input=number
   if (!isNaN(parameter.value)) {
 
@@ -25,8 +33,8 @@ function Parameter({ parameter, onChange, grid }) {
       <div className={grid ? 'parameter-select' : 'parameter-box margin-left'}>
         <label className='element'> {parameter.name}</label>
         <select value={parameter.value} name={parameter.key} id={parameter.group} onChange={(e) => onChange(e)}>
-          <option value="genome">{parameter.combo1}</option>
-          <option value="condition">{parameter.combo2}</option>
+          <option value={value1}>{parameter.combo1}</option>
+          <option value={value2}>{parameter.combo2}</option>
         </select>
       </div>
     );

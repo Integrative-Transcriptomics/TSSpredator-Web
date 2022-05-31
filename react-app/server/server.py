@@ -5,8 +5,7 @@ import sys
 import json
 import tempfile
 
-# own files
-import server_save_files as sf
+import server_handle_files as sf
 
 
 app = Flask(__name__)
@@ -27,10 +26,9 @@ def getInput():
     normalReverse = request.files.to_dict(flat=False)['normalreverse']
     alignmentFile = request.files['alignmentfile']
 
-   # projectName = request.form['projectname']
-   # parameters = request.form['parameters']
-   # parameterPreset = request.form['parameterPreset']
-   # rnaGraph = request.form['rnagraph']
+    projectName = request.form['projectname']
+    parameters = json.loads(request.form['parameters'])
+    rnaGraph = request.form['rnagraph']
     genomes = json.loads(request.form['genomes'])
     replicates = json.loads(request.form['replicates'])
     replicateNum = json.loads(request.form['replicateNum'])
@@ -51,7 +49,6 @@ def getInput():
         genomeCounter = 0
         replicateCounter = 0
         for x in range(len(enrichedForward)):
-
             # enrichedForward file
             fileEF = enrichedForward[x]
             replicates = sf.save_replicate_file(tmpdir, fileEF, replicates, genomeCounter, replicateCounter, 'enrichedforward')
@@ -78,6 +75,10 @@ def getInput():
         # save alignment file
         alignmentFilename = tmpdir + '/' + secure_filename(alignmentFile.filename)
         alignmentFile.save(alignmentFilename)
+
+        # create json string for jar
+        jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, tmpdir)
+
        
             
 

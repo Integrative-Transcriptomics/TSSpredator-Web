@@ -82,7 +82,6 @@ function App() {
     formData.append('alignmentfile', alignmentFile);
     formData.append('projectname', JSON.stringify(projectName)); 
     formData.append('parameters', JSON.stringify(parameters));
-    formData.append('parameterpreset', JSON.stringify(parameterPreset));
     formData.append('rnagraph', JSON.stringify(rnaGraph));
     formData.append('genomes', JSON.stringify(genomes));
     formData.append('replicates', JSON.stringify(replicates));

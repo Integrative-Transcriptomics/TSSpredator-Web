@@ -29,7 +29,6 @@ public class Main {
 
     public static String programInfo = "TSSpredator v1.1beta   --  built 2021/03/31  --  http://it.inf.uni-tuebingen.de/tsspredator\n";
 
-    public static PrintStream out = null;
 
     /**
      * The default gene identifier type.
@@ -129,7 +128,7 @@ public class Main {
 
         long timeStart = System.currentTimeMillis();
 
-        out.print(programInfo);
+        System.out.println(programInfo);
 
         //IDs
         String[] ids = Config.getString("idList").split(",");
@@ -153,7 +152,7 @@ public class Main {
         String outDir = Config.getString("outputDirectory") + "/";
 
         //Genomes and Annotations
-         out.println("Reading Genomes and Annotations...");
+         System.out.println("Reading Genomes and Annotations...");
 
         Map<String, String> genomeMap = new HashMap<String, String>();
 
@@ -210,13 +209,13 @@ public class Main {
                     }
                 }
 
-                annotationMap.put(id, GFFio.parseMultiGFF(Config.getString("annotation_" + id), contigHandlerMap.get(id), Config.getString("outputID_" + id), out));
+                annotationMap.put(id, GFFio.parseMultiGFF(Config.getString("annotation_" + id), contigHandlerMap.get(id), Config.getString("outputID_" + id), System.out));
                 //System.out.print("anno: " + annotationMap.get(id));
                 //System.out.println("id: " +  id + "entries" + contigHandlerMap.get(id).getFASTAentries());
                 //the case with only one fasta entry and one gff file
             } else {
                 try {
-                    String df = EvaluateIdentifier.evaluateCommonIdentifierNew(Config.getString("genome_" + id), Config.getString("fivePrimePlus_" + id + "a"), out, Config.getString("annotation_" + id));
+                    String df = EvaluateIdentifier.evaluateCommonIdentifierNew(Config.getString("genome_" + id), Config.getString("fivePrimePlus_" + id + "a"), System.out, Config.getString("annotation_" + id));
                     //System.out.println("testid: "+df);
                     DEFAULT_SEQUENCE_IDENTIFIER.put(id, df);
                     //System.out.println(DEFAULT_SEQUENCE_IDENTIFIER);
@@ -225,31 +224,31 @@ public class Main {
                 } catch (IOException e) {
                     throw new Exception("Could not find " + e.getMessage()); //System.out.println("default sequence identifier: " + DEFAULT_SEQUENCE_IDENTIFIER);
                 }
-                out.println("Common Identifier " + DEFAULT_SEQUENCE_IDENTIFIER.get(id) + " was found.");
+                System.out.println("Common Identifier " + DEFAULT_SEQUENCE_IDENTIFIER.get(id) + " was found.");
                 //System.err.println("Hello");
                 if (DEFAULT_SEQUENCE_IDENTIFIER.get(id) == null) {
                     //throw new Exception("A common gene identifier (gi, gb, ref...) has to be present in all files! check for files");
                     throw new Exception("A common identifier has to be present in all files! Check for identifiers in files!");
                 }
 
-                annotationMap.put(id, GFFio.parseGFF(Config.getString("annotation_" + id), Config.getString("outputID_" + id), out));
+                annotationMap.put(id, GFFio.parseGFF(Config.getString("annotation_" + id), Config.getString("outputID_" + id), System.out));
             }
         }
 
 
         //check if annotation file is available
         if (annotationMap.get("1").size() == 0) {
-            out.println("There is no annotation file! All TSS will be classified as orphan!");
+            System.out.println("There is no annotation file! All TSS will be classified as orphan!");
         }
 
         //read alignment
         SuperGenome superG;
         if (Config.getString("mode").equalsIgnoreCase("align")) {
-            out.println("Reading alignment...");
+            System.out.println("Reading alignment...");
             List<XmfaBlock> alignmentBlocks = XmfaParser.parseXmfa(Config.getString("xmfa"));
 
             //SuperGenome
-            out.println("Building SuperGenome...");
+            System.out.println("Building SuperGenome...");
             superG = new SuperGenome(alignmentBlocks, ids);
         } else if (Config.getString("mode").equalsIgnoreCase("cond")) {
             superG = new SuperGenome(genomeMap.values().iterator().next().length(), ids);
@@ -299,18 +298,18 @@ public class Main {
         }
 
         ////Graph files
-        out.println("Reading Graph files...");
+        System.out.println("Reading Graph files...");
         double[][] tmpGraphs;
 
         boolean alreadyCached = fivePrimePlusMap != null;
 
         if (alreadyCached) {
-            out.println("\tusing cached data");
+            System.out.println("\tusing cached data");
         }
 
         //FivePrime fow
         if (!alreadyCached) {
-            out.print("\tfivePrimePlus");
+            System.out.print("\tfivePrimePlus");
             fivePrimePlusMap = new HashMap<String, double[][]>();
             for (String id : ids) {
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
@@ -324,16 +323,16 @@ public class Main {
                     tmpGraphs[i][0] = 1;
                     currentHandler.clearWiggleMerger();
                     //tmpGraphs[i] = XYio.readXYfile(Config.getString("fivePrimePlus_"+id+repIDs[i]), genomeMap.get(id).length(), 1);
-                    out.print(".");
+                    System.out.print(".");
                 }
                 fivePrimePlusMap.put(id, tmpGraphs);
             }
-            out.print("\n");
+            System.out.print("\n");
         }
 
         //Normal fow
         if (!alreadyCached) {
-            out.print("\tnormalPlus");
+            System.out.print("\tnormalPlus");
             normalPlusMap = new HashMap<String, double[][]>();
             for (String id : ids) {
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
@@ -345,16 +344,16 @@ public class Main {
                     tmpGraphs[i][0] = 1;
                     currentHandler.clearWiggleMerger();
                     //tmpGraphs[i] = XYio.readXYfile(Config.getString("normalPlus_"+id+repIDs[i]), genomeMap.get(id).length(), 1);
-                    out.print(".");
+                    System.out.print(".");
                 }
                 normalPlusMap.put(id, tmpGraphs);
             }
-           out.print("\n");
+           System.out.print("\n");
         }
 
         //FivePrime rev
         if (!alreadyCached) {
-            out.print("\tfivePrimeMinus");
+            System.out.print("\tfivePrimeMinus");
             fivePrimeMinusMap = new HashMap<String, double[][]>();
             for (String id : ids) {
                 //System.out.println("id: "+ id);
@@ -367,16 +366,16 @@ public class Main {
                     tmpGraphs[i][0] = -1;
                     currentHandler.clearWiggleMerger();
                     //tmpGraphs[i] = XYio.readXYfile(Config.getString("fivePrimeMinus_"+id+repIDs[i]), genomeMap.get(id).length(), -1);
-                    out.print(".");
+                    System.out.print(".");
                 }
                 fivePrimeMinusMap.put(id, tmpGraphs);
             }
-            out.print("\n");
+            System.out.print("\n");
         }
 
         //Normal rev
         if (!alreadyCached) {
-            out.print("\tnormalMinus");
+            System.out.print("\tnormalMinus");
             normalMinusMap = new HashMap<String, double[][]>();
             for (String id : ids) {
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
@@ -388,17 +387,17 @@ public class Main {
                     tmpGraphs[i][0] = -1;
                     currentHandler.clearWiggleMerger();
                     //tmpGraphs[i] = XYio.readXYfile(Config.getString("normalMinus_"+id+repIDs[i]), genomeMap.get(id).length(), -1);
-                   out.print(".");
+                   System.out.print(".");
                 }
                 normalMinusMap.put(id, tmpGraphs);
             }
-            out.print("\n");
+            System.out.print("\n");
         }
 
 
         ////normalize
         if (!alreadyCached && Parameters.normPercentile > 0) {
-            out.println("Normalizing Graph files...");
+            System.out.println("Normalizing Graph files...");
 //			/*
             for (String id : ids)
                 for (int i = 0; i < Parameters.numReplicates; i++)
@@ -451,10 +450,10 @@ public class Main {
         ////write Graphs
         if (Config.getBoolean("writeGraphs")) {
 
-             out.println("Writing Graph files...");
+             System.out.println("Writing Graph files...");
 
             //FivePrime fow
-            out.println("\tfivePrimePlus");
+            System.out.println("\tfivePrimePlus");
             for (String id : ids) {
                 for (int i = 0; i < Parameters.numReplicates; i++) {
                     XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, fivePrimePlusMap.get(id)[i], fivePrimeMinusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superFivePrimePlus.gr", "super");
@@ -464,7 +463,7 @@ public class Main {
 
 
             //Normal fow
-            out.println("\tnormalPlus");
+            System.out.println("\tnormalPlus");
             for (String id : ids)
                 for (int i = 0; i < Parameters.numReplicates; i++) {
                     XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, normalPlusMap.get(id)[i], normalMinusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superNormalPlus.gr", "super");
@@ -472,7 +471,7 @@ public class Main {
                 }
 
             //FivePrime revERROR_MESSAGE
-            out.println("\tfivePrimeMinus");
+            System.out.println("\tfivePrimeMinus");
             for (String id : ids)
                 for (int i = 0; i < Parameters.numReplicates; i++) {
                     XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, fivePrimeMinusMap.get(id)[i], fivePrimePlusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superFivePrimeMinus.gr", "super");
@@ -480,7 +479,7 @@ public class Main {
                 }
 
             //Normal rev
-            out.println("\tnormalMinus");
+            System.out.println("\tnormalMinus");
             for (String id : ids)
                 for (int i = 0; i < Parameters.numReplicates; i++) {
                     XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, normalMinusMap.get(id)[i], normalPlusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superNormalMinus.gr", "super");
@@ -489,7 +488,7 @@ public class Main {
 
         }
         ////write SuperGenomified annotations
-        out.println("Writing SuperGenome annotations...");
+        System.out.println("Writing SuperGenome annotations...");
 
         for (String id : ids) {
             //System.out.println("annoMap:" + annotationMap.get(id));
@@ -523,7 +522,7 @@ public class Main {
 
 
         ////write aligned genome fasta
-        out.println("Writing SuperGenome Sequences...");
+        System.out.println("Writing SuperGenome Sequences...");
 
         for (String id : ids) {
             bw = new BufferedWriter(new FileWriter(outDir + Config.getString("outputPrefix_" + id) + "_super.fa"));
@@ -536,7 +535,7 @@ public class Main {
         bw.close();
 
         ////TSS prediction
-        out.println("Predicting TSS...");
+        System.out.println("Predicting TSS...");
 
         Map<String, List<TSS>> tssMap = new HashMap<String, List<TSS>>();
         List<TSS> tmpTssList;
@@ -595,7 +594,7 @@ public class Main {
         bw.close();
 
         /////classify TSS
-        out.println("Classifying TSS...");
+        System.out.println("Classifying TSS...");
 
         bw = new BufferedWriter(new FileWriter(outDir + "MasterTable.tsv"));
 
@@ -772,7 +771,7 @@ public class Main {
         bw.close();
 
         //write genomeTSS.gff
-        out.println("Writing genome-wise TSS results...");
+        System.out.println("Writing genome-wise TSS results...");
 
         for (String id : ids) {
             bw = new BufferedWriter(new FileWriter(outDir + Config.getString("outputPrefix_" + id) + "_TSS.gff"));
@@ -811,7 +810,7 @@ public class Main {
 
 
         /////statistics
-        out.println("Calculating statistics...");
+        System.out.println("Calculating statistics...");
 
         bw = new BufferedWriter(new FileWriter(outDir + "TSSstatistics.tsv"));
 
@@ -1140,7 +1139,7 @@ public class Main {
 
         //generate Expression Matrix using ortholog mapping
         if (Config.entryExists("orthologMapping")) {
-            out.println("Calculating Expression Matrix from Orthologs...");
+            System.out.println("Calculating Expression Matrix from Orthologs...");
 
             bw = new BufferedWriter(new FileWriter(outDir + "expression_orthologs.tsv"));
 
@@ -1229,7 +1228,7 @@ public class Main {
         }
 
         double timeTaken = (System.currentTimeMillis() - timeStart) / 1000d;
-        out.println("All done! " + timeTaken + " s" + "\n\n\n");
+        System.out.println("All done! " + timeTaken + " s" + "\n\n\n");
     }
 
     public static void ringMode() throws Exception {

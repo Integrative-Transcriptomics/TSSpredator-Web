@@ -1,4 +1,3 @@
-
 package json;
 
 import java.util.Collections;
@@ -7,8 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * speichert Eingaben als JSON-String, um ihn ans frontend zu schicken
- * frontend stellt eingaben dann dar
+ * saves input/parameters from Map in JSON string -> send to frontend
  */
 
 public class JSONwrite {
@@ -20,13 +18,12 @@ public class JSONwrite {
 
         String json = "{";
 
-
         for (String key : keys) {
 
             json += "\"" + key + "\": \"" + values.get(key) + "\",";
         }
 
-        // letzte Komma entfernen
+        // remove last comma
         json = json.substring(0, json.length() - 1);
         json += "}";
 

@@ -21,14 +21,13 @@ import wiggle.ioNew.WiggleParser;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 
 public class Main {
+
+    public static String programInfo = "TSSpredator v1.1beta   --  built 2021/03/31  --  http://it.inf.uni-tuebingen.de/tsspredator\n";
 
     public static PrintStream out = null;
 
@@ -47,54 +46,64 @@ public class Main {
     private String JSONfile;
     private boolean loadConfig = false;
     private boolean saveConfig = false;
+    private boolean readAlignment = false;
     private Map<String, String> values;
 
-    // input der jar Datei
+    // saves input of the jar file
     public Main(String input1) {
         this.JSONfile = input1;
     }
 
-    // zum einlesen der json Datei
-    public Main(boolean loadConfig, boolean saveConfig, Map<String, String> values) {
+    // read json string
+    public Main(boolean loadConfig, boolean saveConfig, boolean readAlignment, Map<String, String> values) {
         this.loadConfig = loadConfig;
         this.saveConfig = saveConfig;
+        this.readAlignment = readAlignment;
         this.values = values;
     }
 
+    /**
+     * runs TSS prediction, reads config file or writes config file
+     * @throws Exception
+     */
     public void compute() throws Exception {
 
-        // JSON Datei auslesen
+        // read JSON string
         Main main = JSONparser.parse(this.JSONfile);
         this.values = main.values;
         this.saveConfig = main.saveConfig;
         this.loadConfig = main.loadConfig;
+        this.readAlignment = main.readAlignment;
 
-        // conf Datei laden
+        // read config file
         if(this.loadConfig) {
-            // unter 'configFile' wird Dateiname gespeichert
+            // under 'configFile' the path to the file is saved
             Config.readConfigFile(this.values.get("configFile"));
             this.values = Config.getConfig();
             String json = JSONwrite.write(this.values);
             System.out.println(json);
-            // TODO: json String zurück ans frontend geben
 
-        // Eingaben als conf Datei speichern
+        // create config File
         } else if(this.saveConfig) {
             saveConfig();
             // TODO: error oder bestätigung dass es geklappt hat zurückgeben -> pop-up fenster im frontend
 
-        // Run
+        // read alignment File
+        } else if(this.readAlignment) {
+            String json = setNamesAndIDsFromXMFA(this.values.get("alignmentFile"));
+            System.out.println(json);
+
+        // Start TSS prediction
         } else {
             Config.setConfig(this.values);
             alignMode();
-            // TODO: files zurückgeben (werden momentan auf system gespeichert)
         }
     }
 
     public static Map<String, String> DEFAULT_SEQUENCE_IDENTIFIER = new HashMap<>();
 
     /**
-     * speichert Eingaben als config File
+     * saves input as config file
      */
     public void saveConfig() {
 
@@ -110,7 +119,6 @@ public class Main {
                 bw.write(s + " = " + values.get(s));
                 bw.newLine();
             }
-
             bw.close();
         } catch (Exception e) {
             System.err.print("An error occured while saving the configuration:\n" + e.getMessage());
@@ -120,6 +128,8 @@ public class Main {
     public void alignMode() throws Exception {
 
         long timeStart = System.currentTimeMillis();
+
+        out.print(programInfo);
 
         //IDs
         String[] ids = Config.getString("idList").split(",");
@@ -133,18 +143,17 @@ public class Main {
         //RepIDs
         char[] repIDs = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
 
-        if (Parameters.numReplicates > 25)
-            throw new Error("Not more than 25 replicates supported!");
+        if (Parameters.numReplicates > 26)
+            throw new Error("Not more than 26 replicates supported!");
 
         if (ids.length != Config.getInt("numberOfDatasets"))
             throw new Error("numberOfDatasets does not match length of idList!");
 
-        //output
+        //output directory
         String outDir = Config.getString("outputDirectory") + "/";
 
         //Genomes and Annotations
-        // out.println("Reading Genomes and Annotations...");
-
+         out.println("Reading Genomes and Annotations...");
 
         Map<String, String> genomeMap = new HashMap<String, String>();
 
@@ -177,7 +186,7 @@ public class Main {
                 Object[] fastaIDs = fastaEntries.toArray();
                 // System.out.println(fastaEntries.toString());
                 //store GFF files
-                List<String> allGffs = GFFio.scanDir(Config.getString("annotation_" + id));
+                List<String> allGffs = GFFio.scanDir(Config.getString("annotation_" + id)); // TODO: hier ordner namen angeben in dem alle gff dateien für genomID enthalten sind
                 //System.out.println("gffs: " + allGffs);
                 List<String> gffIdentifier = GFFio.extractAnnotationIdentifier(Config.getString("annotation_" + id));
                 //System.out.println("size " + gffIdentifier.size());
@@ -216,32 +225,31 @@ public class Main {
                 } catch (IOException e) {
                     throw new Exception("Could not find " + e.getMessage()); //System.out.println("default sequence identifier: " + DEFAULT_SEQUENCE_IDENTIFIER);
                 }
-                //out.println("Common Identifier " + DEFAULT_SEQUENCE_IDENTIFIER.get(id) + " was found.");
+                out.println("Common Identifier " + DEFAULT_SEQUENCE_IDENTIFIER.get(id) + " was found.");
                 //System.err.println("Hello");
                 if (DEFAULT_SEQUENCE_IDENTIFIER.get(id) == null) {
                     //throw new Exception("A common gene identifier (gi, gb, ref...) has to be present in all files! check for files");
                     throw new Exception("A common identifier has to be present in all files! Check for identifiers in files!");
                 }
-                // TODO: nochmal abändern
-                annotationMap.put(id, GFFio.parseGFF(Config.getString("annotation_" + id), Config.getString("outputID_" + ids[0]), out));
-                //annotationMap.put(id, GFFio.parseGFF(Config.getString("annotation_" + id), Config.getString("outputID_" + id), out));
+
+                annotationMap.put(id, GFFio.parseGFF(Config.getString("annotation_" + id), Config.getString("outputID_" + id), out));
             }
         }
 
 
         //check if annotation file is available
         if (annotationMap.get("1").size() == 0) {
-            //out.println("There is no annotation file! All TSS will be classified as orphan!");
+            out.println("There is no annotation file! All TSS will be classified as orphan!");
         }
 
         //read alignment
         SuperGenome superG;
         if (Config.getString("mode").equalsIgnoreCase("align")) {
-            // out.println("Reading alignment...");
+            out.println("Reading alignment...");
             List<XmfaBlock> alignmentBlocks = XmfaParser.parseXmfa(Config.getString("xmfa"));
 
             //SuperGenome
-            // out.println("Building SuperGenome...");
+            out.println("Building SuperGenome...");
             superG = new SuperGenome(alignmentBlocks, ids);
         } else if (Config.getString("mode").equalsIgnoreCase("cond")) {
             superG = new SuperGenome(genomeMap.values().iterator().next().length(), ids);
@@ -291,18 +299,18 @@ public class Main {
         }
 
         ////Graph files
-        // out.println("Reading Graph files...");
+        out.println("Reading Graph files...");
         double[][] tmpGraphs;
 
         boolean alreadyCached = fivePrimePlusMap != null;
 
         if (alreadyCached) {
-            // out.println("\tusing cached data");
+            out.println("\tusing cached data");
         }
 
         //FivePrime fow
         if (!alreadyCached) {
-            // out.print("\tfivePrimePlus");
+            out.print("\tfivePrimePlus");
             fivePrimePlusMap = new HashMap<String, double[][]>();
             for (String id : ids) {
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
@@ -316,16 +324,16 @@ public class Main {
                     tmpGraphs[i][0] = 1;
                     currentHandler.clearWiggleMerger();
                     //tmpGraphs[i] = XYio.readXYfile(Config.getString("fivePrimePlus_"+id+repIDs[i]), genomeMap.get(id).length(), 1);
-                    // out.print(".");
+                    out.print(".");
                 }
                 fivePrimePlusMap.put(id, tmpGraphs);
             }
-            // out.print("\n");
+            out.print("\n");
         }
 
         //Normal fow
         if (!alreadyCached) {
-            // out.print("\tnormalPlus");
+            out.print("\tnormalPlus");
             normalPlusMap = new HashMap<String, double[][]>();
             for (String id : ids) {
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
@@ -337,16 +345,16 @@ public class Main {
                     tmpGraphs[i][0] = 1;
                     currentHandler.clearWiggleMerger();
                     //tmpGraphs[i] = XYio.readXYfile(Config.getString("normalPlus_"+id+repIDs[i]), genomeMap.get(id).length(), 1);
-                    // out.print(".");
+                    out.print(".");
                 }
                 normalPlusMap.put(id, tmpGraphs);
             }
-           // out.print("\n");
+           out.print("\n");
         }
 
         //FivePrime rev
         if (!alreadyCached) {
-            // out.print("\tfivePrimeMinus");
+            out.print("\tfivePrimeMinus");
             fivePrimeMinusMap = new HashMap<String, double[][]>();
             for (String id : ids) {
                 //System.out.println("id: "+ id);
@@ -359,16 +367,16 @@ public class Main {
                     tmpGraphs[i][0] = -1;
                     currentHandler.clearWiggleMerger();
                     //tmpGraphs[i] = XYio.readXYfile(Config.getString("fivePrimeMinus_"+id+repIDs[i]), genomeMap.get(id).length(), -1);
-                    // out.print(".");
+                    out.print(".");
                 }
                 fivePrimeMinusMap.put(id, tmpGraphs);
             }
-            // out.print("\n");
+            out.print("\n");
         }
 
         //Normal rev
         if (!alreadyCached) {
-            // out.print("\tnormalMinus");
+            out.print("\tnormalMinus");
             normalMinusMap = new HashMap<String, double[][]>();
             for (String id : ids) {
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
@@ -380,17 +388,17 @@ public class Main {
                     tmpGraphs[i][0] = -1;
                     currentHandler.clearWiggleMerger();
                     //tmpGraphs[i] = XYio.readXYfile(Config.getString("normalMinus_"+id+repIDs[i]), genomeMap.get(id).length(), -1);
-                   // out.print(".");
+                   out.print(".");
                 }
                 normalMinusMap.put(id, tmpGraphs);
             }
-            // out.print("\n");
+            out.print("\n");
         }
 
 
         ////normalize
         if (!alreadyCached && Parameters.normPercentile > 0) {
-            // out.println("Normalizing Graph files...");
+            out.println("Normalizing Graph files...");
 //			/*
             for (String id : ids)
                 for (int i = 0; i < Parameters.numReplicates; i++)
@@ -443,10 +451,10 @@ public class Main {
         ////write Graphs
         if (Config.getBoolean("writeGraphs")) {
 
-            // out.println("Writing Graph files...");
+             out.println("Writing Graph files...");
 
             //FivePrime fow
-           // out.println("\tfivePrimePlus");
+            out.println("\tfivePrimePlus");
             for (String id : ids) {
                 for (int i = 0; i < Parameters.numReplicates; i++) {
                     XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, fivePrimePlusMap.get(id)[i], fivePrimeMinusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superFivePrimePlus.gr", "super");
@@ -456,7 +464,7 @@ public class Main {
 
 
             //Normal fow
-            // out.println("\tnormalPlus");
+            out.println("\tnormalPlus");
             for (String id : ids)
                 for (int i = 0; i < Parameters.numReplicates; i++) {
                     XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, normalPlusMap.get(id)[i], normalMinusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superNormalPlus.gr", "super");
@@ -464,7 +472,7 @@ public class Main {
                 }
 
             //FivePrime revERROR_MESSAGE
-            // out.println("\tfivePrimeMinus");
+            out.println("\tfivePrimeMinus");
             for (String id : ids)
                 for (int i = 0; i < Parameters.numReplicates; i++) {
                     XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, fivePrimeMinusMap.get(id)[i], fivePrimePlusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superFivePrimeMinus.gr", "super");
@@ -472,7 +480,7 @@ public class Main {
                 }
 
             //Normal rev
-            // out.println("\tnormalMinus");
+            out.println("\tnormalMinus");
             for (String id : ids)
                 for (int i = 0; i < Parameters.numReplicates; i++) {
                     XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, normalMinusMap.get(id)[i], normalPlusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superNormalMinus.gr", "super");
@@ -481,7 +489,7 @@ public class Main {
 
         }
         ////write SuperGenomified annotations
-        // out.println("Writing SuperGenome annotations...");
+        out.println("Writing SuperGenome annotations...");
 
         for (String id : ids) {
             //System.out.println("annoMap:" + annotationMap.get(id));
@@ -515,7 +523,7 @@ public class Main {
 
 
         ////write aligned genome fasta
-        // out.println("Writing SuperGenome Sequences...");
+        out.println("Writing SuperGenome Sequences...");
 
         for (String id : ids) {
             bw = new BufferedWriter(new FileWriter(outDir + Config.getString("outputPrefix_" + id) + "_super.fa"));
@@ -528,7 +536,7 @@ public class Main {
         bw.close();
 
         ////TSS prediction
-        // out.println("Predicting TSS...");
+        out.println("Predicting TSS...");
 
         Map<String, List<TSS>> tssMap = new HashMap<String, List<TSS>>();
         List<TSS> tmpTssList;
@@ -587,7 +595,7 @@ public class Main {
         bw.close();
 
         /////classify TSS
-        // out.println("Classifying TSS...");
+        out.println("Classifying TSS...");
 
         bw = new BufferedWriter(new FileWriter(outDir + "MasterTable.tsv"));
 
@@ -764,7 +772,7 @@ public class Main {
         bw.close();
 
         //write genomeTSS.gff
-        // out.println("Writing genome-wise TSS results...");
+        out.println("Writing genome-wise TSS results...");
 
         for (String id : ids) {
             bw = new BufferedWriter(new FileWriter(outDir + Config.getString("outputPrefix_" + id) + "_TSS.gff"));
@@ -803,7 +811,7 @@ public class Main {
 
 
         /////statistics
-        // out.println("Calculating statistics...");
+        out.println("Calculating statistics...");
 
         bw = new BufferedWriter(new FileWriter(outDir + "TSSstatistics.tsv"));
 
@@ -1132,7 +1140,7 @@ public class Main {
 
         //generate Expression Matrix using ortholog mapping
         if (Config.entryExists("orthologMapping")) {
-            //out.println("Calculating Expression Matrix from Orthologs...");
+            out.println("Calculating Expression Matrix from Orthologs...");
 
             bw = new BufferedWriter(new FileWriter(outDir + "expression_orthologs.tsv"));
 
@@ -1221,7 +1229,7 @@ public class Main {
         }
 
         double timeTaken = (System.currentTimeMillis() - timeStart) / 1000d;
-        // out.println("All done! " + timeTaken + " s" + "\n\n\n");
+        out.println("All done! " + timeTaken + " s" + "\n\n\n");
     }
 
     public static void ringMode() throws Exception {
@@ -1302,5 +1310,60 @@ public class Main {
         if (b)
             return (1);
         return (0);
+    }
+
+    public String setNamesAndIDsFromXMFA(String filename) {
+
+        try {
+            Map<String, String> nameMap = new HashMap<String, String>();
+            BufferedReader br = new BufferedReader(new FileReader(filename));
+
+            int i = 1;
+            String[] fields;
+            for (String line = br.readLine(); line != null; line = br.readLine()) {
+                line = line.trim();
+
+                if (line.length() == 0)
+                    continue;
+
+                //header finished
+                if (line.startsWith(">"))
+                    break;
+
+                //entry
+                if (line.startsWith("#Sequence" + i + "File")) {
+                    fields = line.split("\t");
+
+                    if (fields.length < 2) {
+                        return "Error: The header of the alignment file is missing or not in proper format (Mauve xmfa format).\nGenome names and alignment IDs cannot be parsed from the file.\nPlease set them manually.";
+                    }
+
+                    fields = fields[1].split("/|\\\\");
+                    nameMap.put(Integer.toString(i++), fields[fields.length - 1]);
+                }
+            }
+
+            br.close();
+
+            //no entries
+            if (nameMap.size() == 0) {
+                return "The header of the alignment file is missing or not in proper format (Mauve xmfa format).\nGenome names and alignment IDs cannot be parsed from the file.\nPlease set them manually.";
+            }
+
+            //set values
+            String jsonString = "{";
+            for (int j = 0; j < nameMap.size(); j++) {
+                jsonString += "\"genome_" + (j+1) + "\": \"" + nameMap.get(Integer.toString(j + 1)) + "\",";
+                jsonString += "\"id_" + (j+1) + "\": \"" + Integer.toString(j+1) + "\",";
+            }
+
+            jsonString = jsonString.substring(0, jsonString.length() - 1);
+            jsonString += "}";
+            return jsonString;
+
+        } catch (Throwable t) {
+            return "Error: An error occured while parsing the alignment file:\n" + t.getMessage();
+        }
+
     }
 }

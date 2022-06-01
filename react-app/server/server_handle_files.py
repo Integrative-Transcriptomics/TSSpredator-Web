@@ -43,7 +43,7 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
         writeGraph = "1"
 
     jsonString = '{'
-    jsonString += '"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "configFile": "' + configFile + '",'
+    jsonString += '"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "loadAlignment": "false", "configFile": "' + configFile + '",'
     # add parameters
     jsonString += '"TSSinClusterSelectionMethod": "' + str(clustering['clustermethod']['value']) + '",'
     jsonString += '"allowedCompareShift": "' + str(comparative['allowedcrossgenomeshift']['value']) + '",'
@@ -66,7 +66,7 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"numReplicates": "' + str(replicateNum['num']) + '",'
     jsonString += '"numberOfDatasets": "' + str(len(genomes)) + '",'
     jsonString += '"outputDirectory": "' + outputDirectory + '/",'
-    jsonString += '"projectName": "' + projectName + '",'
+    jsonString += '"projectName": ' + projectName + ','
     jsonString += '"superGraphCompatibility": "igb",'
     jsonString += '"texNormPercentile": "' + str(normalization['enrichmentnormalizationpercentile']['value']) + '",'
     jsonString += '"writeGraphs": "' + writeGraph + '",'

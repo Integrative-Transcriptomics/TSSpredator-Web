@@ -34,16 +34,20 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     classification = parameterBox['Classification']
     comparative = parameterBox['Comparative']
 
+   
+
+    jsonString = '{'
+    jsonString += '"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "loadAlignment": "false", "configFile": "' + configFile + '",'
+
     studytype = "align"
     if(setupBox['typeofstudy']['value'] == 'condition'):
         studytype = 'cond'
+        jsonString += '"printReplicateStats": "1",'
 
     writeGraph = "0"
     if(rnaGraph == 'true'):
         writeGraph = "1"
 
-    jsonString = '{'
-    jsonString += '"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "loadAlignment": "false", "configFile": "' + configFile + '",'
     # add parameters
     jsonString += '"TSSinClusterSelectionMethod": "' + str(clustering['clustermethod']['value']) + '",'
     jsonString += '"allowedCompareShift": "' + str(comparative['allowedcrossgenomeshift']['value']) + '",'
@@ -66,7 +70,7 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"numReplicates": "' + str(replicateNum['num']) + '",'
     jsonString += '"numberOfDatasets": "' + str(len(genomes)) + '",'
     jsonString += '"outputDirectory": "' + outputDirectory + '/",'
-    jsonString += '"projectName": ' + projectName + ','
+    jsonString += '"projectName": ' + projectName + ','    
     jsonString += '"superGraphCompatibility": "igb",'
     jsonString += '"texNormPercentile": "' + str(normalization['enrichmentnormalizationpercentile']['value']) + '",'
     jsonString += '"writeGraphs": "' + writeGraph + '",'

@@ -11,7 +11,7 @@ import '../css/DragDrop.css';
  * creates the main window and saves all inputs
  */
 
-function Main() {
+function Main({a}) {
 
     const [projectName, setProjectName] = useState({});
     const [parameters, setParameters] = useState([{}]);
@@ -50,6 +50,7 @@ function Main() {
      */
     const handleSubmit = (event) => {
         event.preventDefault();
+        a();
         sendData();
     }
 
@@ -87,7 +88,7 @@ function Main() {
         formData.append('replicates', JSON.stringify(replicates));
         formData.append('replicateNum', JSON.stringify({ 'num': numRep }));
 
-
+     
         fetch('/input/', {
             method: 'POST',
             // headers: {'Content-Type': 'multipart/form-data'},
@@ -97,9 +98,11 @@ function Main() {
             .then(blob => {
 
                 // open result in new tab
-                const newWindow = window.open('/result', '_blank', 'noopener,noreferrer')
+                const newWindow = window.open('/result', 'test', '_blank', 'noopener,noreferrer');
+                      
+               
 
-
+/*
                 const url = newWindow.URL.createObjectURL(
                     new Blob([blob]),
                 );
@@ -111,7 +114,7 @@ function Main() {
                 );
 
                 // Append to html link element page
-                document.body.appendChild(link);
+                document.body.appendChild(link);*/
 
                 // Start download
                 //link.click();

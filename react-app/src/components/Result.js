@@ -1,11 +1,16 @@
 import React from 'react';
 
-function Result() {
+function Result({a}) {
+
+    console.log(a);
+   
     return (
         <div>
             <header>
                 <h1>TSSpredator</h1>
             </header>
+
+           
         </div>
     )
 }

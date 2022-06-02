@@ -1,14 +1,34 @@
 from werkzeug.utils import secure_filename
+import tempfile
 
 def save_genome_file(directory, file, genomeObject, idx, node):
-    # save file in temporary directory
-    filename = directory + '/' + secure_filename(file.filename)
-    file.save(filename)
+
+    # save annotation files for each genome in individual directory
+    if(node == 'genomeannotation'):
+       
+        filename =''
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # go over list for genome x, with all annotation files for genome x
+            for x in file:
+                newTmpDir = tmpdir.replace('\\', '/')
+                
+                # save file x in tempDirectory
+                filename = newTmpDir + '/' + secure_filename(x.filename)
+                x.save(filename)
             
-    # save filename in genome object
-    genomeObject[idx]['genome'+str(idx+1)][node] = filename
+        # save filename of the last file -> jar: scans directory of the annotation file if multiFasta is given
+        genomeObject[idx]['genome'+str(idx+1)][node] = filename              
+
+    else:
+        # save file in temporary directory
+        filename = directory + '/' + secure_filename(file.filename)
+        file.save(filename)
+            
+        # save filename in genome object
+        genomeObject[idx]['genome'+str(idx+1)][node] = filename
 
     return genomeObject
+   
 
 def save_replicate_file(directory, file, replicateObject, genomeCounter, replicateCounter, node):
 

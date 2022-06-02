@@ -50,8 +50,7 @@ function Main() {
      */
     const handleSubmit = (event) => {
         event.preventDefault();
-        //sendData();
-        console.log(genomes);
+        sendData();
     }
 
     /**
@@ -62,21 +61,24 @@ function Main() {
         const formData = new FormData();
 
         for (let i = 0; i < genomes.length; i++) {
-            const temp = genomes[i]['genome' + (i + 1)]
+            const temp = genomes[i]['genome' + (i + 1)];
 
-            formData.append('genomefasta', temp.genomefasta)
-            formData.append('genomeannotation', temp.genomeannotation)
-
+            formData.append('genomefasta', temp.genomefasta);
+            // go over annotation array
+            for(let k = 0; k < temp.genomeannotation.length; k++) {
+                formData.append('genomeannotation'+(i+1), temp.genomeannotation[k]);
+            }
+            
             const rep = replicates[i]['genome' + (i + 1)]
 
             for (let j = 0; j < rep.length; j++) {
                 const letter = String.fromCharCode(97 + j);
-                const temp1 = rep[j]['replicate' + letter]
+                const temp1 = rep[j]['replicate' + letter];
 
-                formData.append('enrichedforward', temp1.enrichedforward)
-                formData.append('enrichedreverse', temp1.enrichedreverse)
-                formData.append('normalforward', temp1.normalforward)
-                formData.append('normalreverse', temp1.normalreverse)
+                formData.append('enrichedforward', temp1.enrichedforward);
+                formData.append('enrichedreverse', temp1.enrichedreverse);
+                formData.append('normalforward', temp1.normalforward);
+                formData.append('normalreverse', temp1.normalreverse);
             }
         }
 

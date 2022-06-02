@@ -5,14 +5,12 @@ import Result from './components/Result';
 
 function App() {
   
-  const [state, setState] = useState('test')
-
   return (
     <BrowserRouter>
       <Routes>
 
-        <Route path="/" element={<Main a={() => setState('aaaaaaa')}/>} />
-        <Route path="/result" element={<Result a={state}/>} />
+        <Route path="/" element={<Main/>} />
+        <Route path="/result" element={<Result />} />
 
       </Routes>
     </BrowserRouter>

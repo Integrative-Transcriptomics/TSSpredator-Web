@@ -11,7 +11,7 @@ import '../css/DragDrop.css';
  * creates the main window and saves all inputs
  */
 
-function Main({a}) {
+function Main() {
 
     const [projectName, setProjectName] = useState({});
     const [parameters, setParameters] = useState([{}]);
@@ -50,7 +50,6 @@ function Main({a}) {
      */
     const handleSubmit = (event) => {
         event.preventDefault();
-        a();
         sendData();
     }
 
@@ -88,42 +87,18 @@ function Main({a}) {
         formData.append('replicates', JSON.stringify(replicates));
         formData.append('replicateNum', JSON.stringify({ 'num': numRep }));
 
-     
+
         fetch('/input/', {
             method: 'POST',
             // headers: {'Content-Type': 'multipart/form-data'},
             body: formData
         })
-            .then(response => response.blob())
-            .then(blob => {
-
-                // open result in new tab
-                const newWindow = window.open('/result', 'test', '_blank', 'noopener,noreferrer');
-                      
-               
-
-/*
-                const url = newWindow.URL.createObjectURL(
-                    new Blob([blob]),
-                );
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute(
-                    'download',
-                    `test.zip`,
-                );
-
-                // Append to html link element page
-                document.body.appendChild(link);*/
-
-                // Start download
-                //link.click();
-
-                // Clean up and remove the link
-                //link.parentNode.removeChild(link);
-            })
-            //.then((data) => console.log(data))
-            .catch(err => console.log(err));
+        .then(response => {
+            response.json()
+            // open result in new tab
+            window.open('/result', '_blank', 'noopener,noreferrer');})
+        .then(data => console.log(data))
+        .catch(err => console.log(err));
     }
 
     /**

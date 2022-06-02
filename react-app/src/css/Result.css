@@ -1,0 +1,5 @@
+.download-link {
+    cursor: pointer;
+    color: rgb(64, 0, 255);
+    text-decoration-line: underline;
+}

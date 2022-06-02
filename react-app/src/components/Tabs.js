@@ -14,9 +14,10 @@ import PopupWindow from "./PopupWindow";
  * @param numRep: number of replicates
  * @param saveFiles: function to handle multiple uploaded files
  * @param saveIndividualFile: saves an individual file
+ * @param saveAnnotationFile: saves annotation files
  */
 
-function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs, numRep, saveFiles, saveIndividualFile }) {
+function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs, numRep, saveFiles, saveIndividualFile, saveAnnotationFile }) {
 
   // current active tab
   const [state, setState] = useState(1);
@@ -82,12 +83,12 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
                 {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID" }, { "name": "Output ID" }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
                   <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
                   <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)}
-                    saveIndividualFile={(e) => saveIndividualFile(e)} />
+                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)}/>
                   <Tabs genomes={replicates[i]['genome' + (i + 1)]} genome={false} whichGenome={i} handleTabs={(e) => handleTabs(e)}
-                    saveIndividualFile={(e) => saveIndividualFile(e)} />
+                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)}/>
                 </>
                   : <UploadFilesIndividually files={fileNames} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)}
-                    saveIndividualFile={(e) => saveIndividualFile(e)} />}
+                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)}/>}
               </div>
             )
           })

@@ -102,6 +102,7 @@ input:focus {
 
 .button {
     cursor: pointer;
+    max-height: 2.2rem;
     color: rgb(0, 0, 0, 0.8);
     background-color: #e0e0e0;
     font-size: 0.8rem;
@@ -125,8 +126,11 @@ input:focus {
 .file-name {
     font-size: 0.8rem;
     color: rgba(0, 0, 0, 1);
-    width: 80%;
+    width: 75%;
     font-style: italic;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;

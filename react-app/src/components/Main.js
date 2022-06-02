@@ -18,7 +18,7 @@ function Main() {
     const [parameterPreset, setParameterPreset] = useState("default");
     // checkbox
     const [rnaGraph, setRnaGraph] = useState(false);
-    const [genomes, setGenomes] = useState([{ "genome1": { "name": "Genome 1", "placeholder": "Genome 1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": "" } }]);
+    const [genomes, setGenomes] = useState([{ "genome1": { "name": "Genome 1", "placeholder": "Genome 1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": [] } }]);
     const [replicates, setReplicates] = useState([{ "genome1": [{ "replicatea": { "name": "Replicate a", "enrichedforward": "", "enrichedreverse": "", "normalforward": "", "normalreverse": "" } }] }]);
     const [alignmentFile, setAlignmentFile] = useState("");
 
@@ -50,7 +50,8 @@ function Main() {
      */
     const handleSubmit = (event) => {
         event.preventDefault();
-        sendData();
+        //sendData();
+        console.log(genomes);
     }
 
     /**
@@ -168,7 +169,7 @@ function Main() {
                     [...current,
                     {
                         ["genome" + val]:
-                            { name: genomeName, placeholder: genomeName, alignmentid: "", outputid: "", genomefasta: "", genomeannotation: "" }
+                            { name: genomeName, placeholder: genomeName, alignmentid: "", outputid: "", genomefasta: "", genomeannotation: [] }
                     }]
                 ))
                 // add new genome to replicates
@@ -317,7 +318,23 @@ function Main() {
         } else {
             saveGenomes(parseInt(id[0]), node, file);
         }
+    }
 
+     /**
+     * saves annotation file(s)
+     */
+      const saveAnnotationFile = (event) => {
+
+        const node = event.target.name;
+        const id = parseInt(event.target.id[0]);
+        const file = event.target.files[0];
+
+        const temp = [...genomes];
+        const tmpArray = temp[id]['genome' + (id + 1)][node];
+        tmpArray.push(file);
+        temp[id]['genome' + (id + 1)][node] = tmpArray ;
+        setGenomes([...temp]);
+    
     }
 
     /** 
@@ -400,7 +417,7 @@ function Main() {
 
                                 <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value}
                                     handleTabs={(e) => handleTabs(e)} numRep={numRep} saveFiles={(g, ef, er, nf, nr, idx) => saveFiles(g, ef, er, nf, nr, idx)}
-                                    saveIndividualFile={(e) => saveIndividualFile(e)} />
+                                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} />
                             </>
                         }
                     </div>

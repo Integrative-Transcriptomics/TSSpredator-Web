@@ -130,7 +130,6 @@ input:focus {
     font-style: italic;
     display: flex;
     flex-direction: row;
-    align-items: center;
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;

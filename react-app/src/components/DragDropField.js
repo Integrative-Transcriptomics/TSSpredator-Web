@@ -26,9 +26,9 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
 
     // dragged item over drop container
     const handleDragOver = (event) => {
-        // only one file per field, exeption: upload box
+        // only one file per field, exeption: upload box and genome annotation files
         if(!disabled) {
-            if (state === 'upload' || currentFiles.length === 0 || typeof currentFiles[0] === 'undefined') {
+            if (state === 'upload' || state === 'genomeAnn' || currentFiles.length === 0 || typeof currentFiles[0] === 'undefined') {
                 event.preventDefault();
                 event.stopPropagation();
             }

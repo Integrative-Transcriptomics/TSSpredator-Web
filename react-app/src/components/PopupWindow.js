@@ -93,9 +93,8 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
 
     const saveFiles = (event) => {
 
-        let genomeFiles = { 'genomefasta': '', 'genomeannotation': '' };
+        let genomeFiles = { 'genomefasta': '', 'genomeannotation': [] };
         let genomeFastaFound = false;
-        let genomeAnnfound = false;
 
         let enrichedForwardFiles = { '0': '' };
         let numEF = 0;
@@ -114,9 +113,8 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
                 genomeFiles.genomefasta = file;
                 genomeFastaFound = true;
                 return;
-            } else if (genomeAnn.includes(file.name) && !genomeAnnfound) {
-                genomeFiles.genomeannotation = file;
-                genomeAnnfound = true;
+            } else if (genomeAnn.includes(file.name)) {
+                genomeFiles.genomeannotation.push(file);
                 return;
             } else {
                 if (numEF <= numRep) {
@@ -184,9 +182,9 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
                     <div className='drop-box-column column-active'>
                         <h4>Genome Files</h4>
                         <div className='drop-box'>
-                            <DragDropField label={disabled ? 'no file needed' : 'Genome FASTA'} currentFiles={genomeFasta} state='genomeFasta' disabled={disabled}
+                            <DragDropField label={disabled ? 'no file needed' : 'Genome FASTA file'} currentFiles={genomeFasta} state='genomeFasta' disabled={disabled}
                                 handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
-                            <DragDropField label={disabled ? 'no file needed' : 'Genome Annotation'} currentFiles={genomeAnn} state='genomeAnn' disabled={disabled}
+                            <DragDropField label={disabled ? 'no file needed' : 'Genome Annotation file(s)'} currentFiles={genomeAnn} state='genomeAnn' disabled={disabled}
                                 handleAdd={(e) => handleAdd(e, genomeAnn, setGenomeAnn)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
                         </div>
                     </div>

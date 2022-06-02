@@ -18,12 +18,28 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
     // save file names to drag and drop
     const [upload, setUpload] = useState([]);
     const [genomeFasta, setGenomeFasta] = useState([]);
-    const [genomeAnn, setGenomeAnn] = useState([]);
     // each index in the objects stands for one replicate
     const [enrichF, setEnrichF] = useState({});
     const [enrichR, setEnrichR] = useState({});
     const [normalF, setNormalF] = useState({});
     const [normalR, setNormalR] = useState({});
+
+    // save files from annotation folder
+    const [genomeAnn, setGenomeAnn] = useState([]);
+    const [genomeAnnfolder, setGenomAnnFolder] = useState("");
+
+    const saveAnnotationFile = (event) => {
+        const tmpArray = [];
+
+        for(let i = 0; i < (event.target.files).length; i++) {
+            tmpArray.push(event.target.files[i]);
+        }
+        setGenomeAnn([...tmpArray]);
+
+        var relativePath = (event.target.files)[0].webkitRelativePath;
+        var folder = relativePath.split("/")[0];
+        setGenomAnnFolder(folder);
+    }
 
     // save all uploaded Files
     const handleNewFiles = (event) => {
@@ -93,7 +109,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
 
     const saveFiles = (event) => {
 
-        let genomeFiles = { 'genomefasta': '', 'genomeannotation': [] };
+        let genomeFiles = { 'genomefasta': '', 'genomeannotation': [...genomeAnn] };
         let genomeFastaFound = false;
 
         let enrichedForwardFiles = { '0': '' };
@@ -112,9 +128,6 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
             if (genomeFasta.includes(file.name) && !genomeFastaFound) {
                 genomeFiles.genomefasta = file;
                 genomeFastaFound = true;
-                return;
-            } else if (genomeAnn.includes(file.name)) {
-                genomeFiles.genomeannotation.push(file);
                 return;
             } else {
                 if (numEF <= numRep) {
@@ -155,6 +168,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
                 }
             }
         })
+      
         saveAllFiles(genomeFiles, enrichedForwardFiles, enrichedReverseFiles, normalForwardFiles, normalReverseFiles);
         closePopup(event);
     }
@@ -169,10 +183,11 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
 
                     <div className='drop-box-column column-active'>
                         <DragDropField label={'Drop your files for Genome ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
-                            handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
+                            handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} 
+                            />
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }} >
                         <div className="long-arrow">
                             <div className="arrow-line"></div>
                             <div className="arrow-point"></div>
@@ -183,9 +198,17 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
                         <h4>Genome Files</h4>
                         <div className='drop-box'>
                             <DragDropField label={disabled ? 'no file needed' : 'Genome FASTA file'} currentFiles={genomeFasta} state='genomeFasta' disabled={disabled}
-                                handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
-                            <DragDropField label={disabled ? 'no file needed' : 'Genome Annotation file(s)'} currentFiles={genomeAnn} state='genomeAnn' disabled={disabled}
-                                handleAdd={(e) => handleAdd(e, genomeAnn, setGenomeAnn)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} />
+                                handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)}
+                                tooltip="FASTA file containing the genomic sequence of this genome." />
+
+                            <label className={disabled ? ' disabled-zone drag-drop-zone' : 'drag-drop-zone'} title="Folder containing all GFF/GTF genomic annotation files for this genome.">
+                            {genomeAnnfolder.length === 0 ? <p>Click to select Genome Annotation folder</p> 
+                                                        : <div  className='drag-box no-drag'> {genomeAnnfolder}</div>} 
+                            
+
+                                <input disabled={disabled} type='file' style={{ display: 'none' }} directory="" webkitdirectory="" onChange={(e) => saveAnnotationFile(e)}/>
+
+                            </label>
                         </div>
                     </div>
 

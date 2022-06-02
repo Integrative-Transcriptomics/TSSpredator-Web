@@ -36,11 +36,22 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
 
       if (fileArray.length > 0) {
         fileName = '';
-        fileArray.forEach(file => {
-          fileName += file.name + ', '
-        });
-        // remove last comma
-        fileName = fileName.slice(0, -2);
+        // less than 5 files, show all file names
+        if(fileArray.length < 5) {
+          fileArray.forEach(file => {
+            fileName += file.name + ', '
+          });
+          // remove last comma
+          fileName = fileName.slice(0, -2);
+
+        // more than 5 files, show only first 5 file names
+        } else {
+          for(let i = 0; i < 5; i++) {
+            fileName += fileArray[i].name + ', ';
+          }
+          fileName += '...'
+        }
+   
       }
     } else {
       fileName = genomes[gIdx]['genome' + (gIdx + 1)][label].name;
@@ -49,14 +60,15 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
 
   if (label === 'genomeannotation') {
     return (
-      <div className={show ? 'file-box' : 'hidden'}>
+      <div className={show ? 'file-box' : 'hidden'} title={file.tooltip}>
         <p className='file-row'>{file.name}</p>
         <label className='element-row file-row'>
 
-          <input disabled={disabled} className='element' type="file" name={label} id={id + 'annfile'} style={{ display: 'none' }}
-            onChange={(e) => saveAnnotationFile(e)} multiple />
+          <input disabled={disabled} className='element' type='file' name={label} id={id + 'annfile'} style={{ display: 'none' }}
+            onChange={(e) => saveAnnotationFile(e)} directory=""
+            webkitdirectory=""  />
 
-          <p className={disabled ? 'button disabled' : 'button'}>Select File(s)</p>
+          <p className={disabled ? 'button disabled' : 'button'}>Select Folder</p>
           {typeof fileName === 'undefined' ? <div className='file-name'>No file(s) selected.</div> 
                                            : <div className='file-name'> {fileName}</div>}
         </label>
@@ -64,7 +76,7 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
     )
   } else {
     return (
-      <div className={show ? 'file-box' : 'hidden'}>
+      <div className={show ? 'file-box' : 'hidden'} title={file.tooltip}>
         <p className='file-row'>{file.name}</p>
         <label className='element-row file-row'>
 

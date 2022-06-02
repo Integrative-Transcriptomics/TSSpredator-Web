@@ -50,7 +50,22 @@ function Main() {
      */
     const handleSubmit = (event) => {
         event.preventDefault();
+        updateGenomes();
+       
         sendData();
+    }
+
+    const updateGenomes = () => {
+        if(parameters.setup.typeofstudy.value === 'condition') {
+            const temp = [...genomes];
+            var outputId = temp[0]['genome1']['outputid']
+            for(let i = 0; i < genomes.length; i++) {
+                temp[i]['genome' + (i + 1)]['alignmentid'] = (i+1);
+                temp[i]['genome' + (i + 1)]['outputid'] = outputId;
+            }
+            
+            setGenomes([...temp]);
+        }
     }
 
     /**
@@ -65,10 +80,10 @@ function Main() {
 
             formData.append('genomefasta', temp.genomefasta);
             // go over annotation array
-            for(let k = 0; k < temp.genomeannotation.length; k++) {
-                formData.append('genomeannotation'+(i+1), temp.genomeannotation[k]);
+            for (let k = 0; k < temp.genomeannotation.length; k++) {
+                formData.append('genomeannotation' + (i + 1), temp.genomeannotation[k]);
             }
-            
+
             const rep = replicates[i]['genome' + (i + 1)]
 
             for (let j = 0; j < rep.length; j++) {
@@ -82,7 +97,6 @@ function Main() {
             }
         }
 
-        formData.append('alignmentfile', alignmentFile);
         formData.append('projectname', JSON.stringify(projectName));
         formData.append('parameters', JSON.stringify(parameters));
         formData.append('rnagraph', JSON.stringify(rnaGraph));
@@ -90,18 +104,37 @@ function Main() {
         formData.append('replicates', JSON.stringify(replicates));
         formData.append('replicateNum', JSON.stringify({ 'num': numRep }));
 
+        if (parameters.setup.typeofstudy.value === 'genome') {
+            formData.append('alignmentfile', alignmentFile);
 
-        fetch('/input/', {
-            method: 'POST',
-            // headers: {'Content-Type': 'multipart/form-data'},
-            body: formData
-        })
-        .then(response => {
-            response.json()
-            // open result in new tab
-            window.open('/result', '_blank', 'noopener,noreferrer');})
-        .then(data => console.log(data))
-        .catch(err => console.log(err));
+            fetch('/genome/', {
+                method: 'POST',
+                // headers: {'Content-Type': 'multipart/form-data'},
+                body: formData
+            })
+                .then(response => {
+                    response.json()
+                    // open result in new tab
+                    window.open('/result', '_blank', 'noopener,noreferrer');
+                })
+                .then(data => console.log(data))
+                .catch(err => console.log(err));
+        } else {
+            console.log(genomes)
+            fetch('/condition/', {
+                method: 'POST',
+                // headers: {'Content-Type': 'multipart/form-data'},
+                body: formData
+            })
+                .then(response => {
+                    response.json()
+                    // open result in new tab
+                    window.open('/result', '_blank', 'noopener,noreferrer');
+                })
+                .then(data => console.log(data))
+                .catch(err => console.log(err));
+        }
+
     }
 
     /**
@@ -164,6 +197,7 @@ function Main() {
 
 
         if (name === "numberofgenomes") {
+           
             // add genom tab
             const genomeName = (parameters.setup.typeofstudy.value).charAt(0).toUpperCase() + (parameters.setup.typeofstudy.value).slice(1) + " " + val;
             if (val > Object.keys(genomes).length) {
@@ -322,21 +356,22 @@ function Main() {
         }
     }
 
-     /**
-     * saves annotation file(s)
-     */
-      const saveAnnotationFile = (event) => {
+    /**
+    * saves annotation file(s)
+    */
+    const saveAnnotationFile = (event) => {
 
         const node = event.target.name;
         const id = parseInt(event.target.id[0]);
-        const file = event.target.files[0];
-
         const temp = [...genomes];
         const tmpArray = temp[id]['genome' + (id + 1)][node];
-        tmpArray.push(file);
-        temp[id]['genome' + (id + 1)][node] = tmpArray ;
+
+        for (let i = 0; i < (event.target.files).length; i++) {
+            tmpArray.push(event.target.files[i]);
+        }
+
+        temp[id]['genome' + (id + 1)][node] = tmpArray;
         setGenomes([...temp]);
-    
     }
 
     /** 
@@ -366,6 +401,7 @@ function Main() {
      * saves genome files
      */
     const saveGenomes = (gId, node, file) => {
+
         const temp = [...genomes];
         temp[gId]['genome' + (gId + 1)][node] = file;
         setGenomes([...temp]);
@@ -408,7 +444,7 @@ function Main() {
                         {(typeof parameters.setup === 'undefined')
                             ? <></>
                             : <>
-                                <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'file-box-align vis-hidden'}>
+                                <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'file-box-align vis-hidden'} title='Select the xmfa alignment file containing the aligned genomes.'>
                                     <p className='file-row'>Alignment File</p>
                                     <label className='element-row file-row' htmlFor='alignment-file'>
                                         <input className='element hidden' type="file" id='alignment-file' onChange={(e) => setAlignmentFile(e.target.files[0])} />
@@ -441,8 +477,10 @@ function Main() {
                                 <option value="very sensitive">very sensitive</option>
                             </select>
 
-                            <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)} />
-                            <label className='element' htmlFor='check'>write rna-seq graph</label>
+                            <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)}
+                                title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime." />
+                            <label className='element' htmlFor='check'
+                                title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime.">write rna-seq graph</label>
                         </div>
 
                         {(typeof parameters.parameterBox === 'undefined')

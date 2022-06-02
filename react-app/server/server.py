@@ -23,9 +23,57 @@ def parameters():
 def getFiles():
     return  send_file('./result.zip', mimetype='application/zip') #, as_attachment=True) 
 
+@app.route('/condition/', methods=['POST', 'GET'])
+def getCondition():
+    # get all input information
+    genomeFasta = request.files.to_dict(flat=False)['genomefasta']
 
-@app.route('/input/', methods=['POST', 'GET'])
-def getInput():
+    # multiple genomannotation files per genome possible
+    genomeAnnotation = []
+    for x in range(len(genomeFasta)):
+        genomeAnnotation.append(request.files.to_dict(flat=False)['genomeannotation'+str(x+1)])
+  
+    enrichedForward  = request.files.to_dict(flat=False)['enrichedforward']
+    enrichedReverse = request.files.to_dict(flat=False)['enrichedreverse']
+    normalForward = request.files.to_dict(flat=False)['normalforward']
+    normalReverse = request.files.to_dict(flat=False)['normalreverse']
+
+    projectName = request.form['projectname']
+    parameters = json.loads(request.form['parameters'])
+    rnaGraph = request.form['rnagraph']
+    genomes = json.loads(request.form['genomes'])
+    replicates = json.loads(request.form['replicates'])
+    replicateNum = json.loads(request.form['replicateNum'])
+
+    # create temporary directory, save files and save filename in genome/replicate object
+    with tempfile.TemporaryDirectory() as tmpdir: 
+
+        newTmpDir = tmpdir.replace('\\', '/')
+ 
+        sf.save_files(newTmpDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
+
+        with tempfile.TemporaryDirectory() as resultDir:
+
+            newResultDir = resultDir.replace('\\', '/')
+
+            # create json string for jar
+            jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, '', projectName, parameters, rnaGraph, newResultDir)
+
+            print(jsonString)
+
+            # call jar file for TSS prediction
+            subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString])
+
+            # zip files
+            if os.path.exists("result.zip"):
+                os.remove("result.zip")
+            make_archive('result', 'zip', newResultDir)
+
+            # return 'success' or 'error'
+            return {'result': 'success'}
+
+@app.route('/genome/', methods=['POST', 'GET'])
+def getGenome():
 
     # get all input information
     genomeFasta = request.files.to_dict(flat=False)['genomefasta']
@@ -34,7 +82,7 @@ def getInput():
     genomeAnnotation = []
     for x in range(len(genomeFasta)):
         genomeAnnotation.append(request.files.to_dict(flat=False)['genomeannotation'+str(x+1)])
-        
+  
     enrichedForward  = request.files.to_dict(flat=False)['enrichedforward']
     enrichedReverse = request.files.to_dict(flat=False)['enrichedreverse']
     normalForward = request.files.to_dict(flat=False)['normalforward']
@@ -49,49 +97,15 @@ def getInput():
     replicateNum = json.loads(request.form['replicateNum'])
 
     # create temporary directory, save files and save filename in genome/replicate object
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory() as tmpdir: 
 
         newTmpDir = tmpdir.replace('\\', '/')
  
-        # genomefasta files
-        for x in range(len(genomeFasta)):
-            genomes = sf.save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta')
-
-        # genomeannotation files 
-        for x in range(len(genomeAnnotation)):
-            genomes = sf.save_genome_file(newTmpDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
-
-        
-        # enriched forward/reverse and normal forward/reverse files
-        genomeCounter = 0
-        replicateCounter = 0
-        for x in range(len(enrichedForward)):
-            # enrichedForward file
-            fileEF = enrichedForward[x]
-            replicates = sf.save_replicate_file(newTmpDir, fileEF, replicates, genomeCounter, replicateCounter, 'enrichedforward')
-
-            # enrichedReverse file
-            fileER = enrichedReverse[x]
-            replicates = sf.save_replicate_file(newTmpDir, fileER, replicates, genomeCounter, replicateCounter, 'enrichedreverse')
-
-            # normalForward file
-            fileNF = normalForward[x]
-            replicates = sf.save_replicate_file(newTmpDir, fileNF, replicates, genomeCounter, replicateCounter, 'normalforward')
-
-            # normalReverse file
-            fileNR = normalReverse[x]
-            replicates = sf.save_replicate_file(newTmpDir, fileNR, replicates, genomeCounter, replicateCounter, 'normalreverse')
-
-            # last replicate in the genome updated -> look at next genome and begin replicates at 0
-            if(replicateCounter == replicateNum['num'] - 1):
-                replicateCounter = 0
-                genomeCounter += 1
-            else:
-                replicateCounter += 1
+        sf.save_files(newTmpDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
 
         # save alignment file
         alignmentFilename = newTmpDir + '/' + secure_filename(alignmentFile.filename)
-        alignmentFile.save(alignmentFilename)
+        alignmentFile.save(alignmentFilename)       
 
         with tempfile.TemporaryDirectory() as resultDir:
 
@@ -101,14 +115,13 @@ def getInput():
             jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
 
             # call jar file for TSS prediction
-           # subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString])
+            subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString])
 
             # zip files
-            #if os.path.exists("result.zip"):
-            #    os.remove("result.zip")
-            #make_archive('result', 'zip', newResultDir)
+            if os.path.exists("result.zip"):
+                os.remove("result.zip")
+            make_archive('result', 'zip', newResultDir)
 
-            print(jsonString)
             # return 'success' or 'error'
             return {'result': 'success'}
         

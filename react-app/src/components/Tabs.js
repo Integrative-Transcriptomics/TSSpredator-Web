@@ -41,11 +41,14 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
   let fileNames;
   if (genome) {
     tabClass = 'tab'
-    fileNames = [{ "name": "Genome FASTA", "value": "Genome FASTA" }, { "name": "Genome Annotation", "value": "Genome Annotation" }]
+    fileNames = [{ "name": "Genome FASTA", "value": "Genome FASTA", "tooltip": "FASTA file containing the genomic sequence of this genome." }, 
+                 { "name": "Genome Annotation", "value": "Genome Annotation", "tooltip": "Folder containing all GFF/GTF genomic annotation files for this genome." }]
   } else {
     tabClass = 'tab-rep'
-    fileNames = [{ "name": "enriched forward", "value": "enriched forward" }, { "name": "enriched reverse", "value": "enriched reverse" },
-    { "name": "normal forward", "value": "normal forward" }, { "name": "normal reverse", "value": "normal reverse" }]
+    fileNames = [{ "name": "enriched forward", "value": "enriched forward", "tooltip": "Graph file containing the RNA-seq expression graph for the forward strand from the 5' enrichment library." }, 
+                  { "name": "enriched reverse", "value": "enriched reverse", "tooltip": "Graph file containing the RNA-seq expression graph for the reverse strand from the 5' enrichment library." },
+                { "name": "normal forward", "value": "normal forward", "tooltip": "Graph file containing the RNA-seq expression graph for the forward strand from library without 5' enrichment." },
+                 { "name": "normal reverse", "value": "normal reverse", "tooltip": "Graph file containing the RNA-seq expression graph for the reverse strand from library without 5' enrichment." }]
   }
 
   return (
@@ -62,7 +65,7 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
               <div className={state === (i + 1) ? tabClass + ' tab-active' : tabClass} key={(i + 1)} onClick={() => { setState((i + 1)) }}>
 
                 {genome ? <input className={state === (i + 1) ? 'tab-input tab-input-active' : 'tab-input'} type="text" id={i} name="name"
-                  placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} />
+                  placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} title="Brief unique name for this strain/condition, which can be freely chosen. As this name is also used in some filenames any special characters (including spaces) should be avoided." />
                   : "Replicate " + String.fromCharCode(97 + i)}
               </div>
 

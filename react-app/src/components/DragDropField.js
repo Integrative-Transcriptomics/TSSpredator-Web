@@ -12,7 +12,7 @@ import React from 'react';
  * @param disabled: should field be disabled
  */
 
-function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, handleFiles, index, disabled }) {
+function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, handleFiles, index, disabled, tooltip }) {
 
     const handleDragStart = (event) => {
         event.dataTransfer.setData('name', event.target.dataset.name);
@@ -26,9 +26,9 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
 
     // dragged item over drop container
     const handleDragOver = (event) => {
-        // only one file per field, exeption: upload box and genome annotation files
-        if(!disabled) {
-            if (state === 'upload' || state === 'genomeAnn' || currentFiles.length === 0 || typeof currentFiles[0] === 'undefined') {
+        // only one file per field, exeption: upload box 
+        if (!disabled) {
+            if (state === 'upload' || currentFiles.length === 0 || typeof currentFiles[0] === 'undefined') {
                 event.preventDefault();
                 event.stopPropagation();
             }
@@ -40,6 +40,8 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
         event.preventDefault();
         event.stopPropagation();
         const newFiles = [...event.dataTransfer.files];
+
+
 
         // no new file uploaded, just a item moved from a different container
         if (newFiles.length === 0) {
@@ -67,13 +69,12 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
     }
 
     let className = 'drag-drop-zone';
-    if(state === 'upload') {
+    if (state === 'upload') {
         className += ' scroll';
-    } 
+    }
 
     return (
-
-        <div className={disabled ? className + ' disabled-zone' : className} onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)}>
+        <div className={disabled ? className + ' disabled-zone' : className} onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)} title={tooltip}>
             {currentFiles.length === 0 || typeof currentFiles[0] === 'undefined' ? <p>{label}</p> : <></>}
 
             {typeof currentFiles !== 'undefined' ?
@@ -85,7 +86,6 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
                     )
                 }) : <></>}
         </div>
-
     )
 }
 

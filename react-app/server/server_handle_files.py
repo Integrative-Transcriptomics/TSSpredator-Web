@@ -1,20 +1,57 @@
 from werkzeug.utils import secure_filename
 import tempfile
 
+
+def save_files(newTmpDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum ):
+
+    # genomefasta files
+        for x in range(len(genomeFasta)):
+            genomes = save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta')
+
+        # genomeannotation files 
+        for x in range(len(genomeAnnotation)):
+            genomes = save_genome_file(newTmpDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
+
+        
+        # enriched forward/reverse and normal forward/reverse files
+        genomeCounter = 0
+        replicateCounter = 0
+        for x in range(len(enrichedForward)):
+            # enrichedForward file
+            fileEF = enrichedForward[x]
+            replicates = save_replicate_file(newTmpDir, fileEF, replicates, genomeCounter, replicateCounter, 'enrichedforward')
+
+            # enrichedReverse file
+            fileER = enrichedReverse[x]
+            replicates = save_replicate_file(newTmpDir, fileER, replicates, genomeCounter, replicateCounter, 'enrichedreverse')
+
+            # normalForward file
+            fileNF = normalForward[x]
+            replicates = save_replicate_file(newTmpDir, fileNF, replicates, genomeCounter, replicateCounter, 'normalforward')
+
+            # normalReverse file
+            fileNR = normalReverse[x]
+            replicates = save_replicate_file(newTmpDir, fileNR, replicates, genomeCounter, replicateCounter, 'normalreverse')
+
+            # last replicate in the genome updated -> look at next genome and begin replicates at 0
+            if(replicateCounter == replicateNum['num'] - 1):
+                replicateCounter = 0
+                genomeCounter += 1
+            else:
+                replicateCounter += 1
+
 def save_genome_file(directory, file, genomeObject, idx, node):
 
     # save annotation files for each genome in individual directory
     if(node == 'genomeannotation'):
        
         filename =''
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # go over list for genome x, with all annotation files for genome x
-            for x in file:
-                newTmpDir = tmpdir.replace('\\', '/')
-                
-                # save file x in tempDirectory
-                filename = newTmpDir + '/' + secure_filename(x.filename)
-                x.save(filename)
+        # go over list for genome x, with all annotation files for genome x
+        for x in file:
+                  
+            # save file x in tempDirectory
+            filename = directory + '/' + secure_filename(x.filename)
+            x.save(filename)
             
         # save filename of the last file -> jar: scans directory of the annotation file if multiFasta is given
         genomeObject[idx]['genome'+str(idx+1)][node] = filename              
@@ -63,6 +100,8 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     if(setupBox['typeofstudy']['value'] == 'condition'):
         studytype = 'cond'
         jsonString += '"printReplicateStats": "1",'
+    else:
+        jsonString += '"xmfa": "' + alignmentFilepath + '",'
 
     writeGraph = "0"
     if(rnaGraph == 'true'):
@@ -94,8 +133,8 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"superGraphCompatibility": "igb",'
     jsonString += '"texNormPercentile": "' + str(normalization['enrichmentnormalizationpercentile']['value']) + '",'
     jsonString += '"writeGraphs": "' + writeGraph + '",'
-    jsonString += '"writeNocornacFiles": "0" ,'
-    jsonString += '"xmfa": "' + alignmentFilepath + '",'
+    jsonString += '"writeNocornacFiles": "0" ,'      
+    
 
     # add genome fasta, genome annotation files, alignment id, output id and genome names
     idList = ''

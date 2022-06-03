@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import ParameterGroup from './ParameterGroup';
-import ParameterAllGroups from './ParameterAllGroups';
-import Tabs from './Tabs';
+import ParameterGroup from './Main/ParameterGroup';
+import ParameterAllGroups from './Main/ParameterAllGroups';
+import Tabs from './Main/Tabs';
 import '../css/Tabs.css';
 import '../css/App.css';
 import '../css/Grid.css';

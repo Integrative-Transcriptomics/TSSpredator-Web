@@ -19,7 +19,7 @@ function Main() {
     const [parameterPreset, setParameterPreset] = useState("default");
     // checkbox
     const [rnaGraph, setRnaGraph] = useState(false);
-    const [genomes, setGenomes] = useState([{ "genome1": { "name": "Genome_1", "placeholder": "Genome_1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": [] } }]);
+    const [genomes, setGenomes] = useState([{ "genome1": { "name": "Condition_1", "placeholder": "Condition_1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": [] } }]);
     const [replicates, setReplicates] = useState([{ "genome1": [{ "replicatea": { "name": "Replicate a", "enrichedforward": "", "enrichedreverse": "", "normalforward": "", "normalreverse": "" } }] }]);
     const [alignmentFile, setAlignmentFile] = useState("");
 
@@ -161,7 +161,7 @@ function Main() {
 
             if (tmpAnnotation.length <= 0) {
                 seteHeader("WARNING");
-                showError("Missing Annotation file for " + studyType + " " + (i + 1) + ". This file is not required, but if no Annotation file is given, all TSS Candidates are classified as orphans.");
+                showError("Missing Annotation file for " + studyType + " " + (i + 1) + ". This file is not required, but if no Annotation file is given, all TSS will be classified as orphan.");
                 return false;
             } else {
                 for (let j = 0; j < tmpAnnotation.length; j++) {

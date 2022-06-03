@@ -9,8 +9,8 @@ import React from 'react';
 function Parameter({ parameter, onChange, grid }) {
 
   // for combo box
-  let value1 = 'genome';
-  let value2 = 'condition';
+  let value1 = 'condition';
+  let value2 = 'genome';
   if(parameter.name === 'cluster method') {
     value1 = parameter.combo1
     value2 = parameter.combo2

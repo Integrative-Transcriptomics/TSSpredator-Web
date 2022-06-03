@@ -32,8 +32,11 @@ def getInput():
 
    # multiple genomannotation files per genome possible
     genomeAnnotation = []
-    for x in range(len(genomeFasta)):
-        genomeAnnotation.append(request.files.to_dict(flat=False)['genomeannotation'+str(x+1)])
+    try:
+        for x in range(len(genomeFasta)):
+            genomeAnnotation.append(request.files.to_dict(flat=False)['genomeannotation'+str(x+1)])
+    except:
+        print("No genome Annotation file.")    
   
     enrichedForward  = request.files.to_dict(flat=False)['enrichedforward']
     enrichedReverse = request.files.to_dict(flat=False)['enrichedreverse']

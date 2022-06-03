@@ -9,8 +9,11 @@ def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genom
             genomes = save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta')
 
         # genomeannotation files 
-        for x in range(len(genomeAnnotation)):
-            genomes = save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
+        if(len(genomeAnnotation) <= 0):
+            genomes = save_genome_file(annotationDir, "", genomes, x, 'genomeannotation')
+        else:
+            for x in range(len(genomeAnnotation)):
+                genomes = save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
 
         
         # enriched forward/reverse and normal forward/reverse files
@@ -91,8 +94,6 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     classification = parameterBox['Classification']
     comparative = parameterBox['Comparative']
 
-   
-
     jsonString = '{'
     jsonString += '"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "loadAlignment": "false", "configFile": "' + configFile + '",'
 
@@ -139,7 +140,7 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     # add genome fasta, genome annotation files, alignment id, output id and genome names
     idList = ''
     for x in range(len(genomes)):
-      
+        
         jsonString += '"annotation_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomeannotation'] + '",'
         jsonString += '"genome_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomefasta'] + '",'
         jsonString += '"outputPrefix_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['name'] + '",'

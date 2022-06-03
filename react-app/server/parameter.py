@@ -50,9 +50,9 @@ class ParameterCombo:
 
 
 def defParamtersSetUpBox():
-    study_typ = ParameterCombo("typeofstudy","Type of Study", "genome", "Comparison of different strains/species", "Comparison of different conditions", "setup",  
+    study_typ = ParameterCombo("typeofstudy","Type of Study", "condition", "TSS prediction in different condition(s)", "Comparison of different strains/species",  "setup",  
                                 "For a cross-strain analysis an alignment file has to be provided. In addition, in each genome tab an individual genomic sequence and genome annotation has to be set. \n When comparing different conditions no alignment file is needed and the genomic sequence and genome annotation of the organism has to be set in the first genome tab only.")
-    number_genomes = ParameterConstant("numberofgenomes","Number of Genomes", 1, 100, 1, 1, "setup" , '')
+    number_genomes = ParameterConstant("numberofgenomes","Number of Conditions", 1, 100, 1, 1, "setup" , '')
     number_replicates = ParameterConstant("numberofreplicates","Number of Replicates", 1, 26, 1, 1, "setup", '')
     return [study_typ, number_genomes, number_replicates]
 
@@ -98,7 +98,7 @@ def defParameterClass():
 
 
 def defParameterComparative():
-    allowed_cross_genome_shift = ParameterConstant("allowedcrossgenomeshift","allowed cross-genome shift", 0, 100, 1, 1, "Comparative",
+    allowed_cross_genome_shift = ParameterConstant("allowedcrossgenomeshift","allowed cross-condition shift", 0, 100, 1, 1, "Comparative",
                                                     "This is the maximal positional difference (bp) for TSS candidates from different strains/conditions to be assigned to each other.")
     allowed_cross_replicate_shift = ParameterConstant("allowedcrossreplicateshift","allowed cross-replicate shift", 0, 100, 1, 1, "Comparative",
                                                         "This is the maximal positional difference (bp) for TSS candidates from different replicates to be assigned to each other.")

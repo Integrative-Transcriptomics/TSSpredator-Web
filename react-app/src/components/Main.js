@@ -86,6 +86,12 @@ function Main() {
         var studyType = "Genome";
         if (parameters.setup.typeofstudy.value === 'genome') {
 
+            // check if at least 2 genomes are given
+            if (genomes.length < 2) {
+                showError("For the Comparison of different strains/species at least 2 Genomes are needed.");
+                return false;
+            }
+
             // check if alignmentFile is given and in the correct format
             if (alignmentFile.length <= 0) {
                 showError("Alignment file in xmfa format is missing!");
@@ -133,7 +139,7 @@ function Main() {
             const fastaFormats = ['fasta', 'fna', 'ffn', 'faa', 'frn', 'fa'];
             if (i === 0 || (i > 0 && studyType === "Genome")) {
                 if (tmpFasta.length <= 0) {
-                    showError("Missing FASTA file for " + studyType + " " + (i + 1) + ".");
+                    showError("Missing 'Genome FASTA' file for " + studyType + " " + (i + 1) + ".");
                     return false;
                 } else {
                     const split = tmpFasta.name.split('.');
@@ -155,13 +161,71 @@ function Main() {
             return false;
         }
 
+        // check replicate files
+        const repFormats = ['gr', 'wig'];
+        for (let i = 0; i < replicates.length; i++) {
+
+            const tmpG = replicates[i]['genome'+(i+1)];
+           
+            for (let j = 0; j < tmpG.length; j++) {
+
+                const letter = String.fromCharCode(97 + j);
+               
+                const tmpEF = tmpG[j]['replicate' + letter]['enrichedforward'];
+                const tmpER = tmpG[j]['replicate' + letter]['enrichedreverse'];
+                const tmpNF = tmpG[j]['replicate' + letter]['normalforward'];
+                const tmpNR = tmpG[j]['replicate' + letter]['normalreverse'];
+
+                if (tmpEF.length <= 0) {
+                    showError("Missing 'enrichment forward' graph file for Replicate " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + ".");
+                    return false;
+                } else {
+                    const split = tmpEF.name.split('.');
+                    if (!repFormats.includes(split[split.length - 1])) {
+                        showError("Enrichment forward graph file for Replicate  " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + " has the wrong format. Wiggle file format (.gr, .wig) is needed.");
+                        return false;
+                    }
+                }
+                if (tmpER.length <= 0) {
+                    showError("Missing 'enrichment reverse' graph file for Replicate " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + ".");
+                    return false;
+                } else {
+                    const split = tmpER.name.split('.');
+                    if (!repFormats.includes(split[split.length - 1])) {
+                        showError("Enrichment reverse graph file for Replicate  " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + " has the wrong format. Wiggle file format (.gr, .wig) is needed.");
+                        return false;
+                    }
+                }
+                if (tmpNF.length <= 0) {
+                    showError("Missing 'normal forward' graph file for Replicate " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + ".");
+                    return false;
+                } else {
+                    const split = tmpNF.name.split('.');
+                    if (!repFormats.includes(split[split.length - 1])) {
+                        showError("Normal forward graph file for Replicate  " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + " has the wrong format. Wiggle file format (.gr, .wig) is needed.");
+                        return false;
+                    }
+                }
+                if (tmpNR.length <= 0) {
+                    showError("Missing 'normal reverse' graph file for Replicate " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + ".");
+                    return false;
+                } else {
+                    const split = tmpNR.name.split('.');
+                    if (!repFormats.includes(split[split.length - 1])) {
+                        showError("Normal reverse graph file for Replicate  " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + " has the wrong format. Wiggle file format (.gr, .wig) is needed.");
+                        return false;
+                    }
+                }
+            }
+        }
+
         // check annotation files -> not neccessary, but warning needed
         for (let i = 0; i < genomes.length; i++) {
             var tmpAnnotation = genomes[i]['genome' + (i + 1)]['genomeannotation'];
 
             if (tmpAnnotation.length <= 0) {
                 seteHeader("WARNING");
-                showError("Missing Annotation file for " + studyType + " " + (i + 1) + ". This file is not required, but if no Annotation file is given, all TSS will be classified as orphan.");
+                showError("Missing 'Genome Annotation' file for " + studyType + " " + (i + 1) + ". This file is not required, but if no Annotation file is given, all TSS will be classified as orphan.");
                 return false;
             } else {
                 for (let j = 0; j < tmpAnnotation.length; j++) {

@@ -14,7 +14,7 @@ import Error from './Main/Error';
 
 function Main() {
 
-    const [projectName, setProjectName] = useState({});
+    const [projectName, setProjectName] = useState("");
     const [parameters, setParameters] = useState([{}]);
     const [parameterPreset, setParameterPreset] = useState("default");
     // checkbox
@@ -34,7 +34,10 @@ function Main() {
     // show error popup
     const [ePopup, setEPopup] = useState(false);
     const [error, setError] = useState("");
-    const [eHeader, setEHeader] = useState("ERROR")
+    const [eHeader, seteHeader] = useState("ERROR");
+
+    // run without annotation file
+    const [runWithoutAnn, setRunWithoutAnn] = useState(false);
 
 
     /**
@@ -57,9 +60,13 @@ function Main() {
         event.preventDefault();
         updateGenomes();
 
-        const run = checkInput();
-        if(run) {
+        if (runWithoutAnn) {
             sendData();
+        } else {
+            const run = checkInput();
+            if (run) {
+                sendData();
+            }
         }
     }
 
@@ -68,62 +75,106 @@ function Main() {
      */
     const checkInput = () => {
 
-        // projectName?
+        seteHeader("ERROR");
+
+        // check if project name is given
+        if (projectName.length <= 0) {
+            showError("Project Name is missing.");
+            return false;
+        }
 
         var studyType = "Genome";
-
-        if(parameters.setup.typeofstudy.value === 'genome') {
+        if (parameters.setup.typeofstudy.value === 'genome') {
 
             // check if alignmentFile is given and in the correct format
-            if(alignmentFile.length <= 0) {
-                setError("Alignment file in xmfa format is missing!");
-                setEPopup(!ePopup);
+            if (alignmentFile.length <= 0) {
+                showError("Alignment file in xmfa format is missing!");
                 return false;
-            } else if(alignmentFile.name.split('.')[1] !== 'xmfa') {
-                setError("Alignment file has the wrong format. XMFA file format is needed!");
-                setEPopup(!ePopup);
+            } else if (alignmentFile.name.split('.')[1] !== 'xmfa') {
+                showError("Alignment file has the wrong format. XMFA file format (.xmfa) is needed!");
                 return false;
             }
         } else {
             studyType = "Condition";
         }
 
-        // check if genome names and alingment IDS non-empty
+        // check if genome names and alingment IDS and output IDs are non-empty
+        // check if fasta files are given and in the correct format
         var names = [];
         var alignmentIds = [];
-        for(let i = 0; i < genomes.length; i++) {
+        for (let i = 0; i < genomes.length; i++) {
 
-            var tmpName = genomes[i]['genome'+(i+1)]['name'];
-            var tmpAlignmentId = genomes[i]['genome'+(i+1)]['alignmentid'];
-            var tmpOutputId = genomes[i]['genome'+(i+1)]['outputid'];
-            
-            if(tmpName.length <= 0) {
-                showError("Missing name for " + studyType + " " + (i+1) + " . Click in the tab header and choose a unique name.");
+            var tmpName = genomes[i]['genome' + (i + 1)]['name'];
+            var tmpAlignmentId = genomes[i]['genome' + (i + 1)]['alignmentid'];
+            var tmpOutputId = genomes[i]['genome' + (i + 1)]['outputid'];
+            var tmpFasta = genomes[i]['genome' + (i + 1)]['genomefasta'];
+
+            // genome name
+            if (tmpName.length <= 0) {
+                showError("Missing name for " + studyType + " " + (i + 1) + " . Click in the tab header and choose a unique name.");
                 return false;
             } else {
                 names.push(tmpName);
             }
-            if(tmpAlignmentId.length <= 0) {
-                showError("Missing Alignment ID for " + studyType + " " + (i+1) + ".");
+            // alignment id
+            if (tmpAlignmentId.length <= 0) {
+                showError("Missing Alignment ID for " + studyType + " " + (i + 1) + ".");
                 return false;
             } else {
                 alignmentIds.push(tmpAlignmentId);
             }
-            if(tmpOutputId.length <= 0) {
-                showError("Missing OutputID for " + studyType + " " + (i+1) + ".");
+            // output id
+            if (tmpOutputId.length <= 0) {
+                showError("Missing OutputID for " + studyType + " " + (i + 1) + ".");
                 return false;
-            } 
+            }
+
+            // fasta file 
+            const fastaFormats = ['fasta', 'fna', 'ffn', 'faa', 'frn', 'fa'];
+            if (i === 0 || (i > 0 && studyType === "Genome")) {
+                if (tmpFasta.length <= 0) {
+                    showError("Missing FASTA file for " + studyType + " " + (i + 1) + ".");
+                    return false;
+                } else {
+                    const split = tmpFasta.name.split('.');
+                    if (!fastaFormats.includes(split[split.length - 1])) {
+                        showError("FASTA file for " + studyType + " " + (i + 1) + " has the wrong format. FASTA file format (.fasta, .fa, .fna, .ffn, .faa, .frn) is needed.");
+                        return false;
+                    }
+                }
+            }
         }
         // check if genome names and alingment IDS are unique
         const newNames = new Set(names);
         const newIds = new Set(alignmentIds);
-        if(names.length !== newNames.size) {
+        if (names.length !== newNames.size) {
             showError(studyType + " " + " names are not unique.");
             return false;
-        } else if(alignmentIds.length !== newIds.size) {
+        } else if (alignmentIds.length !== newIds.size) {
             showError("Alignment IDs are not unique.");
             return false;
         }
+
+        // check annotation files -> not neccessary, but warning needed
+        for (let i = 0; i < genomes.length; i++) {
+            var tmpAnnotation = genomes[i]['genome' + (i + 1)]['genomeannotation'];
+
+            if (tmpAnnotation.length <= 0) {
+                seteHeader("WARNING");
+                showError("Missing Annotation file for " + studyType + " " + (i + 1) + ". This file is not required, but if no Annotation file is given, all TSS Candidates are classified as orphans.");
+                return false;
+            } else {
+                for (let j = 0; j < tmpAnnotation.length; j++) {
+                    const split = tmpAnnotation[j].name.split('.');
+                    if (!['gff', 'gtf'].includes(split[split.length - 1])) {
+                        showError("Annotation file (number: " + (i + 1) + ") for " + studyType + " " + (i + 1) + " has the wrong format. GFF/GTF file format (.gff, .gtf) is needed.");
+                        return false;
+                    }
+                }
+
+            }
+        }
+
         return true;
 
     }
@@ -194,13 +245,13 @@ function Main() {
         })
             .then(response => response.json())
             .then(data => {
-                if(data.result === 'success') {
+                if (data.result === 'success') {
                     // open result in new tab
                     window.open('/result', '_blank', 'noopener,noreferrer');
                 } else {
                     // show error
-                }            
-        })
+                }
+            })
             .catch(err => console.log(err));
 
     }
@@ -494,7 +545,8 @@ function Main() {
     return (
         <div>
 
-        {ePopup && <Error header={eHeader} error={error} onClick={() => setEPopup(!ePopup)}/>}
+            {ePopup && <Error error={error} header={eHeader} onCancel={() => setEPopup(!ePopup)} onRun={() => { setRunWithoutAnn(true); setEPopup(!ePopup) }} />}
+
 
             <header>
                 <h1>TSSpredator</h1>

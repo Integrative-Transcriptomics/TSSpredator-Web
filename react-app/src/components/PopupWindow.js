@@ -199,7 +199,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
                         <div className='drop-box'>
                             <DragDropField label={disabled ? 'no file needed' : 'Genome FASTA file'} currentFiles={genomeFasta} state='genomeFasta' disabled={disabled}
                                 handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)}
-                                tooltip="FASTA file containing the genomic sequence of this genome." />
+                                tooltip="FASTA/multiFASTA file containing the genomic sequence of this genome." />
 
                             <label className={disabled ? ' disabled-zone drag-drop-zone' : 'drag-drop-zone'} title="Folder containing all GFF/GTF genomic annotation files for this genome.">
                             {genomeAnnfolder.length === 0 ? <p>Click to select Genome Annotation folder</p> 

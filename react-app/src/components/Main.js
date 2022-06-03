@@ -51,19 +51,19 @@ function Main() {
     const handleSubmit = (event) => {
         event.preventDefault();
         updateGenomes();
-       
+
         sendData();
     }
 
     const updateGenomes = () => {
-        if(parameters.setup.typeofstudy.value === 'condition') {
+        if (parameters.setup.typeofstudy.value === 'condition') {
             const temp = [...genomes];
             var outputId = temp[0]['genome1']['outputid']
-            for(let i = 0; i < genomes.length; i++) {
-                temp[i]['genome' + (i + 1)]['alignmentid'] = (i+1);
+            for (let i = 0; i < genomes.length; i++) {
+                temp[i]['genome' + (i + 1)]['alignmentid'] = (i + 1);
                 temp[i]['genome' + (i + 1)]['outputid'] = outputId;
             }
-            
+
             setGenomes([...temp]);
         }
     }
@@ -104,36 +104,23 @@ function Main() {
         formData.append('replicates', JSON.stringify(replicates));
         formData.append('replicateNum', JSON.stringify({ 'num': numRep }));
 
-        if (parameters.setup.typeofstudy.value === 'genome') {
-            formData.append('alignmentfile', alignmentFile);
+        formData.append('alignmentfile', alignmentFile);
 
-            fetch('/genome/', {
-                method: 'POST',
-                // headers: {'Content-Type': 'multipart/form-data'},
-                body: formData
-            })
-                .then(response => {
-                    response.json()
+        fetch('/input/', {
+            method: 'POST',
+            // headers: {'Content-Type': 'multipart/form-data'},
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if(data.result === 'success') {
                     // open result in new tab
                     window.open('/result', '_blank', 'noopener,noreferrer');
-                })
-                .then(data => console.log(data))
-                .catch(err => console.log(err));
-        } else {
-            console.log(genomes)
-            fetch('/condition/', {
-                method: 'POST',
-                // headers: {'Content-Type': 'multipart/form-data'},
-                body: formData
-            })
-                .then(response => {
-                    response.json()
-                    // open result in new tab
-                    window.open('/result', '_blank', 'noopener,noreferrer');
-                })
-                .then(data => console.log(data))
-                .catch(err => console.log(err));
-        }
+                } else {
+                    // show error
+                }            
+        })
+            .catch(err => console.log(err));
 
     }
 
@@ -197,7 +184,7 @@ function Main() {
 
 
         if (name === "numberofgenomes") {
-           
+
             // add genom tab
             const genomeName = (parameters.setup.typeofstudy.value).charAt(0).toUpperCase() + (parameters.setup.typeofstudy.value).slice(1) + " " + val;
             if (val > Object.keys(genomes).length) {

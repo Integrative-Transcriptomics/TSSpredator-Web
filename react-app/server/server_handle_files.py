@@ -2,15 +2,15 @@ from werkzeug.utils import secure_filename
 import tempfile
 
 
-def save_files(newTmpDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum ):
+def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum ):
 
-    # genomefasta files
+        # genomefasta files
         for x in range(len(genomeFasta)):
             genomes = save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta')
 
         # genomeannotation files 
         for x in range(len(genomeAnnotation)):
-            genomes = save_genome_file(newTmpDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
+            genomes = save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
 
         
         # enriched forward/reverse and normal forward/reverse files

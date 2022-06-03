@@ -41,7 +41,7 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
   let fileNames;
   if (genome) {
     tabClass = 'tab'
-    fileNames = [{ "name": "Genome FASTA", "value": "Genome FASTA", "tooltip": "FASTA file containing the genomic sequence of this genome." }, 
+    fileNames = [{ "name": "Genome FASTA", "value": "Genome FASTA", "tooltip": "FASTA/multiFASTA file containing the genomic sequence of this genome." }, 
                  { "name": "Genome Annotation", "value": "Genome Annotation", "tooltip": "Folder containing all GFF/GTF genomic annotation files for this genome." }]
   } else {
     tabClass = 'tab-rep'

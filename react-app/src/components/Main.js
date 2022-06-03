@@ -313,7 +313,12 @@ function Main() {
                     // open result in new tab
                     window.open('/result', '_blank', 'noopener,noreferrer');
                 } else {
-                    // show error
+                    var error = (data.result).slice(2).replaceAll('\\n', '').replaceAll('\\t', '').replaceAll('\\r', '');
+                    var idx = error.indexOf('at');
+                    if(idx > 0) {
+                        error = error.slice(0, idx);
+                    }
+                   showError(error);
                 }
             })
             .catch(err => console.log(err));
@@ -547,7 +552,7 @@ function Main() {
         const node = event.target.name;
         const id = parseInt(event.target.id[0]);
         const temp = [...genomes];
-        const tmpArray = temp[id]['genome' + (id + 1)][node];
+        const tmpArray = [];
 
         for (let i = 0; i < (event.target.files).length; i++) {
             tmpArray.push(event.target.files[i]);

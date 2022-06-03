@@ -50,6 +50,7 @@ def getInput():
     replicates = json.loads(request.form['replicates'])
     replicateNum = json.loads(request.form['replicateNum'])
 
+
     # create temporary directory, save files and save filename in genome/replicate object
     with tempfile.TemporaryDirectory() as tmpdir: 
 
@@ -59,8 +60,8 @@ def getInput():
 
             newAnnotationDir = annotationDir.replace('\\', '/')
  
-            sf.save_files(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
-
+            genomes, replicates = sf.save_files(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
+            
             # if alingment file is given -> study type = align
             alignmentFilename = ''
             try:
@@ -80,7 +81,7 @@ def getInput():
                 jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
 
                 # call jar file for TSS prediction
-                subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString])
+                p = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stderr=PIPE)
 
                 # zip files
                 if os.path.exists("result.zip"):
@@ -88,7 +89,10 @@ def getInput():
                 make_archive('result', 'zip', newResultDir)
 
                 # return 'success' or 'error'
-                return {'result': 'success'}
+                if(len(p.stderr) == 0):
+                    return {'result': 'success'}
+                else: 
+                    return {'result': str(p.stderr)}
         
         
  

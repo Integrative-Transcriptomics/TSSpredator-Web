@@ -6,6 +6,7 @@ import '../css/Tabs.css';
 import '../css/App.css';
 import '../css/Grid.css';
 import '../css/DragDrop.css';
+import Error from './Main/Error';
 
 /**
  * creates the main window and saves all inputs
@@ -18,7 +19,7 @@ function Main() {
     const [parameterPreset, setParameterPreset] = useState("default");
     // checkbox
     const [rnaGraph, setRnaGraph] = useState(false);
-    const [genomes, setGenomes] = useState([{ "genome1": { "name": "Genome 1", "placeholder": "Genome 1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": [] } }]);
+    const [genomes, setGenomes] = useState([{ "genome1": { "name": "Genome_1", "placeholder": "Genome_1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": [] } }]);
     const [replicates, setReplicates] = useState([{ "genome1": [{ "replicatea": { "name": "Replicate a", "enrichedforward": "", "enrichedreverse": "", "normalforward": "", "normalreverse": "" } }] }]);
     const [alignmentFile, setAlignmentFile] = useState("");
 
@@ -30,6 +31,10 @@ function Main() {
     const [numRep, setnumRep] = useState(1);
     // open/close parameters
     const [showParam, setShowParam] = useState(false);
+    // show error popup
+    const [ePopup, setEPopup] = useState(false);
+    const [error, setError] = useState("");
+    const [eHeader, setEHeader] = useState("ERROR")
 
 
     /**
@@ -52,9 +57,85 @@ function Main() {
         event.preventDefault();
         updateGenomes();
 
-        sendData();
+        const run = checkInput();
+        if(run) {
+            sendData();
+        }
     }
 
+    /**
+     * check if input is correct
+     */
+    const checkInput = () => {
+
+        // projectName?
+
+        var studyType = "Genome";
+
+        if(parameters.setup.typeofstudy.value === 'genome') {
+
+            // check if alignmentFile is given and in the correct format
+            if(alignmentFile.length <= 0) {
+                setError("Alignment file in xmfa format is missing!");
+                setEPopup(!ePopup);
+                return false;
+            } else if(alignmentFile.name.split('.')[1] !== 'xmfa') {
+                setError("Alignment file has the wrong format. XMFA file format is needed!");
+                setEPopup(!ePopup);
+                return false;
+            }
+        } else {
+            studyType = "Condition";
+        }
+
+        // check if genome names and alingment IDS non-empty
+        var names = [];
+        var alignmentIds = [];
+        for(let i = 0; i < genomes.length; i++) {
+
+            var tmpName = genomes[i]['genome'+(i+1)]['name'];
+            var tmpAlignmentId = genomes[i]['genome'+(i+1)]['alignmentid'];
+            var tmpOutputId = genomes[i]['genome'+(i+1)]['outputid'];
+            
+            if(tmpName.length <= 0) {
+                showError("Missing name for " + studyType + " " + (i+1) + " . Click in the tab header and choose a unique name.");
+                return false;
+            } else {
+                names.push(tmpName);
+            }
+            if(tmpAlignmentId.length <= 0) {
+                showError("Missing Alignment ID for " + studyType + " " + (i+1) + ".");
+                return false;
+            } else {
+                alignmentIds.push(tmpAlignmentId);
+            }
+            if(tmpOutputId.length <= 0) {
+                showError("Missing OutputID for " + studyType + " " + (i+1) + ".");
+                return false;
+            } 
+        }
+        // check if genome names and alingment IDS are unique
+        const newNames = new Set(names);
+        const newIds = new Set(alignmentIds);
+        if(names.length !== newNames.size) {
+            showError(studyType + " " + " names are not unique.");
+            return false;
+        } else if(alignmentIds.length !== newIds.size) {
+            showError("Alignment IDs are not unique.");
+            return false;
+        }
+        return true;
+
+    }
+
+    const showError = (error) => {
+        setError(error);
+        setEPopup(!ePopup);
+    }
+
+    /**
+     * if studytype: condition -> fill out alignment id and output id in genomes
+     */
     const updateGenomes = () => {
         if (parameters.setup.typeofstudy.value === 'condition') {
             const temp = [...genomes];
@@ -186,7 +267,7 @@ function Main() {
         if (name === "numberofgenomes") {
 
             // add genom tab
-            const genomeName = (parameters.setup.typeofstudy.value).charAt(0).toUpperCase() + (parameters.setup.typeofstudy.value).slice(1) + " " + val;
+            const genomeName = (parameters.setup.typeofstudy.value).charAt(0).toUpperCase() + (parameters.setup.typeofstudy.value).slice(1) + "_" + val;
             if (val > Object.keys(genomes).length) {
                 setGenomes(current => (
                     [...current,
@@ -412,6 +493,8 @@ function Main() {
 
     return (
         <div>
+
+        {ePopup && <Error header={eHeader} error={error} onClick={() => setEPopup(!ePopup)}/>}
 
             <header>
                 <h1>TSSpredator</h1>

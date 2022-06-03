@@ -24,7 +24,7 @@ function TextField({ field, id, studyType, handleTabs }) {
   if(field.name === 'Alignment ID') {
     title = "The identifier of this genome in the alignment file. If Mauve was used to align the genomes, the identifiers are just numbers assigned to the genomes in the order as they have been chosen as input in Mauve."
   } else if (field.name === 'Output ID') {
-    title = "he specified output ID defines which gene tag in the attributes column (in the provided annotation file) should be used for TSS classification. Examples are 'locus_tag' or 'gene_id'."
+    title = "The specified output ID defines which gene tag in the attributes column (in the provided annotation file) should be used for TSS classification. Examples are 'locus_tag' or 'gene_id'."
   }
 
   return (

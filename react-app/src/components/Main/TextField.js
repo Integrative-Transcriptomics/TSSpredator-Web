@@ -29,8 +29,8 @@ function TextField({ field, id, studyType, handleTabs }) {
   }
 
   return (
-    <div className='text-field-box' data-title={title}>
-      <label htmlFor={id}> {field.name}</label>
+    <div className='text-field-box'>
+      <label htmlFor={id} data-title={title}> {field.name}</label>
       <input disabled={disabled} className={disabled ? 'element text-field disabled-field' : 'element text-field'} type="text" 
               name={(field.name).toLowerCase().replace(' ', '')} defaultValue={value} id={id}
               onChange={(e) => handleTabs(e)} />

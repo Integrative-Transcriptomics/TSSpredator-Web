@@ -116,10 +116,13 @@ def getAlignment():
         jsonString += '"loadConfig": "false",' + '"saveConfig": "false", "loadAlignment": "true",' + '"alignmentFile": "' + alignmentFilename + '"}'
 
         # call jar file for to extract genome names & ids
-        result = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stdout=PIPE) #, stderr=PIPE)
+        result = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stdout=PIPE, stderr=PIPE)
         
-        # here the json string with the genome names and ids is stored
-        return {'result': json.loads((result.stdout).decode())}
+        if(len(result.stderr) == 0):
+            return {'result': json.loads((result.stdout).decode())}
+        else:
+            return {'result': json.loads((result.stderr).decode())}
+        
 
 
 # loads a config file
@@ -127,10 +130,27 @@ def getAlignment():
 def loadConfig():
 
     configFile = request.files['configFile']
-    # send to jar
-    # get back json with all inputs
-    # send this to react
 
+    with tempfile.TemporaryDirectory() as tmpdir:
+
+        newTmpDir = tmpdir.replace('\\', '/')
+
+        # save alignment file
+        configFilename = newTmpDir + '/' + secure_filename(configFile.filename)
+        configFile.save(configFilename)
+
+        # write JSON string 
+        jsonString = '{'
+        jsonString += '"loadConfig": "true",' + '"saveConfig": "false", "loadAlignment": "false",' + '"configFile": "' + configFilename + '"}'
+
+        # call jar file for to extract genome names & ids
+        result = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stdout=PIPE, stderr=PIPE)
+
+        
+        if(len(result.stderr) == 0):
+            return {'result': json.loads((result.stdout).decode())}
+        else:
+            return {'result': json.loads((result.stderr).decode())}
 
 
 # saves input as config file

@@ -297,6 +297,45 @@ function Main() {
     }
 
     /**
+     * save uploaded alignment file
+     */
+    const saveAlignmentFile = (e) => {
+        setAlignmentFile(e.target.files[0]);
+
+        // ask if file was created by mauve and than fill in genome names and ids
+        seteHeader("INFO");
+        showError("If the alignment has been generated with Mauve, genome names and IDs can be read from the file. Do you want to do this?");
+    }
+
+    /**
+     * send alignment file to flask to read it 
+     * get back json object of genome names and alignment ids
+     */
+    const sendAlignmentFile = () => {
+        // close popup
+        setEPopup(!ePopup);
+
+        // send file to server
+        const formData = new FormData();
+        formData.append('alignmentFile', alignmentFile);
+        fetch('/alignment/', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+
+                // fill out genome names and ids
+                const dataResult = data.result;
+                // change number of genomes
+                const numGenomes = Object.keys(dataResult).length / 2;
+                setShowGName(true);
+                updateGenomes(numGenomes, dataResult);
+            })
+            .catch(err => console.log(err));
+    }
+
+    /**
      * update useState of changed paramter p
      * if other parameters are dependend on p they are also updated
      */
@@ -325,7 +364,18 @@ function Main() {
         if (name === "numberofgenomes") {
             updateGenomes(val);
         }
-
+        if(name === 'stepfactor') {
+            updateParameterBox(directParent, 'stepfactorreduction', 'max', val);
+            if(parameters.parameterBox['Prediction']['stepfactorreduction']['value'] > val) {
+                parameters.parameterBox['Prediction']['stepfactorreduction']['value'] = val;
+            }
+        }
+        if(name === "stepheight"){
+            updateParameterBox(directParent, 'stepheightreduction', 'max', val);
+            if(parameters.parameterBox['Prediction']['stepheightreduction']['value'] > val) {
+                parameters.parameterBox['Prediction']['stepheightreduction']['value'] = val;
+            }
+        }
         // update Genome/Condition label
         if (name === "typeofstudy") {
 
@@ -539,46 +589,6 @@ function Main() {
     }
 
     /**
-     * save uploaded alignment file
-     */
-
-    const saveAlignmentFile = (e) => {
-        setAlignmentFile(e.target.files[0]);
-
-        // ask if file was created by mauve and than fill in genome names and ids
-        seteHeader("INFO");
-        showError("If the alignment has been generated with Mauve, genome names and IDs can be read from the file. Do you want to do this?");
-    }
-
-    /**
-     * send alignment file to flask to read it 
-     * get back json object of genome names and alignment ids
-     */
-    const sendAlignmentFile = () => {
-        // close popup
-        setEPopup(!ePopup);
-
-        // send file to server
-        const formData = new FormData();
-        formData.append('alignmentFile', alignmentFile);
-        fetch('/alignment/', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-
-                // fill out genome names and ids
-                const dataResult = data.result;
-                // change number of genomes
-                const numGenomes = Object.keys(dataResult).length / 2;
-                setShowGName(true);
-                updateGenomes(numGenomes, dataResult);
-            })
-            .catch(err => console.log(err));
-    }
-
-    /**
      * updates text input in genome tabs
      */
     const handleTabs = (event) => {
@@ -687,24 +697,35 @@ function Main() {
      */
     const loadConfigFile = (event) => {
 
-       const file = event.target.files[0];
+        const file = event.target.files[0];
         // check if config file
-        const split= file.name.split('.');
-        if(split[split.length-1] !== 'config') {
+        const split = file.name.split('.');
+        if (split[split.length - 1] !== 'config') {
             showError('Config File has wrong format. Config file format (.config) needed.')
         } else {
 
-            // upload files from config file
+            // send config file to server
+            const formData = new FormData();
+            formData.append('configFile', file);
+            fetch('/loadConfig/', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
 
+                    // fill out genome names and ids
+                    parameters.setup.numberofreplicates.value = parseInt(data.result.numReplicates);
+                    parameters.parameterBox.Prediction.stepfactor.value = parseFloat(data.result.minCliffFactor);
+                  console.log(parameters.setup.numberofreplicates.value);
+                })
+                .catch(err => console.log(err));
         }
-
     }
 
     return (
         <div>
-
             {ePopup && <Error error={error} header={eHeader} onCancel={() => setEPopup(!ePopup)} onRun={() => runWithoutCheck()} sendAlignmentFile={() => sendAlignmentFile()} />}
-
 
             <header>
                 <h1>TSSpredator</h1>

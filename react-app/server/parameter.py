@@ -59,11 +59,11 @@ def defParamtersSetUpBox():
 def defParameterPrediction():
     step_height = ParameterPreset("stepheight","step height", 0, None, 0.05, 1, 0.5, 0.3, 0.2, 0.1, 0.3, "Prediction",
                                 "Minimal number of read starts at a certain genomic position to be considered as a TSS candidate. A lower value results in a higher sensitivity.")
-    step_height_reduction = ParameterPreset("stepheightreduction","step height reduction", 0, None, 0.05, 0.5, 0.2, 0.2, 0.15, 0.09, 0.2, "Prediction",
+    step_height_reduction = ParameterPreset("stepheightreduction","step height reduction", 0, 0.3, 0.05, 0.5, 0.2, 0.2, 0.15, 0.09, 0.2, "Prediction",
                                             "When comparing different strains/conditions and the step height threshold is reached in at least one strain/condition, the threshold is reduced for the other strains/conditions by the value set here. A higher value results in a higher sensitivity.")
     step_factor = ParameterPreset("stepfactor", "step factor", 1, None, 0.1, 2, 2, 2, 1.5, 1, 2, "Prediction",
                                     "Minimal factor by which the TSS height has to exceed the local expression background. A lower value results in a higher sensitivity. Set this value to 1 to disable it.")
-    step_factor_reduction = ParameterPreset("stepfactorreduction","step factor reduction", 0, None, 0.1, 0.5, 0.5, 0.5, 0.5, 0, 0.5, "Prediction", 
+    step_factor_reduction = ParameterPreset("stepfactorreduction","step factor reduction", 0, 2, 0.1, 0.5, 0.5, 0.5, 0.5, 0, 0.5, "Prediction", 
                                             "When comparing different strains/conditions and the step factor threshold is reached in at least one strain/condition, the threshold is reduced for the other strains/conditions by the value set here. A higher value results in a higher sensitivity.")
     enrichment_factor = ParameterPreset("enrichmentfactor","enrichment factor", 0, None, 0.1, 3, 2, 2, 1.5, 1, 2, "Prediction", 
                                         "Minimal enrichment factor for a TSS candidate. The threshold has to be exceeded in at least one strain/condition. If the threshold is not exceeded in another condition the TSS candidate is marked as detected but not as enriched in this strain/condition. A lower value results in a higher sensitivity. Set this value to 0 to disable it.")

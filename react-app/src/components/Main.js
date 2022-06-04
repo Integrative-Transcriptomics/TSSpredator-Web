@@ -36,20 +36,17 @@ function Main() {
     const [error, setError] = useState("");
     const [eHeader, seteHeader] = useState("ERROR");
 
-    // run without annotation file
-    const [runWithoutAnn, setRunWithoutAnn] = useState(false);
+    // show name of genom tab: set to true when genome names of alignment file are used
+    const [showGName, setShowGName] = useState(false);
 
 
     /**
       * GETs Parameters from flask 
       */
     useEffect(() => {
-        fetch("/parameters/").then(
-            res => res.json())
-            .then(
-                parameters => {
-                    setParameters(parameters)
-                })
+        fetch("/parameters/")
+            .then(res => res.json())
+            .then(parameters => setParameters(parameters))
     }, []);
 
 
@@ -58,15 +55,35 @@ function Main() {
      */
     const handleSubmit = (event) => {
         event.preventDefault();
-        updateGenomes();
+        // if studytype condition: fill out alignment and output id
+        fillGenomes();
 
-        if (runWithoutAnn) {
+        const run = checkInput();
+        if (run) {
             sendData();
-        } else {
-            const run = checkInput();
-            if (run) {
-                sendData();
+        }
+    }
+
+    /**
+     *  RUN: when user wants to run without annotation file
+     */
+    const runWithoutCheck = () => {
+        sendData();
+        setEPopup(!ePopup);
+    }
+
+    /**
+    * if studytype: condition -> fill out alignment id and output id in genomes
+    */
+    const fillGenomes = () => {
+        if (parameters.setup.typeofstudy.value === 'condition') {
+            const temp = [...genomes];
+            var outputId = temp[0]['genome1']['outputid']
+            for (let i = 0; i < genomes.length; i++) {
+                temp[i]['genome' + (i + 1)]['alignmentid'] = (i + 1);
+                temp[i]['genome' + (i + 1)]['outputid'] = outputId;
             }
+            setGenomes([...temp]);
         }
     }
 
@@ -104,7 +121,7 @@ function Main() {
             studyType = "Condition";
         }
 
-        // check if genome names and alingment IDS and output IDs are non-empty
+        // check if genome names and alignment IDS and output IDs are non-empty
         // check if fasta files are given and in the correct format
         var names = [];
         var alignmentIds = [];
@@ -154,7 +171,7 @@ function Main() {
         const newNames = new Set(names);
         const newIds = new Set(alignmentIds);
         if (names.length !== newNames.size) {
-            showError(studyType + " " + " names are not unique.");
+            showError(studyType + " names are not unique.");
             return false;
         } else if (alignmentIds.length !== newIds.size) {
             showError("Alignment IDs are not unique.");
@@ -162,60 +179,22 @@ function Main() {
         }
 
         // check replicate files
-        const repFormats = ['gr', 'wig'];
         for (let i = 0; i < replicates.length; i++) {
 
-            const tmpG = replicates[i]['genome'+(i+1)];
-           
+            const tmpG = replicates[i]['genome' + (i + 1)];
+
             for (let j = 0; j < tmpG.length; j++) {
 
                 const letter = String.fromCharCode(97 + j);
-               
                 const tmpEF = tmpG[j]['replicate' + letter]['enrichedforward'];
                 const tmpER = tmpG[j]['replicate' + letter]['enrichedreverse'];
                 const tmpNF = tmpG[j]['replicate' + letter]['normalforward'];
                 const tmpNR = tmpG[j]['replicate' + letter]['normalreverse'];
 
-                if (tmpEF.length <= 0) {
-                    showError("Missing 'enrichment forward' graph file for Replicate " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + ".");
-                    return false;
-                } else {
-                    const split = tmpEF.name.split('.');
-                    if (!repFormats.includes(split[split.length - 1])) {
-                        showError("Enrichment forward graph file for Replicate  " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + " has the wrong format. Wiggle file format (.gr, .wig) is needed.");
-                        return false;
-                    }
-                }
-                if (tmpER.length <= 0) {
-                    showError("Missing 'enrichment reverse' graph file for Replicate " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + ".");
-                    return false;
-                } else {
-                    const split = tmpER.name.split('.');
-                    if (!repFormats.includes(split[split.length - 1])) {
-                        showError("Enrichment reverse graph file for Replicate  " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + " has the wrong format. Wiggle file format (.gr, .wig) is needed.");
-                        return false;
-                    }
-                }
-                if (tmpNF.length <= 0) {
-                    showError("Missing 'normal forward' graph file for Replicate " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + ".");
-                    return false;
-                } else {
-                    const split = tmpNF.name.split('.');
-                    if (!repFormats.includes(split[split.length - 1])) {
-                        showError("Normal forward graph file for Replicate  " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + " has the wrong format. Wiggle file format (.gr, .wig) is needed.");
-                        return false;
-                    }
-                }
-                if (tmpNR.length <= 0) {
-                    showError("Missing 'normal reverse' graph file for Replicate " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + ".");
-                    return false;
-                } else {
-                    const split = tmpNR.name.split('.');
-                    if (!repFormats.includes(split[split.length - 1])) {
-                        showError("Normal reverse graph file for Replicate  " + String.fromCharCode(97 + j) + " in " + studyType + " " + (i + 1) + " has the wrong format. Wiggle file format (.gr, .wig) is needed.");
-                        return false;
-                    }
-                }
+                if (!checkReplicateFiles(tmpEF, "Enrichment forward", studyType, i, j)) return false;
+                if (!checkReplicateFiles(tmpER, "Enrichment reverse", studyType, i, j)) return false;
+                if (!checkReplicateFiles(tmpNF, "Normal forward", studyType, i, j)) return false;
+                if (!checkReplicateFiles(tmpNR, "Normal reverse", studyType, i, j)) return false;
             }
         }
 
@@ -235,33 +214,27 @@ function Main() {
                         return false;
                     }
                 }
-
             }
         }
-
         return true;
-
-    }
-
-    const showError = (error) => {
-        setError(error);
-        setEPopup(!ePopup);
     }
 
     /**
-     * if studytype: condition -> fill out alignment id and output id in genomes
+     * check if replicate files are given and in the correct format
      */
-    const updateGenomes = () => {
-        if (parameters.setup.typeofstudy.value === 'condition') {
-            const temp = [...genomes];
-            var outputId = temp[0]['genome1']['outputid']
-            for (let i = 0; i < genomes.length; i++) {
-                temp[i]['genome' + (i + 1)]['alignmentid'] = (i + 1);
-                temp[i]['genome' + (i + 1)]['outputid'] = outputId;
+    const checkReplicateFiles = (file, errorName, studyType, idxGenome, idxRep) => {
+        const repFormats = ['gr', 'wig'];
+        if (file.length <= 0) {
+            showError("Missing '" + errorName + "' graph file for Replicate " + String.fromCharCode(97 + idxRep) + " in " + studyType + " " + (idxGenome + 1) + ".");
+            return false;
+        } else {
+            const split = file.name.split('.');
+            if (!repFormats.includes(split[split.length - 1])) {
+                showError(errorName + " graph file for Replicate  " + String.fromCharCode(97 + idxRep) + " in " + studyType + " " + (idxGenome + 1) + " has the wrong format. Wiggle file format (.gr, .wig) is needed.");
+                return false;
             }
-
-            setGenomes([...temp]);
         }
+        return true;
     }
 
     /**
@@ -304,7 +277,6 @@ function Main() {
 
         fetch('/input/', {
             method: 'POST',
-            // headers: {'Content-Type': 'multipart/form-data'},
             body: formData
         })
             .then(response => response.json())
@@ -313,16 +285,15 @@ function Main() {
                     // open result in new tab
                     window.open('/result', '_blank', 'noopener,noreferrer');
                 } else {
-                    var error = (data.result).slice(2).replaceAll('\\n', '').replaceAll('\\t', '').replaceAll('\\r', '');
+                    var error = (data.result);
                     var idx = error.indexOf('at');
-                    if(idx > 0) {
+                    if (idx > 0) {
                         error = error.slice(0, idx);
                     }
-                   showError(error);
+                    showError(error);
                 }
             })
             .catch(err => console.log(err));
-
     }
 
     /**
@@ -348,30 +319,69 @@ function Main() {
             updateParameterBox(directParent, name, 'value', val);
             checkPreset(val, name);
         }
-
         if (name === "numberofreplicates") {
-            setnumRep(val);
-            // update maximum of Parameter 'matching replicates'
-            updateParameterBox('Comparative', 'matchingreplicates', 'max', val);
+            updateReplicates(val);
+        }
+        if (name === "numberofgenomes") {
+            updateGenomes(val);
+        }
 
-            // update replicate tabs
-            const repLetter = String.fromCharCode(96 + val);
-            const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
+        // update Genome/Condition label
+        if (name === "typeofstudy") {
 
-            // replicate added
-            if (val > replicateTemplate.length) {
+            if (val === "condition") {
+                setShowGName(false);
+            }
+
+            const newName = "Number of " + val.charAt(0).toUpperCase() + val.slice(1) + "s";
+            // Number of Genomes/Conditions
+            updateSetupBox('numberofgenomes', 'name', newName);
+
+            // Genome/Condition Tabs
+            genomes.forEach((g, i) => {
+                g['genome' + (i + 1)].placeholder = val.charAt(0).toUpperCase() + val.slice(1) + "_" + (i + 1);
+                g['genome' + (i + 1)].name = val.charAt(0).toUpperCase() + val.slice(1) + "_" + (i + 1);
+            })
+            setGenomes([...genomes]);
+
+            // allowed cross-genome/condition shift
+            updateParameterBox('Comparative', 'allowedcrossgenomeshift', 'name', "allowed cross-" + val + " shift");
+        }
+    }
+
+    /**
+     * update number of replicates
+     */
+    const updateReplicates = (val) => {
+        setnumRep(val);
+        // update maximum of Parameter 'matching replicates'
+        updateParameterBox('Comparative', 'matchingreplicates', 'max', val);
+
+        const numRep = replicateTemplate.length;
+
+        // replicate added
+        if (val > numRep) {
+
+            // add all needed replicates
+            for (let i = numRep + 1; i <= val; i++) {
+
+                const repLetter = String.fromCharCode(96 + i);
+                const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
+
                 // update replicate template
                 replicateTemplate.push(newRep);
                 setReplicateTemplate(replicateTemplate);
-
                 // update replicates 
-                for (var i = 0; i < replicates.length; i++) {
-                    replicates[i]['genome' + (i + 1)].push(newRep);
+                for (let j = 0; j < replicates.length; j++) {
+                    replicates[j]['genome' + (j + 1)].push(newRep);
                 }
                 setReplicates(replicates);
+            }
 
-                // replicate removed    
-            } else if (val < replicateTemplate.length) {
+            // replicate removed    
+        } else if (val < numRep) {
+            const difference = numRep - val;
+            for (let i = 0; i < difference; i++) {
                 // update replicate template
                 replicateTemplate.pop();
                 setReplicateTemplate(replicateTemplate);
@@ -382,51 +392,82 @@ function Main() {
                 setReplicates(replicates);
             }
         }
+    }
 
+    /**
+     * update number of genomes 
+     * @param val: the new number of genomes
+     * @param data: object with genome names and ids from the alignment file
+     */
+    const updateGenomes = (val, data) => {
 
-        if (name === "numberofgenomes") {
+        parameters.setup.numberofgenomes.value = val;
 
-            // add genom tab
-            const genomeName = (parameters.setup.typeofstudy.value).charAt(0).toUpperCase() + (parameters.setup.typeofstudy.value).slice(1) + "_" + val;
-            if (val > Object.keys(genomes).length) {
-                setGenomes(current => (
-                    [...current,
-                    {
-                        ["genome" + val]:
-                            { name: genomeName, placeholder: genomeName, alignmentid: "", outputid: "", genomefasta: "", genomeannotation: [] }
-                    }]
-                ))
+        // add genom tab
+        const numGenomes = Object.keys(genomes).length;
+        if (val > numGenomes) {
+
+            // add all needed genomes
+            for (let i = numGenomes + 1; i <= val; i++) {
+                var genomeName = (parameters.setup.typeofstudy.value).charAt(0).toUpperCase() + (parameters.setup.typeofstudy.value).slice(1) + "_" + i;
+                var placeholder = (parameters.setup.typeofstudy.value).charAt(0).toUpperCase() + (parameters.setup.typeofstudy.value).slice(1) + "_" + i;
+
+                var alignmentID = "";
+                if (typeof data !== 'undefined') {
+                    genomeName = data['genome_' + i];
+                    alignmentID = data['id_' + i];
+                }
+
+                genomes.push({
+                    ["genome" + i]: { name: genomeName, placeholder: placeholder, alignmentid: alignmentID, outputid: "", genomefasta: "", genomeannotation: [] }
+                });
+                setGenomes(genomes);
                 // add new genome to replicates
-                replicates.push({ ["genome" + val]: [...replicateTemplate] });
+                replicates.push({ ["genome" + i]: [...replicateTemplate] });
                 setReplicates(replicates);
+            }
+            // update genome names and alignmetn ids
+            if (typeof data !== 'undefined') {
+                for (let i = 0; i < numGenomes; i++) {
+                    genomes[i]["genome" + (i + 1)]['name'] = data['genome_' + (i + 1)];
+                    genomes[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
+                }
+            }
 
-                // remove genome tab   
-            } else if (val < Object.keys(genomes).length) {
+            // remove genome tab   
+        } else if (val < numGenomes) {
+            // remove all genomes
+            const difference = numGenomes - val;
+            for (let i = 0; i < difference; i++) {
+                // remove last genome
                 genomes.pop();
                 setGenomes(genomes);
                 // remove genome from replicates
                 replicates.pop();
                 setReplicates(replicates);
             }
-        }
-
-        // update Genome/Condition label
-        if (name === "typeofstudy") {
-            const newName = "Number of " + val.charAt(0).toUpperCase() + val.slice(1) + "s";
-            // Number of Genomes/Conditions
-            updateSetupBox('numberofgenomes', 'name', newName);
-
-            // Genome/Condition Tabs
-            genomes.map((g, i) => (
-                g['genome' + (i + 1)].placeholder = val.charAt(0).toUpperCase() + val.slice(1) + " " + (i + 1)
-            ))
-            setGenomes([...genomes]);
-
-            // allowed cross-genome/condition shift
-            updateParameterBox('Comparative', 'allowedcrossgenomeshift', 'name', "allowed cross-" + val + " shift");
+            // update genome names and alignment ids
+            if (typeof data !== 'undefined') {
+                for (let i = 0; i < val; i++) {
+                    genomes[i]["genome" + (i + 1)]['name'] = data['genome_' + (i + 1)];
+                    genomes[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
+                }
+            }
         }
     }
-
+    /**
+    * update parameter value in setup box
+    */
+    const updateSetupBox = (node, element, value) => {
+        setParameters(current => (
+            {
+                ...current,
+                setup: {
+                    ...current.setup,
+                    [node]: { ...current.setup[node], [element]: value }
+                }
+            }));
+    }
     /**
      * update parameter value in parameter box
      */
@@ -440,20 +481,6 @@ function Main() {
                         ...current.parameterBox[parent],
                         [node]: { ...current.parameterBox[parent][node], [element]: value }
                     }
-                }
-            }));
-    }
-
-    /**
-     * update parameter value in setup box
-     */
-    const updateSetupBox = (node, element, value) => {
-        setParameters(current => (
-            {
-                ...current,
-                setup: {
-                    ...current.setup,
-                    [node]: { ...current.setup[node], [element]: value }
                 }
             }));
     }
@@ -491,7 +518,6 @@ function Main() {
                 }
             })
         }
-
         if (match.length !== 0) {
             setParameterPreset(match[0]);
         }
@@ -510,6 +536,46 @@ function Main() {
                 updateParameterBox('Prediction', name, 'value', parameters.parameterBox.Prediction[name][preset]);
             })
         }
+    }
+
+    /**
+     * save uploaded alignment file
+     */
+
+    const saveAlignmentFile = (e) => {
+        setAlignmentFile(e.target.files[0]);
+
+        // ask if file was created by mauve and than fill in genome names and ids
+        seteHeader("INFO");
+        showError("If the alignment has been generated with Mauve, genome names and IDs can be read from the file. Do you want to do this?");
+    }
+
+    /**
+     * send alignment file to flask to read it 
+     * get back json object of genome names and alignment ids
+     */
+    const sendAlignmentFile = () => {
+        // close popup
+        setEPopup(!ePopup);
+
+        // send file to server
+        const formData = new FormData();
+        formData.append('alignmentFile', alignmentFile);
+        fetch('/alignment/', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+
+                // fill out genome names and ids
+                const dataResult = data.result;
+                // change number of genomes
+                const numGenomes = Object.keys(dataResult).length / 2;
+                setShowGName(true);
+                updateGenomes(numGenomes, dataResult);
+            })
+            .catch(err => console.log(err));
     }
 
     /**
@@ -545,7 +611,7 @@ function Main() {
     }
 
     /**
-    * saves annotation file(s)
+    * saves individual uploaded annotation file(s)
     */
     const saveAnnotationFile = (event) => {
 
@@ -582,14 +648,12 @@ function Main() {
         Object.keys(normalRev).forEach((key) => {
             saveReplicates(genomeIdx, parseInt(key), 'normalreverse', normalRev[key]);
         });
-
     }
 
     /**
      * saves genome files
      */
     const saveGenomes = (gId, node, file) => {
-
         const temp = [...genomes];
         temp[gId]['genome' + (gId + 1)][node] = file;
         setGenomes([...temp]);
@@ -610,11 +674,19 @@ function Main() {
         setReplicates([...temp]);
     }
 
+    /**
+   * popup window with error
+   */
+    const showError = (error) => {
+        setError(error);
+        setEPopup(!ePopup);
+    }
+
 
     return (
         <div>
 
-            {ePopup && <Error error={error} header={eHeader} onCancel={() => setEPopup(!ePopup)} onRun={() => { setRunWithoutAnn(true); setEPopup(!ePopup) }} />}
+            {ePopup && <Error error={error} header={eHeader} onCancel={() => setEPopup(!ePopup)} onRun={() => runWithoutCheck()} sendAlignmentFile={() => sendAlignmentFile()} />}
 
 
             <header>
@@ -638,7 +710,7 @@ function Main() {
                                 <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'file-box-align vis-hidden'} title='Select the xmfa alignment file containing the aligned genomes.'>
                                     <p className='file-row'>Alignment File</p>
                                     <label className='element-row file-row' htmlFor='alignment-file'>
-                                        <input className='element hidden' type="file" id='alignment-file' onChange={(e) => setAlignmentFile(e.target.files[0])} />
+                                        <input className='element hidden' type="file" id='alignment-file' onChange={(e) => saveAlignmentFile(e)} />
                                         <p className='button'>Select File</p>
                                         {alignmentFile.length <= 0 ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{alignmentFile.name}</p>}
                                     </label>
@@ -646,7 +718,7 @@ function Main() {
 
                                 <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value}
                                     handleTabs={(e) => handleTabs(e)} numRep={numRep} saveFiles={(g, ef, er, nf, nr, idx) => saveFiles(g, ef, er, nf, nr, idx)}
-                                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} />
+                                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} showName={showGName} />
                             </>
                         }
                     </div>

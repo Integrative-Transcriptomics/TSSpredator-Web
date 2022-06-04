@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Error({ header, error, onCancel, onRun }) {
+function Error({ header, error, onCancel, onRun, sendAlignmentFile }) {
     return (
         <div className='error-popup'>
             <div className='error-popup-inner'>
@@ -8,8 +8,11 @@ function Error({ header, error, onCancel, onRun }) {
                 <div className='error-field'>{error}</div>
                 <div className='error-button'>
                     {header === 'ERROR' ? <button className='button error' onClick={() => onCancel()}>OK</button>
-                        : <><button className='button error' onClick={() => onCancel()}>Cancel</button>
-                            <button className='button error' onClick={() => onRun()}>Continue</button></>}
+                        : (header === "WARNING" ? <><button className='button error' onClick={() => onCancel()}>Cancel</button>
+                                                <button className='button error' onClick={() => onRun()}>Start TSS prediction</button></>
+                                                : <><button className='button error' onClick={() => sendAlignmentFile()}>Yes</button>
+                                                    <button className='button error' onClick={() => onCancel()}>No</button></>
+                        )}
 
                 </div>
             </div>

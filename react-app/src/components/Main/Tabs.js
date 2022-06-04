@@ -15,9 +15,10 @@ import PopupWindow from "./PopupWindow";
  * @param saveFiles: function to handle multiple uploaded files
  * @param saveIndividualFile: saves an individual file
  * @param saveAnnotationFile: saves annotation files
+ * @param showName: true <-> show name of genome tab
  */
 
-function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs, numRep, saveFiles, saveIndividualFile, saveAnnotationFile }) {
+function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs, numRep, saveFiles, saveIndividualFile, saveAnnotationFile, showName }) {
 
   // current active tab
   const [state, setState] = useState(1);
@@ -60,11 +61,15 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
         <div className='tab-row'>
           {genome ? <></> : <div className='left-line'></div>}
           {genomes.map((g, i) => {
+            var val = "";
+            if(showName) {
+              val = genomes[i]['genome' + (i + 1)].name;
+            }
             return (
 
               <div className={state === (i + 1) ? tabClass + ' tab-active' : tabClass} key={(i + 1)} onClick={() => { setState((i + 1)) }}>
 
-                {genome ? <input className={state === (i + 1) ? 'tab-input tab-input-active' : 'tab-input'} type="text" id={i} name="name"
+                {genome ? <input className={state === (i + 1) ? 'tab-input tab-input-active' : 'tab-input'} type="text" id={i} name="name" value={val}
                   placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} title="Brief unique name for this strain/condition, which can be freely chosen. As this name is also used in some filenames any special characters (including spaces) should be avoided." />
                   : "Replicate " + String.fromCharCode(97 + i)}
               </div>
@@ -80,13 +85,16 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
           }
          
           {genomes.map((g, i) => {
+          
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 
-                {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID" }, { "name": "Output ID" }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
+                {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID", "value": g['genome'+(i+1)]['alignmentid'] }, { "name": "Output ID" }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
                   <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
+
                   <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)}
                     saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)}/>
+
                   <Tabs genomes={replicates[i]['genome' + (i + 1)]} genome={false} whichGenome={i} handleTabs={(e) => handleTabs(e)}
                     saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)}/>
                 </>

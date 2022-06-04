@@ -92,7 +92,7 @@ def getInput():
                 if(len(p.stderr) == 0):
                     return {'result': 'success'}
                 else: 
-                    return {'result': str(p.stderr)}
+                    return {'result': (p.stderr).decode()}
         
         
  
@@ -103,7 +103,6 @@ def getAlignment():
 
     alignmentFile = request.files['alignmentFile']
 
-    # create temporary directory, save files and save filename in genome/replicate object
     with tempfile.TemporaryDirectory() as tmpdir:
 
         newTmpDir = tmpdir.replace('\\', '/')
@@ -114,13 +113,13 @@ def getAlignment():
 
         # write JSON string 
         jsonString = '{'
-        jsonString += '"loadConfig": "false"' + '", "saveConfig": "false", loadAlignment": "true",' + '"alignmentFile": "' + alignmentFilename + '"}'
+        jsonString += '"loadConfig": "false",' + '"saveConfig": "false", "loadAlignment": "true",' + '"alignmentFile": "' + alignmentFilename + '"}'
 
-        # call jar file for TSS prediction
-        result = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stdout=PIPE, stderr=PIPE)
+        # call jar file for to extract genome names & ids
+        result = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stdout=PIPE) #, stderr=PIPE)
         
         # here the json string with the genome names and ids is stored
-        print(result.stdout)
+        return {'result': json.loads((result.stdout).decode())}
 
 
 # loads a config file

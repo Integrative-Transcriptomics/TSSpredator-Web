@@ -11,7 +11,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2;
+  z-index: 100;
 }
 
 .popup-inner {
@@ -20,7 +20,7 @@
   background: white;
   border-radius: 0.65rem;
   margin: 0;
-  z-index: 2;
+  z-index: 100;
 }
 
 .popup-header {
@@ -29,7 +29,6 @@
   height: 8%;
   width: 100%;
   text-align: center;
-  z-index: 2;
   margin: 0;
 }
 .popup-columns {
@@ -85,7 +84,6 @@
   width: 100%;
   max-width:100%;
   box-shadow: 0 0.1rem 0.2rem rgb(0, 0, 0, 0.5);
-  z-index: 2;
   overflow: hidden;
 }
 /*upload box*/
@@ -95,7 +93,6 @@
 
 .drag-drop-zone p {
   color: black;
-  z-index: 2;
 }
 /* einzelne drag elemente*/
 .drag-box {
@@ -109,7 +106,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2;
   cursor: grab;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -140,7 +136,6 @@
   padding: 1.5rem 2rem;
   height: 10%;
   width: 100%;
-  z-index: 2;
   display: grid;
   grid-template-columns: 10% 10%;
   grid-gap: 80%;

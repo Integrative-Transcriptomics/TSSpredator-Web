@@ -682,6 +682,23 @@ function Main() {
         setEPopup(!ePopup);
     }
 
+    /**
+     * upload config file
+     */
+    const loadConfigFile = (event) => {
+
+       const file = event.target.files[0];
+        // check if config file
+        const split= file.name.split('.');
+        if(split[split.length-1] !== 'config') {
+            showError('Config File has wrong format. Config file format (.config) needed.')
+        } else {
+
+            // upload files from config file
+
+        }
+
+    }
 
     return (
         <div>
@@ -741,9 +758,9 @@ function Main() {
                             </select>
 
                             <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)}
-                                title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime." />
-                            <label className='element' htmlFor='check'
-                                title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime.">write rna-seq graph</label>
+                                data-title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime." />
+                            <label className='element checkbox' htmlFor='check'
+                                data-title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime.">write rna-seq graph</label>
                         </div>
 
                         {(typeof parameters.parameterBox === 'undefined')
@@ -754,7 +771,10 @@ function Main() {
 
 
                 <div className='footer'>
-                    <button className='button load' type="button">Load</button>
+                    <label className='button load'>
+                        <input type="file" style={{ display: 'none' }} onChange={(e) => loadConfigFile(e)} />
+                        Load
+                    </label>
                     <p>or</p>
                     <button className='button save' type="button">Save</button>
                     <p>Configuration</p>

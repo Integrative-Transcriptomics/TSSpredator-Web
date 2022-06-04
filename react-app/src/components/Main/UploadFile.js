@@ -60,7 +60,7 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
 
   if (label === 'genomeannotation') {
     return (
-      <div className={show ? 'file-box' : 'hidden'} title={file.tooltip}>
+      <div className={show ? 'file-box' : 'hidden'} data-title={file.tooltip}>
         <p className='file-row'>{file.name}</p>
         <label className='element-row file-row'>
 
@@ -69,14 +69,14 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
             webkitdirectory=""  />
 
           <p className={disabled ? 'button disabled' : 'button'}>Select Folder</p>
-          {typeof fileName === 'undefined' ? <div className='file-name'>No file(s) selected.</div> 
+          {typeof fileName === 'undefined' ?  (disabled === true ? <p className='file-name'>No file(s) needed.</p> : <p className='file-name'>No file(s) selected.</p>) 
                                            : <div className='file-name'> {fileName}</div>}
         </label>
       </div>
     )
   } else {
     return (
-      <div className={show ? 'file-box' : 'hidden'} title={file.tooltip}>
+      <div className={show ? 'file-box' : 'hidden'} data-title={file.tooltip}>
         <p className='file-row'>{file.name}</p>
         <label className='element-row file-row'>
 
@@ -84,7 +84,8 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
             onChange={(e) => saveIndividualFile(e)} />
 
           <p className={disabled ? 'button disabled' : 'button'}>Select File</p>
-          {typeof fileName === 'undefined' ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{fileName}</p>}
+          {typeof fileName === 'undefined' ? (disabled === true ? <p className='file-name'>No file needed.</p> : <p className='file-name'>No file selected.</p>) 
+                                            : <p className='file-name'>{fileName}</p>}
         </label>
       </div>
     )

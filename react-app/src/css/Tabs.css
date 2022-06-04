@@ -3,17 +3,16 @@
   flex-direction: column;
   background: white;
   margin-top: 1rem;
-  z-index: 1;
+  z-index: 50;
   border-top: transparent;
 }
-
 
 .tab-row {
   display: flex;
   flex-wrap: wrap;
   padding: 0;
   margin: 0;
-  z-index: 1;
+  z-index: 50;
 }
 
 .tab, .tab-rep {
@@ -28,7 +27,6 @@
   border-left: 1px solid transparent;
   box-sizing: content-box;
   position: relative;
-  z-index: 1;
 }
 
 .tab:first-child,
@@ -45,7 +43,6 @@
 .tab-active {
   background: white;
   border-bottom: 1px solid transparent;
-  z-index: 2;
 }
 
 .tab-input {
@@ -62,12 +59,10 @@
 
 .tab-input-active {
   background-color: white;
-  z-index: 1;
 }
 
 .tab-content {
   flex-grow: 1;
-  z-index: 1;
 }
 
 .content-border {
@@ -79,14 +74,12 @@
   background: white;
   padding-left: 0.5rem;
   display: none;
-  z-index: 1;
   margin-top: 0.8rem;
   margin-bottom: 0.5rem;
 }
 
 .content-active {
   display: block;
-  z-index: 1;
 }
 
 .line {

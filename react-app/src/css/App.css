@@ -69,7 +69,7 @@ input:focus {
     padding: 3rem 0;
     margin: auto;
     width: 50.55%;
-    z-index: 1;
+   
 }
 .content-box {
     margin-bottom: 2rem;
@@ -92,6 +92,9 @@ input:focus {
     display: flex;
     flex-direction: row;
     margin: 0.5rem 0;
+}
+.checkbox {
+    width: 30rem;
 }
 .header {
     font-size: 1.1rem;
@@ -240,7 +243,7 @@ select:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2;
+    z-index: 100;
   }
   
   .error-popup-inner {
@@ -248,7 +251,7 @@ select:hover {
     width: 30%;
     background: white;
     border-radius: 0.65rem;
-    z-index: 2;
+    z-index: 100;
     display: flex;
     flex-direction: column;
   }
@@ -258,7 +261,7 @@ select:hover {
     height: 15%;
     width: 100%;
     text-align: center;
-    z-index: 2;
+    z-index: 100;
   }
   .error-field {
       display: flex;
@@ -278,6 +281,57 @@ select:hover {
       border-top: 1px solid rgba(0, 0, 0, 0.3);
      padding-top: 1rem;
   }
+
+  /* tooltips */
+[data-title]:hover:after {
+    opacity: 1;
+    transition: all 0.1s ease 0.8s;
+    visibility: visible;
+}
+[data-title]:after {
+    content: attr(data-title);
+    font-size: 0.8rem;
+    background-color: #e0e0e0;
+    position: absolute;
+    margin-top: 5%;
+    margin-left: 5%;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.1rem 0.3rem rgb(0, 0, 0, 0.5);
+    border: 1px solid transparent;
+    opacity: 0;
+    z-index: 99;
+    visibility: hidden;
+}
+[data-title] {
+    position: relative;
+}
+
+[data-tabs-title]:hover:after {
+    opacity: 1;
+    transition: all 0.1s ease 0.8s;
+    visibility: visible;
+}
+[data-tabs-title]:after {
+    content: attr(data-tabs-title);
+    width: 20rem;
+    font-size: 0.8rem;
+    background-color: #e0e0e0;
+    position: absolute;
+    margin-top: 5%;
+    margin-left: 5%;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.1rem 0.3rem rgb(0, 0, 0, 0.5);
+    border: 1px solid transparent;
+    opacity: 0;
+    z-index: 99;
+    visibility: hidden;
+}
+[data-tabs-title] {
+    position: relative;
+}
+
 
 
 

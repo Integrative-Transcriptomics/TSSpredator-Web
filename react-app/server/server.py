@@ -1,4 +1,5 @@
 from asyncio.subprocess import PIPE
+from ctypes import alignment
 from distutils.archive_util import make_archive
 from flask import Flask, request, send_file
 from werkzeug.utils import secure_filename
@@ -130,6 +131,9 @@ def getAlignment():
 def loadConfig():
 
     configFile = request.files['configFile']
+    parameters = json.loads(request.form['parameters'])
+    genomes = json.loads(request.form['genomes'])
+    replicates = json.loads(request.form['replicates'])
 
     with tempfile.TemporaryDirectory() as tmpdir:
 
@@ -142,15 +146,20 @@ def loadConfig():
         # write JSON string 
         jsonString = '{'
         jsonString += '"loadConfig": "true",' + '"saveConfig": "false", "loadAlignment": "false",' + '"configFile": "' + configFilename + '"}'
-
+        
         # call jar file for to extract genome names & ids
         result = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stdout=PIPE, stderr=PIPE)
-
         
+      
         if(len(result.stderr) == 0):
+            config = json.loads((result.stdout).decode())
+            parameters, genomes, replicates = sf.handle_config_file(parameters, config, genomes, replicates)
+             ### PROJECT NAME !!!!
+             ### RNA Graph
             return {'result': json.loads((result.stdout).decode())}
         else:
             return {'result': json.loads((result.stderr).decode())}
+     
 
 
 # saves input as config file

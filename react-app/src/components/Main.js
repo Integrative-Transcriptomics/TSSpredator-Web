@@ -707,6 +707,9 @@ function Main() {
             // send config file to server
             const formData = new FormData();
             formData.append('configFile', file);
+            formData.append('parameters', JSON.stringify(parameters));
+            formData.append('genomes', JSON.stringify(genomes));
+            formData.append('replicates', JSON.stringify(replicates));
             fetch('/loadConfig/', {
                 method: 'POST',
                 body: formData
@@ -715,9 +718,7 @@ function Main() {
                 .then(data => {
 
                     // fill out genome names and ids
-                    parameters.setup.numberofreplicates.value = parseInt(data.result.numReplicates);
-                    parameters.parameterBox.Prediction.stepfactor.value = parseFloat(data.result.minCliffFactor);
-                  console.log(parameters.setup.numberofreplicates.value);
+                    console.log(data);
                 })
                 .catch(err => console.log(err));
         }

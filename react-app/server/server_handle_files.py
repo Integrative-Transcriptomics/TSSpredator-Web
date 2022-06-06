@@ -177,6 +177,128 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
 
     return jsonString
 
+
+# update parameter, genome, replicate values regarding the config file
+def handle_config_file(parameters, config, genomes, replicates):
+
+    # update parameters
+    parameters = handle_config_param(parameters, config, 'TSSinClusterSelectionMethod','parameterBox', 'Clustering', 'clustermethod')
+    parameters = handle_config_param(parameters, config, 'allowedCompareShift','parameterBox', 'Comparative', 'allowedcrossgenomeshift')
+    parameters = handle_config_param(parameters, config, 'allowedRepCompareShift','parameterBox', 'Comparative', 'allowedcrossreplicateshift')
+    parameters = handle_config_param(parameters, config, 'allowedRepCompareShift','parameterBox', 'Comparative', 'allowedcrossreplicateshift')
+    parameters = handle_config_param(parameters, config, 'maxASutrLength','parameterBox', 'Classification', 'antisenseutrlength')
+    parameters = handle_config_param(parameters, config, 'maxNormalTo5primeFactor','parameterBox', 'Prediction', 'processingsitefactor')
+    parameters = handle_config_param(parameters, config, 'maxTSSinClusterDistance','parameterBox', 'Clustering', 'tssclusteringdistance')
+    parameters = handle_config_param(parameters, config, 'maxUTRlength','parameterBox', 'Classification', 'utrlength')
+    parameters = handle_config_param(parameters, config, 'min5primeToNormalFactor','parameterBox', 'Prediction', 'enrichmentfactor')
+    parameters = handle_config_param(parameters, config, 'minCliffFactor','parameterBox', 'Prediction', 'stepfactor')
+    parameters = handle_config_param(parameters, config, 'minCliffFactorDiscount','parameterBox', 'Prediction', 'stepfactorreduction')
+    parameters = handle_config_param(parameters, config, 'minCliffHeight','parameterBox', 'Prediction', 'stepheight')
+    parameters = handle_config_param(parameters, config, 'minCliffHeightDiscount','parameterBox', 'Prediction', 'stepheightreduction')
+    parameters = handle_config_param(parameters, config, 'minNormalHeight','parameterBox', 'Prediction', 'baseheight')
+    parameters = handle_config_param(parameters, config, 'minNumRepMatches','parameterBox', 'Comparative', 'matchingreplicates')
+    parameters = handle_config_param(parameters, config, 'minPlateauLength','parameterBox', 'Prediction', 'steplength')
+    parameters = handle_config_param(parameters, config, 'mode','setup', 'typeofstudy')
+    parameters = handle_config_param(parameters, config, 'normPercentile','parameterBox', 'Normalization', 'normalizationpercentile')
+    parameters = handle_config_param(parameters, config, 'numReplicates','setup', 'numberofreplicates')
+    parameters = handle_config_param(parameters, config, 'numberOfDatasets','setup', 'numberofgenomes')
+    parameters = handle_config_param(parameters, config, 'texNormPercentile','parameterBox', 'Normalization', 'enrichmentnormalizationpercentile')
+        
+    # update genomes
+    genomes = handle_config_genomes(config, genomes, parameters)
+
+    # update replicates
+    
+
+    return [parameters, genomes, replicates]
+
+# update parameters from config file
+def handle_config_param(parameters, config, configVariable, parameterNode1, parameterNode2, parameterNode3=""):
+    
+    # setup box
+    if len(parameterNode3) == 0:
+        try:
+            temp = config[configVariable]
+
+            if configVariable == 'mode' and temp == 'cond':
+                temp = 'condition'
+            elif configVariable == 'mode' and temp =='align':
+                temp = 'genome'
+
+            parameters[parameterNode1][parameterNode2]['value'] = temp
+        except:
+            print('No such value')
+    # parameter box
+    else:
+        try:
+            temp = config[configVariable]
+            parameters[parameterNode1][parameterNode2][parameterNode3]['value'] = temp
+        except:
+            print('No such value')
+    
+    return parameters
+
+# update genomes from config file
+def handle_config_genomes(config, genomes, parameters):
+    # annotation files
+    annotationFiles = dict(filter(lambda item: 'annotation_' in item[0], config.items()))
+    # genome files
+    genomeFiles = dict(filter(lambda item: 'genome_' in item[0], config.items()))
+    # output ids
+    outputIDs = dict(filter(lambda item: 'outputID_' in item[0], config.items()))
+    # genome names
+    genomeNames = dict(filter(lambda item: 'outputPrefix_' in item[0], config.items()))
+    # alingment IDs
+    alignmentIDs = dict(filter(lambda item: 'idList' in item[0], config.items()))
+    if len(alignmentIDs) > 0:
+        alignmentIDs = alignmentIDs['idList'].split(',')
+
+    studyType = (parameters['setup']['typeofstudy']['value']).capitalize()
+    genomeNum = int(parameters['setup']['numberofgenomes']['value'])
+
+    for x in range(genomeNum):
+        currentGenomeName = 'genome' + str(x+1)
+        genomePlaceholder = studyType + '_' + str(x+1)
+
+        genomeName = genomePlaceholder
+        alignmentID = ""
+        outputID = ""
+        genomeFile = ""
+        annotationFile = ""
+
+        try:
+            genomeName = genomeNames['outputPrefix_'+str(x+1)]
+        except:
+            print('out of bound')
+        try:
+            alignmentID = alignmentIDs[x]
+        except:
+            print('out of bound')
+        try:
+            outputID = outputIDs['outputID_'+str(x+1)]
+        except:
+            print('out of bound')
+        try:
+            genomeFile = genomeFiles['genome_'+str(x+1)]
+        except:
+            print('out of bound')
+        try:
+            annotationFile = annotationFiles['annotation_'+str(x+1)]
+        except:
+            print('out of bound')
+
+
+        tmpGenome = {currentGenomeName: { "name": genomeName, "placeholder": genomePlaceholder, "alignmentid": alignmentID, "outputid": outputID, 
+                                        "genomefasta": genomeFile, "genomeannotation": annotationFile}}
+        if(x >= len(genomes)):
+            genomes.append(tmpGenome)
+        else: 
+            genomes[x] = tmpGenome
+    
+    return genomes
+
+
+
        
 
 

@@ -19,6 +19,7 @@ function TextField({ field, id, studyType, handleTabs }) {
     value = field.value;
   } else if (field.name === 'Output ID') {
     title = "Defined which gene tag in the attributes column (in the provided annotation file) should be used for TSS classification. Examples are 'locus_tag' or 'gene_id'."
+    value = field.value;
   }
 
   if (studyType === 'condition' && field.name === 'Alignment ID') {

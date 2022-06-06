@@ -182,6 +182,11 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
 def handle_config_file(parameters, config, genomes, replicates):
 
     # update parameters
+    parameters = handle_config_param(parameters, config, 'mode','setup', 'typeofstudy')
+    parameters = handle_config_param(parameters, config, 'numberOfDatasets','setup', 'numberofgenomes')
+    parameters = handle_config_param(parameters, config, 'numReplicates','setup', 'numberofreplicates')
+    parameters = handle_config_param(parameters, config, 'minCliffHeight','parameterBox', 'Prediction', 'stepheight')
+    parameters = handle_config_param(parameters, config, 'minCliffHeightDiscount','parameterBox', 'Prediction', 'stepheightreduction')
     parameters = handle_config_param(parameters, config, 'TSSinClusterSelectionMethod','parameterBox', 'Clustering', 'clustermethod')
     parameters = handle_config_param(parameters, config, 'allowedCompareShift','parameterBox', 'Comparative', 'allowedcrossgenomeshift')
     parameters = handle_config_param(parameters, config, 'allowedRepCompareShift','parameterBox', 'Comparative', 'allowedcrossreplicateshift')
@@ -193,15 +198,10 @@ def handle_config_file(parameters, config, genomes, replicates):
     parameters = handle_config_param(parameters, config, 'min5primeToNormalFactor','parameterBox', 'Prediction', 'enrichmentfactor')
     parameters = handle_config_param(parameters, config, 'minCliffFactor','parameterBox', 'Prediction', 'stepfactor')
     parameters = handle_config_param(parameters, config, 'minCliffFactorDiscount','parameterBox', 'Prediction', 'stepfactorreduction')
-    parameters = handle_config_param(parameters, config, 'minCliffHeight','parameterBox', 'Prediction', 'stepheight')
-    parameters = handle_config_param(parameters, config, 'minCliffHeightDiscount','parameterBox', 'Prediction', 'stepheightreduction')
     parameters = handle_config_param(parameters, config, 'minNormalHeight','parameterBox', 'Prediction', 'baseheight')
     parameters = handle_config_param(parameters, config, 'minNumRepMatches','parameterBox', 'Comparative', 'matchingreplicates')
     parameters = handle_config_param(parameters, config, 'minPlateauLength','parameterBox', 'Prediction', 'steplength')
-    parameters = handle_config_param(parameters, config, 'mode','setup', 'typeofstudy')
     parameters = handle_config_param(parameters, config, 'normPercentile','parameterBox', 'Normalization', 'normalizationpercentile')
-    parameters = handle_config_param(parameters, config, 'numReplicates','setup', 'numberofreplicates')
-    parameters = handle_config_param(parameters, config, 'numberOfDatasets','setup', 'numberofgenomes')
     parameters = handle_config_param(parameters, config, 'texNormPercentile','parameterBox', 'Normalization', 'enrichmentnormalizationpercentile')
         
     # update genomes
@@ -210,7 +210,10 @@ def handle_config_file(parameters, config, genomes, replicates):
     # update replicates
     replicates = handle_config_replicates(config, replicates, parameters)
 
-    return [parameters, genomes, replicates]
+    # alignment file
+    alignmentFile = "" # get_value(config, 'xmfa')    
+
+    return [parameters, genomes, replicates, alignmentFile]
 
 # update parameters from config file
 def handle_config_param(parameters, config, configVariable, parameterNode1, parameterNode2, parameterNode3=""):
@@ -220,19 +223,27 @@ def handle_config_param(parameters, config, configVariable, parameterNode1, para
         try:
             temp = config[configVariable]
 
-            if configVariable == 'mode' and temp == 'cond':
-                temp = 'condition'
-            elif configVariable == 'mode' and temp =='align':
-                temp = 'genome'
-
-            parameters[parameterNode1][parameterNode2]['value'] = temp
+            if configVariable == 'mode':
+                if temp == 'cond':
+                    parameters[parameterNode1][parameterNode2]['value'] = 'condition' 
+                else:
+                    parameters[parameterNode1][parameterNode2]['value'] = 'genome'
+            else:
+                parameters[parameterNode1][parameterNode2]['value'] = int(temp)
         except:
             print('No such value')
     # parameter box
     else:
         try:
             temp = config[configVariable]
-            parameters[parameterNode1][parameterNode2][parameterNode3]['value'] = temp
+
+            if configVariable == 'TSSinClusterSelectionMethod':
+                parameters[parameterNode1][parameterNode2][parameterNode3]['value'] = temp
+
+            # convert to float
+            else:
+                parameters[parameterNode1][parameterNode2][parameterNode3]['value'] = float(temp)
+  
         except:
             print('No such value')
     
@@ -260,34 +271,12 @@ def handle_config_genomes(config, genomes, parameters):
         currentGenomeName = 'genome' + str(x+1)
         genomePlaceholder = studyType + '_' + str(x+1)
 
-        genomeName = genomePlaceholder
-        alignmentID = ""
-        outputID = ""
-        genomeFile = ""
-        annotationFile = ""
-
-        try:
-            genomeName = genomeNames['outputPrefix_'+str(x+1)]
-        except:
-            print('out of bound')
-        try:
-            alignmentID = alignmentIDs[x]
-        except:
-            print('out of bound')
-        try:
-            outputID = outputIDs['outputID_'+str(x+1)]
-        except:
-            print('out of bound')
-        try:
-            genomeFile = genomeFiles['genome_'+str(x+1)]
-        except:
-            print('out of bound')
-        try:
-            annotationFile = annotationFiles['annotation_'+str(x+1)]
-        except:
-            print('out of bound')
-
-
+        genomeName = get_value(genomeNames, 'outputPrefix_'+str(x+1), genomePlaceholder)
+        alignmentID = get_value(alignmentIDs, x)
+        outputID = get_value(outputIDs, 'outputID_'+str(x+1))
+        genomeFile =  "" #get_value(genomeFiles, 'genome_'+str(x+1))
+        annotationFile = [] #get_value(annotationFiles, 'annotation_'+str(x+1))
+       
         tmpGenome = {currentGenomeName: { "name": genomeName, "placeholder": genomePlaceholder, "alignmentid": alignmentID, "outputid": outputID, 
                                         "genomefasta": genomeFile, "genomeannotation": annotationFile}}
         if(x >= len(genomes)):
@@ -322,27 +311,10 @@ def handle_config_replicates(config, replicates, parameters):
             currentReplicateName = 'replicate'+letter
             replicateName = 'Replicate ' + letter
         
-            enrichedForward = ""
-            enrichedReverse = ""
-            normalForward = ""
-            normalReverse = ""
-
-            try:
-                enrichedForward = enrichedForwardFiles['fivePrimePlus_'+str(x+1)+letter]
-            except:
-                print('out of bound')
-            try:
-                enrichedReverse = enrichedReverseFiles['fivePrimeMinus_'+str(x+1)+letter]
-            except:
-                print('out of bound')
-            try:
-                normalForward = normalForwardFiles['normalPlus_'+str(x+1)+letter]
-            except:
-                print('out of bound')
-            try:
-                normalReverse = normalReverseFiles['normalMinus_'+str(x+1)+letter]
-            except:
-                print('out of bound')
+            enrichedForward = "" # get_value(enrichedForwardFiles, 'fivePrimePlus_'+str(x+1)+letter)
+            enrichedReverse = "" # get_value(enrichedReverseFiles, 'fivePrimeMinus_'+str(x+1)+letter)
+            normalForward = "" # get_value(normalForwardFiles, 'normalPlus_'+str(x+1)+letter)
+            normalReverse = "" # get_value(normalReverseFiles, 'normalMinus_'+str(x+1)+letter)
 
             tmpReplicate.append({currentReplicateName: {"name": replicateName, "enrichedforward": enrichedForward, 
                                 "enrichedreverse": enrichedReverse, "normalforward": normalForward, "normalreverse": normalReverse}})
@@ -358,10 +330,14 @@ def handle_config_replicates(config, replicates, parameters):
     return replicates
            
 
-
-   
-
-    return replicates
+def get_value(object, node, default=""):
+    value = default
+    try:
+        value = object[node]
+    except:
+        print('out of bound')
+    
+    return value
 
 
 

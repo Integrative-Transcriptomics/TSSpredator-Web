@@ -58,7 +58,7 @@ function Main() {
         // if studytype condition: fill out alignment and output id
         fillGenomes();
 
-        const run = checkInput();
+        const run = false; //checkInput();
         if (run) {
             sendData();
         }
@@ -717,8 +717,37 @@ function Main() {
                 .then(response => response.json())
                 .then(data => {
 
-                    // fill out genome names and ids
-                    console.log(data);
+                    var result = data.result
+                    setProjectName(result['projectName']);
+                    setGenomes(JSON.parse(result['genomes']));
+                    setReplicates(JSON.parse(result['replicates']));
+                    setParameters(JSON.parse(result['parameters']));
+                    setRnaGraph((result['rnaGraph'] === 'true'));
+                    setAlignmentFile(result['alignmentFile']);
+                    setShowGName(true);
+
+                    var newRepNum = parseInt(result['numReplicate']);
+
+                    // update replicate template
+                    if (newRepNum > numRep) {
+                        for(let i = numRep; i < newRepNum; i++) {
+                            const repLetter = String.fromCharCode(96 + i);
+                            const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
+                            // update replicate template
+                            replicateTemplate.push(newRep);
+                            setReplicateTemplate(replicateTemplate);
+                        }
+                    } else if (newRepNum < numRep) {
+                        const diff = numRep - newRepNum;
+                        for (let i = 0; i  < diff; i++) {
+                            replicateTemplate.pop();
+                            setReplicateTemplate(replicateTemplate);
+                        }
+                    }
+                    setnumRep(newRepNum);
+                   
+                    // upload files?!!
+
                 })
                 .catch(err => console.log(err));
         }
@@ -735,7 +764,7 @@ function Main() {
             <div className='form-container'>
                 <div className='content-box'>
                     <label >
-                        <input className='project-name' type="text" name="project-name" placeholder="Enter Project Name" onChange={(e) => setProjectName(e.target.value)} />
+                        <input className='project-name' type="text" name="project-name" placeholder="Enter Project Name" defaultValue={projectName} onChange={(e) => setProjectName(e.target.value)} />
                     </label>
                     {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup} grid={false} onChange={(e) => handleParameters(e)} />)}
                 </div>

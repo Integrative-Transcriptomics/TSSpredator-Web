@@ -98,7 +98,8 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 
-                {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid'] }, { "name": "Output ID" }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
+                {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid'] }, { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]} 
+                                            studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)}/>
                   <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
 
                   <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)}

@@ -153,10 +153,18 @@ def loadConfig():
       
         if(len(result.stderr) == 0):
             config = json.loads((result.stdout).decode())
-            parameters, genomes, replicates = sf.handle_config_file(parameters, config, genomes, replicates)
-             ### PROJECT NAME !!!!
-             ### RNA Graph
-            return {'result': json.loads((result.stdout).decode())}
+            parameters, genomes, replicates, alignmentFile = sf.handle_config_file(parameters, config, genomes, replicates)
+
+            projectName = sf.get_value(config, 'projectName')
+
+            rnaGraph = 'false'
+            if int(sf.get_value(config, 'writeGraphs')) == 1:
+                rnaGraph = "true"
+
+            # use json.dumps() to keep order            
+            return {'result': {'parameters': json.dumps(parameters), 'genomes': json.dumps(genomes), 
+                    'replicates': json.dumps(replicates), 'projectName': projectName, 'rnaGraph': rnaGraph, 'alignmentFile': alignmentFile, 
+                    'numReplicate': parameters['setup']['numberofreplicates']['value']}}
         else:
             return {'result': json.loads((result.stderr).decode())}
      

@@ -1,7 +1,6 @@
 from werkzeug.utils import secure_filename
-import tempfile
 
-
+# save files in temporary directory and save file paths in json string
 def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum ):
 
     # genomefasta files
@@ -46,6 +45,7 @@ def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genom
 
     return [genomes, replicates]
 
+# save file paths of genome files
 def save_genome_file(directory, file, genomeObject, idx, node):
 
     tmpGenome = genomeObject
@@ -75,7 +75,7 @@ def save_genome_file(directory, file, genomeObject, idx, node):
 
     return tmpGenome
    
-
+# save file paths of replicate files 
 def save_replicate_file(directory, file, replicateObject, genomeCounter, replicateCounter, node):
 
     tmpRep = replicateObject
@@ -89,7 +89,7 @@ def save_replicate_file(directory, file, replicateObject, genomeCounter, replica
 
     return tmpRep
 
-
+# json to run TSS prediction
 def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory,  
                         loadConfig='false', saveConfig='false', configFile=" "):
 
@@ -208,7 +208,7 @@ def handle_config_file(parameters, config, genomes, replicates):
     genomes = handle_config_genomes(config, genomes, parameters)
 
     # update replicates
-    
+    replicates = handle_config_replicates(config, replicates, parameters)
 
     return [parameters, genomes, replicates]
 
@@ -296,6 +296,72 @@ def handle_config_genomes(config, genomes, parameters):
             genomes[x] = tmpGenome
     
     return genomes
+
+# update replicates from config file
+def handle_config_replicates(config, replicates, parameters):
+
+    # enriched forward file
+    enrichedForwardFiles = dict(filter(lambda item: 'fivePrimePlus_' in item[0], config.items()))
+    # enriched reverse files
+    enrichedReverseFiles = dict(filter(lambda item: 'fivePrimeMinus_' in item[0], config.items()))
+    # normal forward files
+    normalForwardFiles = dict(filter(lambda item: 'normalPlus_' in item[0], config.items()))
+    # normal reverse files
+    normalReverseFiles = dict(filter(lambda item: 'normalMinus_' in item[0], config.items()))
+
+    genomeNum = int(parameters['setup']['numberofgenomes']['value'])
+    replicateNum = int(parameters['setup']['numberofreplicates']['value'])
+
+    for x in range(genomeNum):
+        currentGenomeName = 'genome' + str(x+1)
+        tmpReplicate = []
+
+        for z in range(replicateNum): 
+
+            letter = chr(97 + z)
+            currentReplicateName = 'replicate'+letter
+            replicateName = 'Replicate ' + letter
+        
+            enrichedForward = ""
+            enrichedReverse = ""
+            normalForward = ""
+            normalReverse = ""
+
+            try:
+                enrichedForward = enrichedForwardFiles['fivePrimePlus_'+str(x+1)+letter]
+            except:
+                print('out of bound')
+            try:
+                enrichedReverse = enrichedReverseFiles['fivePrimeMinus_'+str(x+1)+letter]
+            except:
+                print('out of bound')
+            try:
+                normalForward = normalForwardFiles['normalPlus_'+str(x+1)+letter]
+            except:
+                print('out of bound')
+            try:
+                normalReverse = normalReverseFiles['normalMinus_'+str(x+1)+letter]
+            except:
+                print('out of bound')
+
+            tmpReplicate.append({currentReplicateName: {"name": replicateName, "enrichedforward": enrichedForward, 
+                                "enrichedreverse": enrichedReverse, "normalforward": normalForward, "normalreverse": normalReverse}})
+           
+
+        tmpGenome = {currentGenomeName: tmpReplicate}
+
+        if(x >= len(replicates)):
+            replicates.append(tmpGenome)
+        else: 
+            replicates[x] = tmpGenome
+    
+    return replicates
+           
+
+
+   
+
+    return replicates
 
 
 

@@ -28,6 +28,7 @@ import java.util.List;
  */
 public class MultiContigHandler {
 
+
     /**
      * Stores the instance of the fastaMerger
      */

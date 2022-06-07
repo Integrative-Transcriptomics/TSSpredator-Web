@@ -1,4 +1,3 @@
-
 package main;
 
 import contighandlerNew.MultiContigHandler;
@@ -19,8 +18,6 @@ import wiggle.XYnorm;
 import wiggle.XYtools;
 import wiggle.ioNew.WiggleParser;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -63,7 +60,6 @@ public class Main {
 
     /**
      * runs TSS prediction, reads config file or writes config file
-     * @throws Exception
      */
     public void compute() throws Exception {
 
@@ -85,7 +81,6 @@ public class Main {
         // create config File
         } else if(this.saveConfig) {
             saveConfig();
-            // TODO: error oder bestätigung dass es geklappt hat zurückgeben -> pop-up fenster im frontend
 
         // read alignment File
         } else if(this.readAlignment) {
@@ -108,15 +103,17 @@ public class Main {
 
         Map<String, String> values = this.values;
 
-        List<String> keys = new LinkedList<String>(values.keySet());
+        List<String> keys = new LinkedList<>(values.keySet());
         Collections.sort(keys);
 
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(this.values.get("configFile")));
 
             for (String s : keys) {
-                bw.write(s + " = " + values.get(s));
-                bw.newLine();
+                if(!s.equals("configFile") && !s.equals("outputDirectory")) {
+                    bw.write(s + " = " + values.get(s));
+                    bw.newLine();
+                }
             }
             bw.close();
         } catch (Exception e) {
@@ -185,7 +182,7 @@ public class Main {
                 Object[] fastaIDs = fastaEntries.toArray();
                 // System.out.println(fastaEntries.toString());
                 //store GFF files
-                List<String> allGffs = GFFio.scanDir(Config.getString("annotation_" + id)); // TODO: hier ordner namen angeben in dem alle gff dateien für genomID enthalten sind
+                List<String> allGffs = GFFio.scanDir(Config.getString("annotation_" + id));
                 //System.out.println("gffs: " + allGffs);
                 List<String> gffIdentifier = GFFio.extractAnnotationIdentifier(Config.getString("annotation_" + id));
                 //System.out.println("size " + gffIdentifier.size());
@@ -202,8 +199,8 @@ public class Main {
                     for (String w : chromNames) {
                         if (s.equals(w)) {
                             if (!gffIdentifier.contains(s)) {
-                               // System.out.println("Fasta ID: " + s + " and" + " Wiggle ID: " + w + " could not found in gff header! \n "
-                                     //   + "Either other header is used or annotation file is not available! In the last case TSS will be classified as orphan!");
+                                System.out.println("Fasta ID: " + s + " and" + " Wiggle ID: " + w + " could not found in gff header! \n "
+                                        + "Either other header is used or annotation file is not available! In the last case TSS will be classified as orphan!");
                             }
                         }
                     }

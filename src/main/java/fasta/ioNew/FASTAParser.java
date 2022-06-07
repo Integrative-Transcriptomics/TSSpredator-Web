@@ -152,7 +152,7 @@ public class FASTAParser
 			//}
 
 		} catch (IOException e){
-			throw new FASTAParserException("Could open FASTA file.", e);
+			throw new FASTAParserException("Could not open FASTA file.", e);
 		}
 
 		return fastaEntries;

@@ -10,8 +10,7 @@ import Error from './Main/Error';
 
 /**
  * creates the main window and saves all inputs
- */
-
+*/
 function Main() {
 
     const [projectName, setProjectName] = useState("");
@@ -49,28 +48,27 @@ function Main() {
             .then(parameters => setParameters(parameters))
     }, []);
 
-
     /**
      * RUN Button event
      */
-    const handleSubmit = (event) => {
+    const handleSubmit = (event, check = true) => {
         event.preventDefault();
         // if studytype condition: fill out alignment and output id
         fillGenomes();
 
-        const run = false; //checkInput();
-        if (run) {
+        const run = checkInput();
+
+        // run without annotation files
+        if (!check) {
+            run = true;
+            // close popup from warning that no annotation files are given
+            setEPopup(!ePopup);
+        }
+        if(run) {
             sendData();
         }
     }
 
-    /**
-     *  RUN: when user wants to run without annotation file
-     */
-    const runWithoutCheck = () => {
-        sendData();
-        setEPopup(!ePopup);
-    }
 
     /**
     * if studytype: condition -> fill out alignment id and output id in genomes
@@ -325,12 +323,16 @@ function Main() {
             .then(response => response.json())
             .then(data => {
 
-                // fill out genome names and ids
-                const dataResult = data.result;
-                // change number of genomes
-                const numGenomes = Object.keys(dataResult).length / 2;
-                setShowGName(true);
-                updateGenomes(numGenomes, dataResult);
+                if (data.result === 'success') {
+                    // fill out genome names and ids
+                    const dataResult = data.data;
+                    // change number of genomes
+                    const numGenomes = Object.keys(dataResult).length / 2;
+                    setShowGName(true);
+                    updateGenomes(numGenomes, dataResult);
+                } else {
+                    showError(data.data);
+                }
             })
             .catch(err => console.log(err));
     }
@@ -364,15 +366,15 @@ function Main() {
         if (name === "numberofgenomes") {
             updateGenomes(val);
         }
-        if(name === 'stepfactor') {
+        if (name === 'stepfactor') {
             updateParameterBox(directParent, 'stepfactorreduction', 'max', val);
-            if(parameters.parameterBox['Prediction']['stepfactorreduction']['value'] > val) {
+            if (parameters.parameterBox['Prediction']['stepfactorreduction']['value'] > val) {
                 parameters.parameterBox['Prediction']['stepfactorreduction']['value'] = val;
             }
         }
-        if(name === "stepheight"){
+        if (name === "stepheight") {
             updateParameterBox(directParent, 'stepheightreduction', 'max', val);
-            if(parameters.parameterBox['Prediction']['stepheightreduction']['value'] > val) {
+            if (parameters.parameterBox['Prediction']['stepheightreduction']['value'] > val) {
                 parameters.parameterBox['Prediction']['stepheightreduction']['value'] = val;
             }
         }
@@ -429,7 +431,7 @@ function Main() {
             }
 
             // replicate removed    
-        } else if (val < numRep) {
+        } else if (val < numRep && val > 0) {
             const difference = numRep - val;
             for (let i = 0; i < difference; i++) {
                 // update replicate template
@@ -485,7 +487,7 @@ function Main() {
             }
 
             // remove genome tab   
-        } else if (val < numGenomes) {
+        } else if (val < numGenomes && val > 0) {
             // remove all genomes
             const difference = numGenomes - val;
             for (let i = 0; i < difference; i++) {
@@ -592,6 +594,8 @@ function Main() {
      * updates text input in genome tabs
      */
     const handleTabs = (event) => {
+
+        setShowGName(true);
 
         const name = event.target.name;
         const value = event.target.value;
@@ -717,45 +721,90 @@ function Main() {
                 .then(response => response.json())
                 .then(data => {
 
-                    var result = data.result
-                    setProjectName(result['projectName']);
-                    setGenomes(JSON.parse(result['genomes']));
-                    setReplicates(JSON.parse(result['replicates']));
-                    setParameters(JSON.parse(result['parameters']));
-                    setRnaGraph((result['rnaGraph'] === 'true'));
-                    setAlignmentFile(result['alignmentFile']);
-                    setShowGName(true);
+                    if (data.result === 'success') {
+                        var result = data.data
+                        setProjectName(result['projectName']);
+                        setGenomes(JSON.parse(result['genomes']));
+                        setReplicates(JSON.parse(result['replicates']));
+                        setParameters(JSON.parse(result['parameters']));
+                        setRnaGraph((result['rnaGraph'] === 'true'));
+                        setAlignmentFile(result['alignmentFile']);
+                        setShowGName(true);
 
-                    var newRepNum = parseInt(result['numReplicate']);
-
-                    // update replicate template
-                    if (newRepNum > numRep) {
-                        for(let i = numRep; i < newRepNum; i++) {
-                            const repLetter = String.fromCharCode(96 + i);
-                            const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
-                            // update replicate template
-                            replicateTemplate.push(newRep);
-                            setReplicateTemplate(replicateTemplate);
+                        var newRepNum = parseInt(result['numReplicate']);
+                        // update replicate template
+                        if (newRepNum > numRep) {
+                            for (let i = numRep; i < newRepNum; i++) {
+                                const repLetter = String.fromCharCode(96 + i);
+                                const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
+                                // update replicate template
+                                replicateTemplate.push(newRep);
+                                setReplicateTemplate(replicateTemplate);
+                            }
+                        } else if (newRepNum < numRep) {
+                            const diff = numRep - newRepNum;
+                            for (let i = 0; i < diff; i++) {
+                                replicateTemplate.pop();
+                                setReplicateTemplate(replicateTemplate);
+                            }
                         }
-                    } else if (newRepNum < numRep) {
-                        const diff = numRep - newRepNum;
-                        for (let i = 0; i  < diff; i++) {
-                            replicateTemplate.pop();
-                            setReplicateTemplate(replicateTemplate);
-                        }
+                        setnumRep(newRepNum);
+                    } else {
+                        showError(data.data);
                     }
-                    setnumRep(newRepNum);
-                   
-                    // upload files?!!
-
                 })
                 .catch(err => console.log(err));
         }
     }
 
+    /**
+     * save input in config file
+     */
+    const saveConfigFile = () => {
+
+        // send input parameters to server
+        const formData = new FormData();
+        formData.append('projectname', JSON.stringify(projectName));
+        formData.append('parameters', JSON.stringify(parameters));
+        formData.append('rnagraph', JSON.stringify(rnaGraph));
+        formData.append('genomes', JSON.stringify(genomes));
+        formData.append('replicates', JSON.stringify(replicates));
+        formData.append('replicateNum', JSON.stringify({ 'num': numRep }));
+        fetch('/saveConfig/', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.blob())
+            .then((blob) => {
+
+                var name = projectName + '.config';
+
+                // Create blob link to download
+                const url = window.URL.createObjectURL(
+                    new Blob([blob]),
+                );
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute(
+                    'download',
+                    name,
+                );
+
+                // Append to html link element page
+                document.body.appendChild(link);
+
+                // Start download
+                link.click();
+
+                // Clean up and remove the link
+                link.parentNode.removeChild(link);
+            })
+            .catch(err => console.log(err));
+    }
+
     return (
         <div>
-            {ePopup && <Error error={error} header={eHeader} onCancel={() => setEPopup(!ePopup)} onRun={() => runWithoutCheck()} sendAlignmentFile={() => sendAlignmentFile()} />}
+            {ePopup && <Error error={error} header={eHeader} onCancel={() => setEPopup(!ePopup)} onRun={(e) => handleSubmit(e, false)} sendAlignmentFile={() => sendAlignmentFile()} />}
 
             <header>
                 <h1>TSSpredator</h1>
@@ -827,7 +876,7 @@ function Main() {
                         Load
                     </label>
                     <p>or</p>
-                    <button className='button save' type="button">Save</button>
+                    <button className='button save' type="button" onClick={() => saveConfigFile()}>Save</button>
                     <p>Configuration</p>
                     <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>Start TSS prediction</button>
                 </div>

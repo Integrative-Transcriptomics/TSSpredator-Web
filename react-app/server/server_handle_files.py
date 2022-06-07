@@ -1,7 +1,8 @@
 from werkzeug.utils import secure_filename
 
 # save files in temporary directory and save file paths in json string
-def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum ):
+def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum):
+    '''save files in temporary directory and save file paths in json string, so that the .jar can read the files'''
 
     # genomefasta files
     for x in range(len(genomeFasta)):
@@ -45,8 +46,8 @@ def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genom
 
     return [genomes, replicates]
 
-# save file paths of genome files
 def save_genome_file(directory, file, genomeObject, idx, node):
+    '''save file paths of genome files'''
 
     tmpGenome = genomeObject
 
@@ -55,7 +56,7 @@ def save_genome_file(directory, file, genomeObject, idx, node):
        
         filename = ''
         if(len(file) > 0):
-            # go over list for genome x, with all annotation files for genome x
+            # go over list for genome Z, with all annotation files for genome Z
             for x in file:
                   
                 # save file x in tempDirectory
@@ -75,8 +76,9 @@ def save_genome_file(directory, file, genomeObject, idx, node):
 
     return tmpGenome
    
-# save file paths of replicate files 
+
 def save_replicate_file(directory, file, replicateObject, genomeCounter, replicateCounter, node):
+    '''save file paths of replicate files'''
 
     tmpRep = replicateObject
 
@@ -89,10 +91,12 @@ def save_replicate_file(directory, file, replicateObject, genomeCounter, replica
 
     return tmpRep
 
-# json to run TSS prediction
 def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory,  
                         loadConfig='false', saveConfig='false', configFile=" "):
+    '''create json string that is needed as input for  TSSpredator.jar'''
 
+    jsonString = '{"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "loadAlignment": "false", "configFile": "' + configFile + '",'
+    
     # parameter handling
     setupBox = parameters['setup']
     parameterBox = parameters['parameterBox']
@@ -101,9 +105,6 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     clustering = parameterBox['Clustering']
     classification = parameterBox['Classification']
     comparative = parameterBox['Comparative']
-
-    jsonString = '{'
-    jsonString += '"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "loadAlignment": "false", "configFile": "' + configFile + '",'
 
     studytype = "align"
     if(setupBox['typeofstudy']['value'] == 'condition'):
@@ -144,13 +145,13 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"writeGraphs": "' + writeGraph + '",'
     jsonString += '"writeNocornacFiles": "0" ,'      
     
-
     # add genome fasta, genome annotation files, alignment id, output id and genome names
     idList = ''
     for x in range(len(genomes)):
         
-        jsonString += '"annotation_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomeannotation'] + '",'
-        jsonString += '"genome_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomefasta'] + '",'
+        if(saveConfig == 'false'):
+            jsonString += '"annotation_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomeannotation'] + '",'
+            jsonString += '"genome_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomefasta'] + '",'
         jsonString += '"outputPrefix_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['name'] + '",'
         jsonString += '"outputID_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['outputid'] + '",'
         
@@ -161,25 +162,25 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"idList": "' + idList + '",'
 
     # add replicate files
-    for x in range(len(replicates)):
-        currentGenome = replicates[x]['genome'+str(x+1)]
+    if(saveConfig == 'false'):
+        for x in range(len(replicates)):
+            currentGenome = replicates[x]['genome'+str(x+1)]
 
-        for y in range(len(currentGenome)):
-            repLetter = chr(97 + y)
-            jsonString += '"fivePrimePlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedforward'] + '",'
-            jsonString += '"fivePrimeMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedreverse'] + '",'
-            jsonString += '"normalPlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalforward'] + '",'
-            jsonString += '"normalMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalreverse'] + '",'
+            for y in range(len(currentGenome)):
+                repLetter = chr(97 + y)
+                jsonString += '"fivePrimePlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedforward'] + '",'
+                jsonString += '"fivePrimeMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedreverse'] + '",'
+                jsonString += '"normalPlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalforward'] + '",'
+                jsonString += '"normalMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalreverse'] + '",'
             
-
     jsonString = jsonString[:-1]
     jsonString += '}'
 
     return jsonString
 
 
-# update parameter, genome, replicate values regarding the config file
 def handle_config_file(parameters, config, genomes, replicates):
+    '''update parameter, genomes, replicate values regarding the given config file'''
 
     # update parameters
     parameters = handle_config_param(parameters, config, 'mode','setup', 'typeofstudy')
@@ -215,8 +216,9 @@ def handle_config_file(parameters, config, genomes, replicates):
 
     return [parameters, genomes, replicates, alignmentFile]
 
-# update parameters from config file
+
 def handle_config_param(parameters, config, configVariable, parameterNode1, parameterNode2, parameterNode3=""):
+    '''update parameters from config file'''
     
     # setup box
     if len(parameterNode3) == 0:
@@ -249,18 +251,22 @@ def handle_config_param(parameters, config, configVariable, parameterNode1, para
     
     return parameters
 
-# update genomes from config file
+
 def handle_config_genomes(config, genomes, parameters):
+    '''update genomes from config file'''
+
     # annotation files
     annotationFiles = dict(filter(lambda item: 'annotation_' in item[0], config.items()))
     # genome files
     genomeFiles = dict(filter(lambda item: 'genome_' in item[0], config.items()))
     # output ids
     outputIDs = dict(filter(lambda item: 'outputID_' in item[0], config.items()))
+    
     # genome names
     genomeNames = dict(filter(lambda item: 'outputPrefix_' in item[0], config.items()))
     # alingment IDs
     alignmentIDs = dict(filter(lambda item: 'idList' in item[0], config.items()))
+
     if len(alignmentIDs) > 0:
         alignmentIDs = alignmentIDs['idList'].split(',')
 
@@ -286,8 +292,8 @@ def handle_config_genomes(config, genomes, parameters):
     
     return genomes
 
-# update replicates from config file
 def handle_config_replicates(config, replicates, parameters):
+    '''update replicates from config file'''
 
     # enriched forward file
     enrichedForwardFiles = dict(filter(lambda item: 'fivePrimePlus_' in item[0], config.items()))
@@ -331,6 +337,7 @@ def handle_config_replicates(config, replicates, parameters):
            
 
 def get_value(object, node, default=""):
+    '''get the value from the given node from a given object '''
     value = default
     try:
         value = object[node]

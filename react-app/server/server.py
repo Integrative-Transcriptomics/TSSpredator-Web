@@ -82,18 +82,23 @@ def getInput():
                 jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
 
                 # call jar file for TSS prediction
-                p = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stderr=PIPE)
+                # timeout after 10 minutes
+                timeout_s = 600 
+                try:
+                    p = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stderr=PIPE, timeout=timeout_s)
 
-                # zip files
-                if os.path.exists("result.zip"):
-                    os.remove("result.zip")
-                make_archive('result', 'zip', newResultDir)
+                     # zip files
+                    if os.path.exists("result.zip"):
+                        os.remove("result.zip")
+                    make_archive('result', 'zip', newResultDir)
 
-                # return 'success' or 'error'
-                if(len(p.stderr) == 0):
-                    return {'result': 'success'}
-                else: 
-                    return {'result': (p.stderr).decode()}      
+                    # return 'success' or 'error'
+                    if(len(p.stderr) == 0):
+                        return {'result': 'success'}
+                    else: 
+                        return {'result': (p.stderr).decode()} 
+                except subprocess.TimeoutExpired:
+                    return {'result': 'Timeout'}                     
         
  
 @app.route('/alignment/', methods=['POST', 'GET'])

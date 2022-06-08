@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ClipLoader from "react-spinners/ClipLoader";
 import ParameterGroup from './Main/ParameterGroup';
 import ParameterAllGroups from './Main/ParameterAllGroups';
 import Tabs from './Main/Tabs';
@@ -45,6 +46,9 @@ function Main() {
     // show name of genom tab: set to true when genome names of alignment file are used
     const [showGName, setShowGName] = useState(false);
 
+    // loading spinner
+    let [loading, setLoading] = useState(false);
+
 
     /**
       * GETs Parameters from flask 
@@ -60,6 +64,7 @@ function Main() {
      */
     const handleSubmit = (event, check = true) => {
         event.preventDefault();
+        setLoading(!loading);
         // if studytype condition: fill out alignment and output id
         fillGenomes();
 
@@ -286,6 +291,9 @@ function Main() {
         })
             .then(response => response.json())
             .then(data => {
+
+                setLoading(false);
+
                 if (data.result === 'success') {
                     // open result in new tab
                     window.open('/result', '_blank', 'noopener,noreferrer');
@@ -1052,9 +1060,11 @@ function Main() {
                     <p>or</p>
                     <button className='button save' type="button" onClick={() => saveConfigFile()}>Save</button>
                     <p>Configuration</p>
-                    <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>Start TSS prediction</button>
+                    {loading ? <div className='loading'><ClipLoader  color='#ffa000' loading={loading} size={30} /></div>
+                    : <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>Start TSS prediction</button>}
+                    
                 </div>
-
+                
             </div>
         </div>
     )

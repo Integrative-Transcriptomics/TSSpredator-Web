@@ -333,6 +333,10 @@ select:hover {
     position: relative;
 }
 
+.loading {
+    margin-left: 65%;
+}
+
 
 
 

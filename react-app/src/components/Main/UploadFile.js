@@ -36,17 +36,17 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
 
       if (fileArray.length > 0) {
         fileName = '';
-        // less than 5 files, show all file names
-        if(fileArray.length < 5) {
+        // less than 4 files, show all file names
+        if(fileArray.length < 4) {
           fileArray.forEach(file => {
             fileName += file.name + ', '
           });
           // remove last comma
           fileName = fileName.slice(0, -2);
 
-        // more than 5 files, show only first 5 file names
+        // more than 4 files, show only first 3 file names
         } else {
-          for(let i = 0; i < 5; i++) {
+          for(let i = 0; i < 3; i++) {
             fileName += fileArray[i].name + ', ';
           }
           fileName += '...'

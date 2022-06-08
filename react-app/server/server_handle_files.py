@@ -212,7 +212,7 @@ def handle_config_file(parameters, config, genomes, replicates):
     replicates = handle_config_replicates(config, replicates, parameters)
 
     # alignment file
-    alignmentFile = "" # get_value(config, 'xmfa')    
+    alignmentFile = get_value(config, 'xmfa')    
 
     return [parameters, genomes, replicates, alignmentFile]
 
@@ -280,8 +280,8 @@ def handle_config_genomes(config, genomes, parameters):
         genomeName = get_value(genomeNames, 'outputPrefix_'+str(x+1), genomePlaceholder)
         alignmentID = get_value(alignmentIDs, x)
         outputID = get_value(outputIDs, 'outputID_'+str(x+1))
-        genomeFile =  "" #get_value(genomeFiles, 'genome_'+str(x+1))
-        annotationFile = [] #get_value(annotationFiles, 'annotation_'+str(x+1))
+        genomeFile =  get_value(genomeFiles, 'genome_'+str(x+1))
+        annotationFile = get_value(annotationFiles, 'annotation_'+str(x+1))
        
         tmpGenome = {currentGenomeName: { "name": genomeName, "placeholder": genomePlaceholder, "alignmentid": alignmentID, "outputid": outputID, 
                                         "genomefasta": genomeFile, "genomeannotation": annotationFile}}
@@ -317,10 +317,10 @@ def handle_config_replicates(config, replicates, parameters):
             currentReplicateName = 'replicate'+letter
             replicateName = 'Replicate ' + letter
         
-            enrichedForward = "" # get_value(enrichedForwardFiles, 'fivePrimePlus_'+str(x+1)+letter)
-            enrichedReverse = "" # get_value(enrichedReverseFiles, 'fivePrimeMinus_'+str(x+1)+letter)
-            normalForward = "" # get_value(normalForwardFiles, 'normalPlus_'+str(x+1)+letter)
-            normalReverse = "" # get_value(normalReverseFiles, 'normalMinus_'+str(x+1)+letter)
+            enrichedForward = get_value(enrichedForwardFiles, 'fivePrimePlus_'+str(x+1)+letter)
+            enrichedReverse = get_value(enrichedReverseFiles, 'fivePrimeMinus_'+str(x+1)+letter)
+            normalForward = get_value(normalForwardFiles, 'normalPlus_'+str(x+1)+letter)
+            normalReverse = get_value(normalReverseFiles, 'normalMinus_'+str(x+1)+letter)
 
             tmpReplicate.append({currentReplicateName: {"name": replicateName, "enrichedforward": enrichedForward, 
                                 "enrichedreverse": enrichedReverse, "normalforward": normalForward, "normalreverse": normalReverse}})
@@ -342,7 +342,7 @@ def get_value(object, node, default=""):
     try:
         value = object[node]
     except:
-        print('out of bound')
+        print(node + ' value not given.')
     
     return value
 

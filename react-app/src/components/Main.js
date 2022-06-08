@@ -7,6 +7,7 @@ import '../css/App.css';
 import '../css/Grid.css';
 import '../css/DragDrop.css';
 import Error from './Main/Error';
+import LoadConfig from './Main/LoadConfig';
 
 /**
  * creates the main window and saves all inputs
@@ -35,6 +36,12 @@ function Main() {
     const [error, setError] = useState("");
     const [eHeader, seteHeader] = useState("ERROR");
 
+    // show config popup
+    const [confPopup, setConfPopup] = useState(false);
+    const [text, setText] = useState("");
+    const [confHeader, setConfHeader] = useState("Upload Config File");
+    const [confFile, setConfFile] = useState("");
+
     // show name of genom tab: set to true when genome names of alignment file are used
     const [showGName, setShowGName] = useState(false);
 
@@ -56,15 +63,15 @@ function Main() {
         // if studytype condition: fill out alignment and output id
         fillGenomes();
 
-        const run = checkInput();
-
+        var run = checkInput();
+        
         // run without annotation files
         if (!check) {
             run = true;
             // close popup from warning that no annotation files are given
             setEPopup(!ePopup);
         }
-        if(run) {
+        if (run) {
             sendData();
         }
     }
@@ -629,6 +636,8 @@ function Main() {
     */
     const saveAnnotationFile = (event) => {
 
+        console.log(event.target.files)
+
         const node = event.target.name;
         const id = parseInt(event.target.id[0]);
         const temp = [...genomes];
@@ -699,62 +708,162 @@ function Main() {
     /**
      * upload config file
      */
-    const loadConfigFile = (event) => {
+    const uploadConfig = (event) => {
 
         const file = event.target.files[0];
-        // check if config file
         const split = file.name.split('.');
         if (split[split.length - 1] !== 'config') {
+            setConfPopup(false);
             showError('Config File has wrong format. Config file format (.config) needed.')
         } else {
+            setConfHeader("Upload Folder");
+            setText("Select the folder that contains all needed files. The genome annotation files for each Genome/Condition have to be in seperate directories.")
+            setConfFile(file);
+        }
+    }
 
-            // send config file to server
-            const formData = new FormData();
-            formData.append('configFile', file);
-            formData.append('parameters', JSON.stringify(parameters));
-            formData.append('genomes', JSON.stringify(genomes));
-            formData.append('replicates', JSON.stringify(replicates));
-            fetch('/loadConfig/', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
+    /**
+     * upload files that are needed for the config file
+     */
+    const uploadConfFiles = (event) => {
 
-                    if (data.result === 'success') {
-                        var result = data.data
-                        setProjectName(result['projectName']);
-                        setGenomes(JSON.parse(result['genomes']));
-                        setReplicates(JSON.parse(result['replicates']));
-                        setParameters(JSON.parse(result['parameters']));
-                        setRnaGraph((result['rnaGraph'] === 'true'));
-                        setAlignmentFile(result['alignmentFile']);
-                        setShowGName(true);
+        const files = event.target.files;
+        const tmpArray = [];
+        for (let i = 0; i < files.length; i++) {
+            tmpArray.push(files[i]);
+        }
+        setConfPopup(false);
 
-                        var newRepNum = parseInt(result['numReplicate']);
-                        // update replicate template
-                        if (newRepNum > numRep) {
-                            for (let i = numRep; i < newRepNum; i++) {
-                                const repLetter = String.fromCharCode(96 + i);
-                                const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
-                                // update replicate template
-                                replicateTemplate.push(newRep);
-                                setReplicateTemplate(replicateTemplate);
-                            }
-                        } else if (newRepNum < numRep) {
-                            const diff = numRep - newRepNum;
-                            for (let i = 0; i < diff; i++) {
-                                replicateTemplate.pop();
-                                setReplicateTemplate(replicateTemplate);
+        sendConfig(tmpArray);
+    }
+
+    /**
+     * send config file to flask server
+     */
+    const sendConfig = (tmpArray) => {
+
+        const allFiles = tmpArray;
+
+        // send config file to server
+        const formData = new FormData();
+        formData.append('configFile', confFile);
+        formData.append('parameters', JSON.stringify(parameters));
+        formData.append('genomes', JSON.stringify(genomes));
+        formData.append('replicates', JSON.stringify(replicates));
+        fetch('/loadConfig/', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+
+                if (data.result === 'success') {
+                    var result = data.data;
+
+                    setProjectName(result['projectName']);
+                    setParameters(JSON.parse(result['parameters']));
+                    setRnaGraph((result['rnaGraph'] === 'true'));
+
+                    // assign uploaded files to genomes
+                    const tmpGenome = [...JSON.parse(result['genomes'])];
+                    for (let i = 0; i < tmpGenome.length; i++) {
+
+                        var tmpFasta = tmpGenome[i]['genome' + (i + 1)]['genomefasta'];
+                        var tmpAnnotation = tmpGenome[i]['genome' + (i + 1)]['genomeannotation'];
+                        tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = [];
+
+                        for (let j = 0; j < allFiles.length; j++) {
+                            var str = allFiles[j].webkitRelativePath;
+                            var name = str.split("/").pop();
+                            str = str.replace(name, '');
+
+                            if (allFiles[j].webkitRelativePath === tmpFasta) {
+                                tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = allFiles[j];
+
+                            } else if (str === tmpAnnotation) {
+                                tmpGenome[i]['genome' + (i + 1)]['genomeannotation'].push(allFiles[j]);
                             }
                         }
-                        setnumRep(newRepNum);
-                    } else {
-                        showError(data.data);
                     }
-                })
-                .catch(err => console.log(err));
-        }
+
+                    // assign uploaded files to replicates
+                    const tmpRep = [...JSON.parse(result['replicates'])];
+
+                    for (let i = 0; i < tmpRep.length; i++) {
+
+                        var tmpG = tmpRep[i]['genome' + (i + 1)];
+
+                        for (let k = 0; k < tmpG.length; k++) {
+
+                            const letter = String.fromCharCode(97 + k);
+
+                            var tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'];
+                            var tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'];
+                            var tmpNF = tmpG[k]['replicate' + letter]['normalforward'];
+                            var tmpNR = tmpG[k]['replicate' + letter]['normalreverse'];
+
+                            for (let j = 0; j < allFiles.length; j++) {
+
+                                const str = allFiles[j].webkitRelativePath;
+
+                                if (str === tmpEF) {
+                                    tmpG[k]['replicate' + letter]['enrichedforward'] = allFiles[j];
+
+                                } else if (str === tmpER) {
+                                    tmpG[k]['replicate' + letter]['enrichedreverse'] = allFiles[j];
+
+                                } else if (str === tmpNF) {
+                                    tmpG[k]['replicate' + letter]['normalforward'] = allFiles[j];
+
+                                } else if (str === tmpNR) {
+                                    tmpG[k]['replicate' + letter]['normalreverse'] = allFiles[j];
+                                }
+                            }
+                        }
+                        tmpRep[i]['genome' + (i + 1)] = tmpG;
+                    }
+
+                    
+                    // update replicate template
+                    var newRepNum = parseInt(result['numReplicate']);
+                    if (newRepNum > numRep) {
+                        for (let i = numRep; i < newRepNum; i++) {
+                            const repLetter = String.fromCharCode(96 + i);
+                            const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
+                            // update replicate template
+                            replicateTemplate.push(newRep);
+                            setReplicateTemplate(replicateTemplate);
+                        }
+                    } else if (newRepNum < numRep) {
+                        const diff = numRep - newRepNum;
+                        for (let i = 0; i < diff; i++) {
+                            replicateTemplate.pop();
+                            setReplicateTemplate(replicateTemplate);
+                        }
+                    }
+
+                    setReplicates(tmpRep);
+                    setnumRep(newRepNum);
+                    setGenomes(tmpGenome);
+                    setShowGName(true);
+
+                    // if alignmentFile given assign it to useState
+                    if (result['alignmentFile'].length > 0) {
+                        for (let j = 0; j < allFiles.length; j++) {
+                            str = allFiles[j].webkitRelativePath;
+
+                            if (str === result['alignmentFile']) {
+                                setAlignmentFile(allFiles[j]);
+                                break;
+                            }
+                        }
+                    }
+
+                } else {
+                    showError(data.data);
+                }
+            })
+            .catch(err => console.log(err));
     }
 
     /**
@@ -777,7 +886,7 @@ function Main() {
             .then(response => response.blob())
             .then((blob) => {
 
-                var name = projectName + '.config';
+                var name = projectName.replace(' ', '_') + '.config';
 
                 // Create blob link to download
                 const url = window.URL.createObjectURL(
@@ -805,6 +914,7 @@ function Main() {
     return (
         <div>
             {ePopup && <Error error={error} header={eHeader} onCancel={() => setEPopup(!ePopup)} onRun={(e) => handleSubmit(e, false)} sendAlignmentFile={() => sendAlignmentFile()} />}
+            {confPopup && <LoadConfig text={text} header={confHeader} uploadConfig={(e) => uploadConfig(e)} uploadFiles={(e) => uploadConfFiles(e)} />}
 
             <header>
                 <h1>TSSpredator</h1>
@@ -871,10 +981,8 @@ function Main() {
 
 
                 <div className='footer'>
-                    <label className='button load'>
-                        <input type="file" style={{ display: 'none' }} onChange={(e) => loadConfigFile(e)} />
-                        Load
-                    </label>
+                    <button className='button load' type="button"
+                        onClick={() => { setConfHeader("Upload Config File"); setText("Select the config file (.config)."); setConfPopup(true); }}>Load</button>
                     <p>or</p>
                     <button className='button save' type="button" onClick={() => saveConfigFile()}>Save</button>
                     <p>Configuration</p>

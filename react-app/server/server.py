@@ -135,7 +135,7 @@ def loadConfig():
 
         newTmpDir = tmpdir.replace('\\', '/')
 
-        # save alignment file
+        # save config file
         configFilename = newTmpDir + '/' + secure_filename(configFile.filename)
         configFile.save(configFilename)
 

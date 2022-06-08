@@ -936,7 +936,6 @@ function Main() {
             console.log('no alignment file')
         }
 
-
         // send input parameters to server
         const formData = new FormData();
         formData.append('projectname', JSON.stringify(projectName));

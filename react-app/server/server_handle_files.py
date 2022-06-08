@@ -117,7 +117,6 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     if(rnaGraph == 'true'):
         writeGraph = "1"
         
-
     # add parameters
     jsonString += '"TSSinClusterSelectionMethod": "' + str(clustering['clustermethod']['value']) + '",'
     jsonString += '"allowedCompareShift": "' + str(comparative['allowedcrossgenomeshift']['value']) + '",'
@@ -230,6 +229,8 @@ def handle_config_param(parameters, config, configVariable, parameterNode1, para
                     parameters[parameterNode1][parameterNode2]['value'] = 'condition' 
                 else:
                     parameters[parameterNode1][parameterNode2]['value'] = 'genome'
+                    parameters['setup']['numberofgenomes']['name'] = 'Number of Genomes'
+                    parameters['parameterBox']['Comparative']['allowedcrossgenomeshift']['name'] = 'allowed cross-genome shift'
             else:
                 parameters[parameterNode1][parameterNode2]['value'] = int(temp)
         except:

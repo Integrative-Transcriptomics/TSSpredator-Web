@@ -472,7 +472,7 @@ public class SuperGenome {
             tmpPos = superG[tss.getPos()];
 
             if (tmpPos == 0 && mapToSuperG)
-                System.err.println("WARNING: Position " + tss.getPos() + "could not be mapped to the SuperGenome!");
+                System.out.println("WARNING: Position " + tss.getPos() + "could not be mapped to the SuperGenome!");
 
             if (tmpPos == 0 && !mapToSuperG)//it is a superTSS
             {
@@ -855,7 +855,7 @@ public class SuperGenome {
                 break;
             default:
                 res = '.';
-                System.err.println("Warning: Invalid strand identifier in toggleStrand function: " + strand);
+                System.out.println("Warning: Invalid strand identifier in toggleStrand function: " + strand);
         }
 
         return res;

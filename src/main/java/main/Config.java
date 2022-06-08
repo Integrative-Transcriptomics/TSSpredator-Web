@@ -158,7 +158,7 @@ public class Config {
                 res.put(name, value);
             }
         } catch (Exception e) {
-            System.err.println("Something went wrong when reading the config file.");
+            System.err.println("Could not read the config file. " + e.getMessage());
             e.printStackTrace();
         }
         values = res;

@@ -179,7 +179,7 @@ public class GFFio {
                     gene.adjustEndPos(offset);
                 } else {
                     contigGFFWithoutContigInput.add(gene.getOrigin());
-                    System.err.println(String.format("Could not find gene's contig ID %s " +
+                    System.out.println(String.format("Could not find gene's contig ID %s " +
                             "in contig list.", gene.getOrigin()));
                 }
             } else {

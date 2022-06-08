@@ -45,9 +45,10 @@ public class SuperGene implements Comparable<SuperGene>
 	
 	public void putGenomicGene(String genomeID, Gene gene)
 	{
-		if(genomeGenes.get(genomeID)!=null)
-			throw new Error("Cannot add "+gene.getId()+" to this SuperGene! Contains already "+genomeGenes.get(genomeID).getId()+" for the same Genome.");
-			
+		if(genomeGenes.get(genomeID)!=null) {
+			System.err.println("Cannot add " + gene.getId() + " to this SuperGene! Contains already " + genomeGenes.get(genomeID).getId() + " for the same Genome.");
+			return;
+		}
 		genomeGenes.put(genomeID, gene);
 		
 		interrogatableRegions=null;
@@ -171,7 +172,7 @@ public class SuperGene implements Comparable<SuperGene>
 		
 		//If SuperGenome based approach IS necessary...
 		//TODO debug
-		System.err.print(this.getContentHashString()+": SuperGenome based approach!");
+		//System.err.print(this.getContentHashString()+": SuperGenome based approach!");
 		
 		lengthProblem=true;
 		
@@ -190,7 +191,7 @@ public class SuperGene implements Comparable<SuperGene>
 			if(tmpG==null)
 			{
 				//TODO debug
-				System.err.println(" - Not all genes supergenomifyable!");
+				//System.err.println(" - Not all genes supergenomifyable!");
 				this.interrogatableRegions=orthoBasedInterrogatableRegions;
 				this.genomeGenes=genomeGenesBak;
 				return;
@@ -210,7 +211,7 @@ public class SuperGene implements Comparable<SuperGene>
 		if(interrogatableRegions==null || interrogatableRegions.size()!=orthoBasedInterrogatableRegions.size())
 		{
 			//TODO debug
-			System.err.println(" - No common region found!");
+			//System.err.println(" - No common region found!");
 			this.interrogatableRegions=orthoBasedInterrogatableRegions;
 			return;
 		}
@@ -221,7 +222,7 @@ public class SuperGene implements Comparable<SuperGene>
 			if(interrogatableRegions.get(id).getLength()<50 && genomeGenes.get(id).getLength()>=50)
 			{
 				//TODO debug
-				System.err.println(" -  Common region to short!");
+				//System.err.println(" -  Common region to short!");
 				this.interrogatableRegions=orthoBasedInterrogatableRegions;
 				return;
 			}
@@ -230,7 +231,7 @@ public class SuperGene implements Comparable<SuperGene>
 		lengthProblem=false;
 		
 		//TODO debug
-		System.err.println(" - success!");
+		//System.err.println(" - success!");
 		//TODO check this again, are we done here?
 		//TODO add some debug messages? Why not.
 	}
@@ -317,7 +318,7 @@ public class SuperGene implements Comparable<SuperGene>
 		case '+': res = '-'; break;
 		case '-': res = '+'; break;
 		case '.': res = '.'; break;
-		default:  res = '.'; System.err.println("Warning: Invalid strand identifier in toggleStrand function: "+strand);
+		default:  res = '.'; //System.err.println("Warning: Invalid strand identifier in toggleStrand function: "+strand);
 		}
 		
 		return res;
@@ -345,7 +346,7 @@ public class SuperGene implements Comparable<SuperGene>
 				return false;
 		
 		//TODO print debug
-		System.err.println(this.getContentHashString()+"is a subset of "+otherSuperGene.getContentHashString());
+		//System.err.println(this.getContentHashString()+"is a subset of "+otherSuperGene.getContentHashString());
 		
 		return res;
 	}

@@ -139,12 +139,14 @@ public class Main {
         //RepIDs
         char[] repIDs = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
 
-        if (Parameters.numReplicates > 26)
-            throw new Error("Not more than 26 replicates supported!");
-
-        if (ids.length != Config.getInt("numberOfDatasets"))
-            throw new Error("numberOfDatasets does not match length of idList!");
-
+        if (Parameters.numReplicates > 26) {
+            System.err.println("Not more than 26 replicates supported!");
+            return;
+        }
+        if (ids.length != Config.getInt("numberOfDatasets")) {
+            System.err.println("numberOfDatasets does not match length of idList!");
+            return;
+        }
         //output directory
         String outDir = Config.getString("outputDirectory") + "/";
 
@@ -249,9 +251,10 @@ public class Main {
             superG = new SuperGenome(alignmentBlocks, ids);
         } else if (Config.getString("mode").equalsIgnoreCase("cond")) {
             superG = new SuperGenome(genomeMap.values().iterator().next().length(), ids);
-        } else
-            throw new Error("Unknown mode: " + Config.getString("mode") + " Please check the config file. 'mode' has to be 'align' or 'cond'.");
-
+        } else {
+            System.err.println("Unknown mode: " + Config.getString("mode") + " Please check the config file. 'mode' has to be 'align' or 'cond'.");
+            return;
+        }
 
         //correct annotations
         if (Config.entryExists("annotationCorrection")) {
@@ -412,7 +415,6 @@ public class Main {
 
         ////normalize TEX
 
-
         //calculate enrichment percentiles
         if (!alreadyCached && Parameters.texNormPercentile > 0) {
 
@@ -441,8 +443,6 @@ public class Main {
                 }
             }
         }
-
-
 
         ////write Graphs
         if (Config.getBoolean("writeGraphs")) {
@@ -1167,7 +1167,7 @@ public class Main {
 
                 //no regions in this SuperGene?
                 if (regions == null) {
-                    System.err.println("Warning: No interrogatable regions in a SuperGene!");
+                    //System.err.println("Warning: No interrogatable regions in a SuperGene!");
                     continue;
                 }
 
@@ -1331,7 +1331,7 @@ public class Main {
                     fields = line.split("\t");
 
                     if (fields.length < 2) {
-                        return "Error: The header of the alignment file is missing or not in proper format (Mauve xmfa format).\nGenome names and alignment IDs cannot be parsed from the file.\nPlease set them manually.";
+                        System.err.println("The header of the alignment file is missing or not in proper format (Mauve xmfa format).\nGenome names and alignment IDs cannot be parsed from the file.\nPlease set them manually.");
                     }
 
                     fields = fields[1].split("/|\\\\");
@@ -1358,7 +1358,7 @@ public class Main {
             return jsonString;
 
         } catch (Throwable t) {
-            return "Error: An error occured while parsing the alignment file:\n" + t.getMessage();
+            return "ERROR: An error occured while parsing the alignment file:\n" + t.getMessage();
         }
 
     }

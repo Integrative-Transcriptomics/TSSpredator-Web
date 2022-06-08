@@ -30,7 +30,7 @@ public class AntiSenseState implements ITssState, Comparable<ITssState>{
     public boolean closestGeneOnSameContig(ArrayList<String> fastaIDList,
                                            MultiContigHandler handler, int... index) {
         if(index == null || index.length != 1){
-            System.err.println("Error in sameContig check. No index provided or wrong size.");
+            System.out.println("Error in sameContig check. No index provided or wrong size.");
             return false;
         }
         boolean onSameContig;

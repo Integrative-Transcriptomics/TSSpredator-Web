@@ -180,7 +180,7 @@ public class SuperGeneFactory {
 		for(String someID:indexToGenomeID)
 			if(!geneMap.keySet().contains(someID))
 				throw new Error("The ID '"+someID+"' in the header of the ortholog mapping file is not a valid genome ID!");
-		
+
 		//generate SuperGene for each line
 		String[] cells;
 		for(String line=br.readLine(); line!=null; line=br.readLine())
@@ -193,7 +193,7 @@ public class SuperGeneFactory {
 			
 			if(cells.length!=indexToGenomeID.length)
 			{
-				System.err.println("The following line in the ortholog mapping file does not have the correct number of entries:\n"+line+"\nThe line is skipped!");
+				System.out.println("The following line in the ortholog mapping file does not have the correct number of entries:\n"+line+"\nThe line is skipped!");
 				continue;
 			}
 			
@@ -211,7 +211,7 @@ public class SuperGeneFactory {
 				//did it work
 				if(tmpGene==null)
 				{
-					System.err.println("The gene '"+cells[i]+"' was not found for genome ID "+indexToGenomeID[i]+". Skipping this entry!");
+					System.out.println("The gene '"+cells[i]+"' was not found for genome ID "+indexToGenomeID[i]+". Skipping this entry!");
 					continue;
 				}
 				
@@ -271,7 +271,7 @@ public class SuperGeneFactory {
 			
 			if(cells.length<indexToGenomeID.length)
 			{
-				System.err.println("The following line in the ortholog mapping file does not have the correct number of entries:\n"+line+"\nThe line is skipped!");
+				System.out.println("The following line in the ortholog mapping file does not have the correct number of entries:\n"+line+"\nThe line is skipped!");
 				continue;
 			}
 			
@@ -289,7 +289,7 @@ public class SuperGeneFactory {
 				//did it work
 				if(tmpGene==null)
 				{
-					System.err.println("The gene '"+cells[i]+"' was not found for genome ID "+indexToGenomeID[i]+". Skipping this entry!");
+					System.out.println("The gene '"+cells[i]+"' was not found for genome ID "+indexToGenomeID[i]+". Skipping this entry!");
 					continue;
 				}
 				

@@ -169,20 +169,21 @@ def saveConfig():
 
     # get all inputs
     projectName = request.form['projectname']
+    alignmentFile = json.loads(request.form['alignmentFile'])
     parameters = json.loads(request.form['parameters'])
     rnaGraph = request.form['rnagraph']
     genomes = json.loads(request.form['genomes'])
     replicates = json.loads(request.form['replicates'])
     replicateNum = json.loads(request.form['replicateNum'])
-       
+
     tmpdir = tempfile.mkdtemp()
     newTmpDir = tmpdir.replace('\\', '/')
-   
-    # save alignment file
+
+    # save config file
     configFilename = newTmpDir + '/configFile.config'
 
     # write JSON string 
-    jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, "", projectName, parameters, rnaGraph, "", 'false', 'true', configFilename)
+    jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", 'false', 'true', configFilename)
 
     # call jar file for to write config file
     subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString])

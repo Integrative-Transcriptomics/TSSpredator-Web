@@ -64,7 +64,7 @@ function Main() {
         fillGenomes();
 
         var run = checkInput();
-        
+
         // run without annotation files
         if (!check) {
             run = true;
@@ -823,7 +823,6 @@ function Main() {
                         tmpRep[i]['genome' + (i + 1)] = tmpG;
                     }
 
-                    
                     // update replicate template
                     var newRepNum = parseInt(result['numReplicate']);
                     if (newRepNum > numRep) {
@@ -871,14 +870,82 @@ function Main() {
      */
     const saveConfigFile = () => {
 
+        // save filenames in genomes
+        const tmpGenome = [...genomes];
+        
+        for (let i = 0; i < genomes.length; i++) {
+
+            var tmpFasta = "";
+            var tmpAnn = "";
+          
+            try {
+                tmpFasta = genomes[i]['genome' + (i + 1)]['genomefasta'].webkitRelativePath;
+                tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = tmpFasta;
+            } catch { console.log('Missing fasta file'); }
+            try {
+                tmpAnn = genomes[i]['genome' + (i + 1)]['genomeannotation'][0].webkitRelativePath;
+                var name = tmpAnn.split("/").pop();
+                tmpAnn = tmpAnn.replace(name, '');
+                tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = tmpAnn;
+            } catch { console.log('missing annotation file'); }
+        }
+
+        // save file names in replicates
+        const tmpRep = [...replicates];
+        
+        for (let i = 0; i < tmpRep.length; i++) {
+
+            var tmpG = tmpRep[i]['genome' + (i + 1)];
+
+            for (let k = 0; k < tmpG.length; k++) {
+
+                const letter = String.fromCharCode(97 + k);
+
+                var tmpEF = "";
+                var tmpER = "";
+                var tmpNF = "";
+                var tmpNR = "";
+
+                try {
+                    tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'].webkitRelativePath;
+                    tmpG[k]['replicate' + letter]['enrichedforward'] = tmpEF;
+                } catch { console.log('no file'); }
+                try {
+                    tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'].webkitRelativePath;
+                    tmpG[k]['replicate' + letter]['enrichedreverse'] = tmpER;
+                } catch { console.log('no file'); }
+                try {
+                    tmpNF = tmpG[k]['replicate' + letter]['normalforward'].webkitRelativePath;
+                    tmpG[k]['replicate' + letter]['normalforward'] = tmpNF;
+                } catch { console.log('no file'); }
+                try {
+                    tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].webkitRelativePath;
+                    tmpG[k]['replicate' + letter]['normalreverse'] = tmpNR;
+                } catch { console.log('no file'); }
+
+            }
+            tmpRep[i]['genome' + (i + 1)] = tmpG;
+        }
+
+        // alignmentFile
+        var tmpAlignFile = "";
+        try {
+            tmpAlignFile = alignmentFile.webkitRelativePath;
+
+        } catch{
+            console.log('no alignment file')
+        }
+
+
         // send input parameters to server
         const formData = new FormData();
         formData.append('projectname', JSON.stringify(projectName));
         formData.append('parameters', JSON.stringify(parameters));
         formData.append('rnagraph', JSON.stringify(rnaGraph));
-        formData.append('genomes', JSON.stringify(genomes));
-        formData.append('replicates', JSON.stringify(replicates));
         formData.append('replicateNum', JSON.stringify({ 'num': numRep }));
+        formData.append('genomes', JSON.stringify(tmpGenome));
+        formData.append('replicates', JSON.stringify(tmpRep));
+        formData.append('alignmentFile', JSON.stringify(tmpAlignFile));
         fetch('/saveConfig/', {
             method: 'POST',
             body: formData

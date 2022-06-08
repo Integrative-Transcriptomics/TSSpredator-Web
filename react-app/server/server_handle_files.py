@@ -149,9 +149,8 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     idList = ''
     for x in range(len(genomes)):
         
-        if(saveConfig == 'false'):
-            jsonString += '"annotation_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomeannotation'] + '",'
-            jsonString += '"genome_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomefasta'] + '",'
+        jsonString += '"annotation_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomeannotation'] + '",'
+        jsonString += '"genome_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomefasta'] + '",'
         jsonString += '"outputPrefix_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['name'] + '",'
         jsonString += '"outputID_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['outputid'] + '",'
         
@@ -162,16 +161,16 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"idList": "' + idList + '",'
 
     # add replicate files
-    if(saveConfig == 'false'):
-        for x in range(len(replicates)):
-            currentGenome = replicates[x]['genome'+str(x+1)]
+   
+    for x in range(len(replicates)):
+        currentGenome = replicates[x]['genome'+str(x+1)]
 
-            for y in range(len(currentGenome)):
-                repLetter = chr(97 + y)
-                jsonString += '"fivePrimePlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedforward'] + '",'
-                jsonString += '"fivePrimeMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedreverse'] + '",'
-                jsonString += '"normalPlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalforward'] + '",'
-                jsonString += '"normalMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalreverse'] + '",'
+        for y in range(len(currentGenome)):
+            repLetter = chr(97 + y)
+            jsonString += '"fivePrimePlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedforward'] + '",'
+            jsonString += '"fivePrimeMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedreverse'] + '",'
+            jsonString += '"normalPlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalforward'] + '",'
+            jsonString += '"normalMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalreverse'] + '",'
             
     jsonString = jsonString[:-1]
     jsonString += '}'

@@ -116,6 +116,7 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     writeGraph = "0"
     if(rnaGraph == 'true'):
         writeGraph = "1"
+        
 
     # add parameters
     jsonString += '"TSSinClusterSelectionMethod": "' + str(clustering['clustermethod']['value']) + '",'

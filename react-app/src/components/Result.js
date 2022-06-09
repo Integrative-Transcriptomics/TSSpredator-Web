@@ -7,8 +7,43 @@ import MasterTable from './Result/MasterTable';
 
 function Result() {
 
-    const [masterTable, setMasterTable] = useState("");
+    const [tableColumns, setTableColumns] = useState([]);
+    const [tableData, setTableData] = useState([]);
+
     const [blob, setBlob] = useState(new Blob());
+
+    /**
+     * extract info from mastertable string
+     */
+    const handleMasterTable = (masterTable) => {
+
+        const allRows = masterTable.split('\n');
+        
+        // column headers
+        const headers = (allRows[0]).split('\t');
+         // columns for the table
+         const col = [];
+         headers.forEach((h, i) => {
+             const char = i.toString();
+             col.push({ Header: h, accessor: char });
+         });
+         setTableColumns([...col]);        
+    
+        // save rows
+        const dataRows = [];
+        allRows.forEach((row, i) => {
+            if (i > 0) {
+                const tmp = row.split('\t');
+                var tmpRow = {};
+                tmp.forEach((content, j) => {
+                    const char = j.toString()
+                    tmpRow[char] = content;
+                })
+                dataRows.push(tmpRow);
+            }
+        });
+        setTableData([...dataRows]);  
+    }
 
     /**
      * get all files from TSS prediction as .zip from server
@@ -24,7 +59,7 @@ function Result() {
                     .then((zip) => {
                         try {
                             zip.file("MasterTable.tsv").async("string").then(data => {
-                                setMasterTable(data);
+                                handleMasterTable(data);
                             });
                         } catch {console.log('No Master Table file');}
                     });
@@ -70,7 +105,7 @@ function Result() {
 
                 <div>
                     <h3 className='header click-param'>+ Master Table</h3>
-                    {masterTable.length > 0 ? <MasterTable masterTable={masterTable}/> : <></>}
+                    {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} /> : <></>}
                 </div>
 
             </div>

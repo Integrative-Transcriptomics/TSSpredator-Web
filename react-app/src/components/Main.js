@@ -711,6 +711,7 @@ function Main() {
     const showError = (error) => {
         setError(error);
         setEPopup(!ePopup);
+        setLoading(false);
     }
 
     /**

@@ -2,62 +2,58 @@ import React, { useState, useEffect } from 'react';
 import JSZip from 'jszip';
 import '../css/Result.css';
 import '../css/App.css';
+import '../css/MasterTable.css';
+import MasterTable from './Result/MasterTable';
 
 function Result() {
 
-    const [files, setFiles] = useState([]);
+    const [masterTable, setMasterTable] = useState("");
+    const [blob, setBlob] = useState(new Blob());
 
+    /**
+     * get all files from TSS prediction as .zip from server
+     */
     useEffect(() => {
-
         fetch("/result/")
             .then(res => res.blob())
             .then(blob => {
 
-                JSZip.loadAsync(blob)
-                .then((zip) => {
-                    zip.forEach((relativePath, zipEntry) => { 
-                      files.push(zipEntry);
-                      setFiles(files);
-                    }); 
-                });
-            });
-        
+                setBlob(blob);
 
-      }, []);
+                JSZip.loadAsync(blob)
+                    .then((zip) => {
+                        try {
+                            zip.file("MasterTable.tsv").async("string").then(data => {
+                                setMasterTable(data);
+                            });
+                        } catch {console.log('No Master Table file');}
+                    });
+            });
+    }, []);
 
     /**
     * download files
     */
     const downloadFiles = () => {
-        fetch("/result/")
-            .then(response => response.blob())
-            .then((blob) => {
+        // blob url to download files
+        const url = window.URL.createObjectURL(
+            new Blob([blob]),
+        );
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute(
+            'download',
+            `TSSpredator-prediction.zip`,
+        );
+        document.body.appendChild(link);
 
-                const stream = blob.stream();
-                
-                console.log(files)
-            
-               
+        // Start download
+        link.click();
 
-                // blob url to download files
-                const url = window.URL.createObjectURL(
-                    new Blob([blob]),
-                );
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute(
-                    'download',
-                    `TSSpredator-prediction.zip`,
-                );
-                document.body.appendChild(link);
-
-                // Start download
-                link.click();
-
-                // remove link
-                link.parentNode.removeChild(link);
-            });
+        // remove link
+        link.parentNode.removeChild(link);
     }
+
 
     return (
         <div>
@@ -74,6 +70,7 @@ function Result() {
 
                 <div>
                     <h3 className='header click-param'>+ Master Table</h3>
+                    {masterTable.length > 0 ? <MasterTable masterTable={masterTable}/> : <></>}
                 </div>
 
             </div>

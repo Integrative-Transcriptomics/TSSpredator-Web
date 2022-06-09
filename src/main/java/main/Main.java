@@ -683,20 +683,45 @@ public class Main {
                     //replicate specific stats
                     if (printRepStats) {
                         tmpRepHeights = "\t";
-                        tmpRepHeights = tmpRepHeights + (suTSS.getGenomicTSS(id).repHeights[0] * scale);
-                        for (int i = 1; i < Parameters.numReplicates; i++)
-                            tmpRepHeights = tmpRepHeights + "/" + (suTSS.getGenomicTSS(id).repHeights[i] * scale);
 
+                        double tmpNum = suTSS.getGenomicTSS(id).repHeights[0] * scale;
+                        if(!Double.isInfinite(tmpNum)) {
+                            tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
+                        }
+                        tmpRepHeights =  tmpRepHeights + tmpNum;//(suTSS.getGenomicTSS(id).repHeights[0] * scale);
+                        for (int i = 1; i < Parameters.numReplicates; i++) {
+                            tmpNum = (suTSS.getGenomicTSS(id).repHeights[i] * scale);
+                            if(!Double.isInfinite(tmpNum)) {
+                                tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
+                            }
+                            tmpRepHeights = tmpRepHeights + "/" + tmpNum;//(suTSS.getGenomicTSS(id).repHeights[i] * scale);
+                        }
                         tmpRepCFactors = "\t";
-                        tmpRepCFactors = tmpRepCFactors + suTSS.getGenomicTSS(id).repStepFactors[0];
-                        for (int i = 1; i < Parameters.numReplicates; i++)
-                            tmpRepCFactors = tmpRepCFactors + "/" + suTSS.getGenomicTSS(id).repStepFactors[i];
-
+                        tmpNum = suTSS.getGenomicTSS(id).repStepFactors[0];
+                        if(!Double.isInfinite(tmpNum)) {
+                            tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
+                        }
+                        tmpRepCFactors = tmpRepCFactors + tmpNum; //suTSS.getGenomicTSS(id).repStepFactors[0];
+                        for (int i = 1; i < Parameters.numReplicates; i++) {
+                            tmpNum = suTSS.getGenomicTSS(id).repStepFactors[i];
+                            if(!Double.isInfinite(tmpNum)) {
+                                tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
+                            }
+                            tmpRepCFactors = tmpRepCFactors + "/" + tmpNum;//suTSS.getGenomicTSS(id).repStepFactors[i];
+                        }
                         tmpRepEFactors = "\t";
-                        tmpRepEFactors = tmpRepEFactors + suTSS.getGenomicTSS(id).repEnrich[0];
-                        for (int i = 1; i < Parameters.numReplicates; i++)
-                            tmpRepEFactors = tmpRepEFactors + "/" + suTSS.getGenomicTSS(id).repEnrich[i];
-
+                        tmpNum = suTSS.getGenomicTSS(id).repEnrich[0];
+                        if(!Double.isInfinite(tmpNum)) {
+                            tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
+                        }
+                        tmpRepEFactors = tmpRepEFactors + tmpNum;//suTSS.getGenomicTSS(id).repEnrich[0];
+                        for (int i = 1; i < Parameters.numReplicates; i++) {
+                            tmpNum = suTSS.getGenomicTSS(id).repEnrich[i];
+                            if(!Double.isInfinite(tmpNum)) {
+                                tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
+                            }
+                            tmpRepEFactors = tmpRepEFactors + "/" + tmpNum;//suTSS.getGenomicTSS(id).repEnrich[i];
+                        }
 
                         tmpHeight = tmpHeight + tmpRepHeights;
                         tmpCFactor = tmpCFactor + tmpRepCFactors;

@@ -1,7 +1,7 @@
 table {
-    font-family: Arial, Helvetica, sans-serif;
     border-collapse: collapse;
     width: 100%;
+    font-size: 80%;
   }
   
   table td, table th {
@@ -20,3 +20,10 @@ table {
     background-color: #04AA6D;
     color: white;
   }
+
+  table thead {
+    position: sticky;
+    position: -webkit-sticky;
+    top: 0; /* required */
+  }
+  

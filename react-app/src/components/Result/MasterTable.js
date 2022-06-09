@@ -38,10 +38,10 @@ function MasterTable({ masterTable }) {
     const data = useMemo(() => dataRows, []);
 
     // create table instance
-    const table = useTable({ columns, data });
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = table
+    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data });
 
     return (
+
         <table {...getTableProps()}>
             <thead>
                 {headerGroups.map((headerGroup) => (
@@ -67,6 +67,7 @@ function MasterTable({ masterTable }) {
                 })}
             </tbody>
         </table>
+
     )
 }
 

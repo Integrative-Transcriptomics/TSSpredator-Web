@@ -1,29 +1,49 @@
 table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 80%;
-  }
-  
-  table td, table th {
-    border: 1px solid #ddd;
-    padding: 8px;
-  }
-  
-  table tr:nth-child(even){background-color: #f2f2f2;}
-  
-  table tr:hover {background-color: #ddd;}
-  
-  table th {
-    padding-top: 12px;
-    padding-bottom: 12px;
-    text-align: center;
-    background-color: #04AA6D;
-    color: white;
-  }
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 80%;
+}
 
-  table thead {
-    position: sticky;
-    position: -webkit-sticky;
-    top: 0; /* required */
-  }
-  
+table td,
+table th {
+  border: 1px solid #ddd;
+  padding: 0.65rem;
+  height: 2.5rem;
+}
+
+
+table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+table tr:hover {
+  background-color: #ddd;
+}
+
+table th {
+  padding: 0.5rem 1rem;
+  text-align: center;
+  background-color: rgb(64, 0, 255);
+  color: white;
+}
+
+table thead {
+  position: sticky;
+  position: -webkit-sticky;
+  top: 0;
+  /* required */
+}
+
+.Container {
+  width: 100%;
+  overflow: auto;
+  white-space: nowrap;
+}
+
+
+
+.Flipped, .Flipped .Content {
+  transform: rotateX(180deg);
+  -ms-transform: rotateX(180deg);
+  -webkit-transform: rotateX(180deg);
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ClipLoader from "react-spinners/ClipLoader";
 import JSZip from 'jszip';
 import '../css/Result.css';
 import '../css/App.css';
@@ -91,7 +92,7 @@ function Result() {
 
 
     return (
-        <div>
+        <>
             <header>
                 <h1>TSSpredator</h1>
             </header>
@@ -105,11 +106,11 @@ function Result() {
 
                 <div>
                     <h3 className='header click-param'>+ Master Table</h3>
-                    {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} /> : <></>}
+                    {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} /> : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
             </div>
-        </div>
+        </>
     )
 }
 

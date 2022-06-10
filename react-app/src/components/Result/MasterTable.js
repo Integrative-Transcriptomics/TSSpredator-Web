@@ -36,11 +36,10 @@ function MasterTable({ tableColumns, tableData }) {
 
 
 
-        <InfiniteScroll className='Container Flipped' dataLength={currentData.length} next={fetchData} hasMore={moreRows}
-        >
+        <InfiniteScroll className='Container' dataLength={currentData.length} next={fetchData} hasMore={moreRows}>
 
 
-            <table className='Content' {...getTableProps()}>
+            <table  {...getTableProps()}>
                 <thead>
                     {headerGroups.map((headerGroup) => (
                         <tr {...headerGroup.getHeaderGroupProps()} >

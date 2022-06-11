@@ -6,50 +6,24 @@ import '../css/App.css';
 import '../css/MasterTable.css';
 import MasterTable from './Result/MasterTable';
 
-function Result() {
+/**
+ * create page that displays result of TSS prediction 
+ */
 
+function Result() {
+    // save files
+    const [blob, setBlob] = useState(new Blob());
+    const [showDownload, setShowDownload] = useState(true);
+
+    // for master table
     const [tableColumns, setTableColumns] = useState([]);
     const [tableData, setTableData] = useState([]);
+    const [showTable, setShowTable] = useState(true);
 
-    const [blob, setBlob] = useState(new Blob());
-
-    /**
-     * extract info from mastertable string
-     */
-    const handleMasterTable = (masterTable) => {
-
-        const allRows = masterTable.split('\n');
-        
-        // column headers
-        const headers = (allRows[0]).split('\t');
-         // columns for the table
-         const col = [];
-         headers.forEach((h, i) => {
-             const char = i.toString();
-             col.push({ Header: h, accessor: char });
-         });
-         setTableColumns([...col]);        
-    
-        // save rows
-        const dataRows = [];
-        allRows.forEach((row, i) => {
-            if (i > 0) {
-                const tmp = row.split('\t');
-                var tmpRow = {};
-                tmp.forEach((content, j) => {
-                    const char = j.toString()
-                    tmpRow[char] = content;
-                })
-                dataRows.push(tmpRow);
-            }
-        });
-        setTableData([...dataRows]);  
-    }
-
-    /**
+     /**
      * get all files from TSS prediction as .zip from server
      */
-    useEffect(() => {
+      useEffect(() => {
         fetch("/result/")
             .then(res => res.blob())
             .then(blob => {
@@ -89,7 +63,40 @@ function Result() {
         // remove link
         link.parentNode.removeChild(link);
     }
+    
 
+    /**
+     * extract info from mastertable string
+     */
+    const handleMasterTable = (masterTable) => {
+
+        const allRows = masterTable.split('\n');
+        
+        // column headers
+        const headers = (allRows[0]).split('\t');
+         // columns for the table
+         const col = [];
+         headers.forEach((h, i) => {
+             const char = i.toString();
+             col.push({ Header: h, accessor: char });
+         });
+         setTableColumns([...col]);        
+    
+        // save rows
+        const dataRows = [];
+        allRows.forEach((row, i) => {
+            if (i > 0) {
+                const tmp = row.split('\t');
+                var tmpRow = {};
+                tmp.forEach((content, j) => {
+                    const char = j.toString()
+                    tmpRow[char] = content;
+                })
+                dataRows.push(tmpRow);
+            }
+        });
+        setTableData([...dataRows]);  
+    }
 
     return (
         <>
@@ -100,13 +107,13 @@ function Result() {
             <div className='result-container'>
 
                 <div >
-                    <h3 className='header click-param'> + Download result of TSS prediction</h3>
-                    <div className='download-link' onClick={() => downloadFiles()}>result.zip</div>
+                    <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}> + Download result of TSS prediction</h3>
+                    <div className={showDownload ? 'download-link' : ' hidden'} onClick={() => downloadFiles()}>result.zip</div>
                 </div>
 
                 <div>
-                    <h3 className='header click-param'>+ Master Table</h3>
-                    {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} /> : <ClipLoader color='#ffa000' size={30} />}
+                    <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>+ Master Table</h3>
+                    {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} /> : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
             </div>

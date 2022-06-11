@@ -33,7 +33,6 @@ function MasterTable({ tableColumns, tableData, showTable }) {
      */
     const observer = useRef();
     const lastRow = useCallback(node => {
-
         if (loading) return;
         if (observer.current) observer.current.disconnect();
         observer.current = new IntersectionObserver(rows => {
@@ -46,7 +45,7 @@ function MasterTable({ tableColumns, tableData, showTable }) {
     }, [loading, moreRows])
 
     // prevent rerendering 
-    const columns = useMemo(() => tableColumns, []);
+    const columns = useMemo(() => tableColumns, [tableColumns]);
     const data = useMemo(() => currentData, [currentData]);
 
     // create table instance

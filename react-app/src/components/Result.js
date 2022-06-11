@@ -111,6 +111,11 @@ function Result() {
                     <div className={showDownload ? 'download-link' : ' hidden'} onClick={() => downloadFiles()}>result.zip</div>
                 </div>
 
+                <div >
+                    <h3 className='header click-param' > + TSS classes overview</h3>
+                    
+                </div>
+
                 <div>
                     <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>+ Master Table</h3>
                     {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} /> : <ClipLoader color='#ffa000' size={30} />}

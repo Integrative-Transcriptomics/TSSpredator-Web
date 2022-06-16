@@ -30,17 +30,22 @@ function MasterTable({ tableColumns, tableData, showTable }) {
             if (typeof second === 'undefined') return -1;
 
             // check if NA
-            if((first === 'NA' && second === 'NA') || (first.length === 0 && second.length === 0)) return 0;
-            if(first === 'NA' || first.length === 0) return 1;
-            if(second === 'NA' || second.length === 0) return -1;
+            if((first === 'NA' && second === 'NA') || (first.length === 0 && second.length === 0) || (first === 'Infinity/Infinity' && second  === 'Infinity/Infinity')){
+                return 0;
+            } 
+            if(first === 'NA' || second === 'Infinity/Infinity' || first.length === 0) return 1;
+            if(second === 'NA' || first  === 'Infinity/Infinity' || second.length === 0) return -1;
 
             // check for '/'
-            if (first.includes('/')) {
-                first = first.split('/')[0];
-            }
-            if (second.includes('/')) {
-                second = second.split('/')[0];
-            }
+            if(first.includes('/') && second.includes('/')) {
+                if(first.split('/')[0] === 'Infinity' && second.split('/')[0] === 'Infinity') {
+                    first = first.split('/')[1];
+                    second = second.split('/')[1];
+                } else {
+                    first = first.split('/')[0];
+                    second = second.split('/')[0];
+                }
+            } 
             // check for >
             if (first[0] === '>') {
                 first = first.slice(1);

@@ -98,6 +98,8 @@ function Result() {
         setTableData([...dataRows]);  
     }
 
+    
+
     return (
         <>
             <header>
@@ -108,7 +110,7 @@ function Result() {
 
                 <div >
                     <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}> + Download result of TSS prediction</h3>
-                    <div className={showDownload ? 'download-link' : ' hidden'} onClick={() => downloadFiles()}>result.zip</div>
+                    <div className={showDownload ? 'download-link' : ' hidden'} onClick={() => downloadFiles()}>TSSpredator-prediction.zip</div>
                 </div>
 
                 <div >
@@ -118,7 +120,8 @@ function Result() {
 
                 <div>
                     <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>+ Master Table</h3>
-                    {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} /> : <ClipLoader color='#ffa000' size={30} />}
+                    {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} 
+                                                /> : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
             </div>

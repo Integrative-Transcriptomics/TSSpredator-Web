@@ -71,6 +71,8 @@ function Result() {
     const handleMasterTable = (masterTable) => {
 
         const allRows = masterTable.split('\n');
+        // remove last empty row
+        allRows.pop()
         
         // column headers
         const headers = (allRows[0]).split('\t');
@@ -91,7 +93,7 @@ function Result() {
                 tmp.forEach((content, j) => {
                     const char = j.toString()
                     tmpRow[char] = content;
-                })
+                });
                 dataRows.push(tmpRow);
             }
         });

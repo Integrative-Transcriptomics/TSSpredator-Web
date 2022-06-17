@@ -98,10 +98,9 @@ function Result() {
                 dataRows.push(tmpRow);
             }
         });
-        setTableData([...dataRows]);  
+        setTableData([...dataRows]); 
     }
-
-    
+ 
 
     return (
         <>
@@ -118,7 +117,7 @@ function Result() {
 
                 <div >
                     <h3 className='header click-param' > + TSS classes overview</h3>
-                    <UpSet />
+                    <UpSet rows={tableData} columns={tableColumns}/>
                     
                 </div>
 

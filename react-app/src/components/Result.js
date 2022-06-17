@@ -5,6 +5,7 @@ import '../css/Result.css';
 import '../css/App.css';
 import '../css/MasterTable.css';
 import MasterTable from './Result/MasterTable';
+import UpSet from './Result/UpSet';
 
 /**
  * create page that displays result of TSS prediction 
@@ -117,6 +118,7 @@ function Result() {
 
                 <div >
                     <h3 className='header click-param' > + TSS classes overview</h3>
+                    <UpSet />
                     
                 </div>
 

@@ -18,18 +18,45 @@ function MasterTable({ tableColumns, tableData, showTable }) {
     const allData = useRef([...tableData]);
     // current sorted column -> first index: column index, second index: d (descending) or a (ascending)
     const currentSortedCol = useRef(['0', 'a']);
+    // seacrh string on column
+    const [searchColumn, setSearchColumn] = useState('0');
+    const [searchString, setSearchString] = useState("");
 
+
+    // reset table
+    const resetTable = () => {
+        setSearchColumn('0');
+        setSearchString("");
+        allData.current = [...tableData];
+        setCounter(200);
+        setCurrentData(tableData.slice(0, 200));
+    }
+
+    // seacrh string
+    const startSearch = () => {
+        if(searchString.length === 0) return;
+
+        const newData = [];
+        tableData.forEach((row) => {
+            if(row[searchColumn].includes(searchString)) {
+                newData.push(row);
+            }
+        });
+        setCounter(200);
+        allData.current = [...newData];
+        setCurrentData(newData.slice(0, 200));
+    }
 
     // sort Table
     const sortTable = (column) => {
-        
-        const sortData = [...tableData];
+
+        const sortData = [...allData.current];
         // sort descending
         var biggerA = -1;
         var biggerB = 1;
         // sort currenlty sorted column
         if ((currentSortedCol.current)[0] === column) {
-            
+
             // currently column sorted in descending order
             if ((currentSortedCol.current)[1] === "d") {
                 // sort in ascending order
@@ -46,7 +73,6 @@ function MasterTable({ tableColumns, tableData, showTable }) {
         sortData.sort((a, b) => {
             return callSort(a[column], b[column], biggerA, biggerB);
         });
-        console.log(sortData)
         setCounter(200);
         allData.current = [...sortData];
         setCurrentData(sortData.slice(0, 200));
@@ -127,18 +153,30 @@ function MasterTable({ tableColumns, tableData, showTable }) {
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data });
 
     return (
-        <div className={showTable ? 'table-container' : 'hidden'}>
+        <div className={showTable ? 'table-and-filter' : 'hidden'}>
+            <div className='table-filter'>Search column
+                <select  onChange={(e) => setSearchColumn(e.target.value)} value={searchColumn}>
+                    {columns.map((col,i ) => {
+                        return <option value={i} key={i}>{col['Header']}</option>
+                    })}
+                </select>
+                for
+                <input className='element' type='text' onChange={(e) => setSearchString(e.target.value)} value={searchString}/>
+                <button className='button' onClick={() => startSearch()}>Search</button>
+                <p className='reset' onClick={() => resetTable()}>x</p>
+            </div>
+            <div className='table-container'>
             <table {...getTableProps()}>
                 <thead >
                     {headerGroups.map((headerGroup) => (
                         <tr {...headerGroup.getHeaderGroupProps()} >
-                            {headerGroup.headers.map((column, i) => (                                
+                            {headerGroup.headers.map((column, i) => (
                                 <th {...column.getHeaderProps()} onClick={() => sortTable((i.toString()))}>
                                     {column.render('Header')}
-                                    {currentSortedCol.current[0] === i.toString() 
-                                        ?  (currentSortedCol.current[1] === 'a' ? <i class="sort-arrow up"></i> : <i class="sort-arrow down"></i>)
-                                        :  <span className='sort-symbol'>-</span>}
-                                    </th>
+                                    {currentSortedCol.current[0] === i.toString()
+                                        ? (currentSortedCol.current[1] === 'a' ? <i className="sort-arrow up"></i> : <i className="sort-arrow down"></i>)
+                                        : <span className='sort-symbol'>-</span>}
+                                </th>
                             ))}
                         </tr>
                     ))}
@@ -172,6 +210,9 @@ function MasterTable({ tableColumns, tableData, showTable }) {
                     })}
                 </tbody>
             </table>
+
+            </div>
+           
         </div>
     )
 }

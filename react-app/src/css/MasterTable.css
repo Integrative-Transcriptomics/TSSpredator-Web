@@ -29,10 +29,12 @@ table th {
 }
 
 .table-container {
-  margin-left: 1.3rem;
   white-space: nowrap;
   overflow: auto;
   max-height: 600px;
+}
+.table-and-filter {
+  margin-left: 1.3rem;
 }
 table thead {
   position: sticky;
@@ -59,5 +61,19 @@ table thead {
 .down {
   transform: rotate(45deg);
   -webkit-transform: rotate(45deg);
+}
+
+.table-filter {
+  display: flex;
+  flex-direction: row;
+  column-gap: 0.5rem;
+  align-items: center;
+}
+
+.reset {
+  cursor: pointer;
+  color: red;
+  margin-bottom: 0.5rem;
+  width: 1rem;
 }
 

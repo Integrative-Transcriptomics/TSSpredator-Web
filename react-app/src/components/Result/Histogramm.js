@@ -1,32 +1,43 @@
-import React, {useState, useMemo} from 'react';
-import {Histogram} from '@upsetjs/plots';
+import React, { useState, useMemo } from 'react';
+import Plotly from "plotly.js-basic-dist";
+import createPlotlyComponent from "react-plotly.js/factory";
 
 
-function Histogramm() {
-    const [selection, setSelection] = useState(null);
-    const elems = useMemo(
-      () =>
-        Array(100)
-          .fill(0)
-          .map((_, i) => ({
-            n: i.toString(),
-            a: Math.random(),
-          })),
-      []
-    );
-    return (
-       
-       
-      <Histogram
-        selection={selection}
-        onHover={setSelection}
-        width={500}
-        height={100}
-        elems={elems}
-        attr="a"
-        title="As"
+
+function Histogramm({ elements }) {
+
+  const Plot = createPlotlyComponent(Plotly);
+
+  
+  return (
+
+    
+      <Plot
+      data={[
+
+        {
+
+          x: [1, 2, 3],
+
+          y: [2, 6, 3],
+
+          type: 'scatter',
+
+          mode: 'lines+markers',
+
+          marker: {color: 'red'},
+
+        },
+
+        {type: 'bar', x: [1, 2, 3], y: [2, 5, 3]},
+
+      ]}
+
+      layout={ {width: 320, height: 240, title: 'A Fancy Plot'} }
+        
       />
-    );
+   
+  )
 }
 
 export default Histogramm

@@ -86,8 +86,8 @@ def getInput():
                 timeout_s = 600 
                 try:
                     p = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stderr=PIPE, timeout=timeout_s)
-
-                     # zip files
+                
+                    # zip files
                     if os.path.exists("result.zip"):
                         os.remove("result.zip")
                     make_archive('result', 'zip', newResultDir)

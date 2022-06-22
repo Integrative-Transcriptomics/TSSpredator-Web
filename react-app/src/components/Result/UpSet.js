@@ -11,123 +11,117 @@ function UpSet({ rows, columns }) {
   const superPosIdx = columns.findIndex((col) => col['Header'] === 'SuperPos');
   const genomeIdx = columns.findIndex((col) => col['Header'] === 'Genome');
 
-  // create elements 
-  var classes = { 'primary': 0, 'secondary': 0, 'internal': 0, 'antisense': 0, 'orphan': 0 };
-  var currentPos = "";
-  var currentGenome = "";
-  var currentClass = {};
 
-  rows.forEach(row => {
+  const calcFreq = () => {
 
-    const tmpPos = row[superPosIdx];
-    const tmpGenome = row[genomeIdx];
+    // save frequency of classes for a TSS
+    var classes = { 'primary': 0, 'secondary': 0, 'internal': 0, 'antisense': 0, 'orphan': 0 };
+    var currentPos = "";
+    var currentGenome = "";
+    var currentClass = {};
 
-    var tmpClass = "";
-    // get class of this row
-    if (row[primaryIdx] === '1') {
-      tmpClass = 'primary';
-    } else if (row[secondaryIdx] === '1') {
-      tmpClass = 'secondary';
-    } else if (row[internalIdx] === '1') {
-      tmpClass = 'internal';
-    } else if (row[antisenseIdx] === '1') {
-      tmpClass = 'antisense';
-      // orphan
-    } else {
-      tmpClass = 'orphan';
-    }
+    rows.forEach(row => {
 
-    // different tss
-    if (tmpPos !== currentPos || tmpGenome !== currentGenome) {
-      // last tss has at least two different classes
-      if (Object.keys(currentClass).length > 1) {
+      const tmpPos = row[superPosIdx];
+      const tmpGenome = row[genomeIdx];
 
-        // sort classes
-        const tmpKey = Object.keys(currentClass);
-        const sortClasses = {};
-        tmpKey.forEach(key => {
-          sortClasses[key] = currentClass[key];
-        })
-       // create new class-group
-        var node = "";
-        Object.keys(sortClasses).forEach(cl => {
-          node += cl + '-';
-        });
-        // remove last '-'
-        node = node.slice(0, -1)
-        // add class-group to classes
-        if (node in classes) {
-          classes[node] += 1;
-        } else {
-          classes[node] = 1;
-        }
-      // at least one class  
-      } else if (Object.keys(currentClass).length > 0) {
-        Object.keys(currentClass).forEach(cl => {
-          classes[cl] += currentClass[cl];
-        });
+      var tmpClass = getClass(row);
+
+      // new TSS found -> add classes from previous TSS
+      if (tmpPos !== currentPos || tmpGenome !== currentGenome) {
+        classes = addNewTSS(currentClass, classes);
+        // reset value
+        currentClass = {};
       }
-      // reset value
-      currentClass = {};
-    }
-    currentPos = tmpPos;
-    currentGenome = tmpGenome;
-    // add class from current row 
-    if (tmpClass in currentClass) {
-      currentClass[tmpClass] += 1;
-    } else {
-      currentClass[tmpClass] = 1;
-    }
-  });
+      // reset values
+      currentPos = tmpPos;
+      currentGenome = tmpGenome;
 
-  // last tss
-  if (Object.keys(currentClass).length > 1) {
+      // add class from current row 
+      if (tmpClass in currentClass) {
+        currentClass[tmpClass] += 1;
+      } else {
+        currentClass[tmpClass] = 1;
+      }
+    });
 
-    // sort classes
-    const tmpKey = Object.keys(currentClass);
-    const sortClasses = {};
-    tmpKey.forEach(key => {
-      sortClasses[key] = currentClass[key];
-    })
-   // create new class-group
-    var node = "";
-    Object.keys(sortClasses).forEach(cl => {
-      node += cl + '-';
+    // add last tss
+    classes = addNewTSS(currentClass, classes);
+    
+    // save all classes in array
+    const newElements = [];
+    Object.keys(classes).forEach((key, i) => {
+
+      const tmpClasses = key.split('-');
+      var classArray = [];
+      // each class is one array element
+      tmpClasses.forEach(cl => {
+        classArray.push(cl);
+      })
+
+      var tmp = { sets: [...classArray] }
+      // add current classes to array, as often as the frequncy of the current classes 
+      for (let j = 0; j < classes[key]; j++) {
+        newElements.push(tmp);
+      }
     });
-    // remove last '-'
-    node = node.slice(0, -1)
-    // add class-group to classes
-    if (node in classes) {
-      classes[node] += 1;
-    } else {
-      classes[node] = 1;
-    }
-  // at least one class  
-  } else if (Object.keys(currentClass).length > 0) {
-    Object.keys(currentClass).forEach(cl => {
-      classes[cl] += currentClass[cl];
-    });
+    return newElements;
   }
 
-  const elements = [];
-  Object.keys(classes).forEach((key, i) => {
 
-    const tmpClasses = key.split('-');
-    var m = [];
+  const getClass = (row) => {
+    // get class of this row
+    if (row[primaryIdx] === '1') {
+      return 'primary';
+    } else if (row[secondaryIdx] === '1') {
+      return 'secondary';
+    } else if (row[internalIdx] === '1') {
+      return 'internal';
+    } else if (row[antisenseIdx] === '1') {
+      return 'antisense';
+      // orphan
+    } else {
+      return 'orphan';
+    }
+  }
 
-    tmpClasses.forEach(cl => {
-      m.push(cl);
-    })
+  
+  const addNewTSS = (currentClass, classes) => {
+    // last tss has at least two different classes
+    if (Object.keys(currentClass).length > 1) {
 
-    var tmp = { sets: [...m] }
-   
-      for (let j = 0; j < classes[key]; j++) {
-        elements.push(tmp);
-      }   
-  });
+      // sort classes
+      const tmpKey = Object.keys(currentClass);
+      const sortClasses = {};
+      tmpKey.forEach(key => {
+        sortClasses[key] = currentClass[key];
+      })
+      // create new class-group
+      var node = "";
+      Object.keys(sortClasses).forEach(cl => {
+        node += cl + '-';
+      });
+      // remove last '-'
+      node = node.slice(0, -1)
+      // add class-group to classes
+      if (node in classes) {
+        classes[node] += 1;
+      } else {
+        classes[node] = 1;
+      }
+      // at least one class  
+    } else if (Object.keys(currentClass).length > 0) {
+      Object.keys(currentClass).forEach(cl => {
+        classes[cl] += currentClass[cl];
+      });
+    }
+    return classes;
+  }
+
+  const elements = calcFreq();
 
   const elems = useMemo(() => [...elements], [elements]);
- 
+ // create upset plot
   const { sets } = useMemo(() => extractCombinations(elems), [elems]);
   const combinations = useMemo(
     () => ({
@@ -137,10 +131,10 @@ function UpSet({ rows, columns }) {
   );
   const [selection, setSelection] = useState(null);
 
-  return <UpSetJS 
-  sets={sets} 
-  combinations={combinations} 
-  width={780} height={400} selection={selection} onHover={setSelection} />;
+  return <UpSetJS
+    sets={sets}
+    combinations={combinations}
+    width={780} height={400} selection={selection} onHover={setSelection} />;
 }
 
 export default UpSet

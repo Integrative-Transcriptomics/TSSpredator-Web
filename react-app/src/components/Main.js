@@ -633,7 +633,7 @@ function Main() {
         const maxFileSize = 200000000;
         if (file.size > maxFileSize) {
             seteHeader("ERROR");
-            showError("The file exceeds the maximum size of 200MB.");
+            showError("The file " + file.name + " exceeds the maximum size of 200MB.");
 
         } else {
             // replicate
@@ -664,7 +664,7 @@ function Main() {
             if (event.target.files[i].size > maxFileSize) {
                 seteHeader("ERROR");
                 showError("The file exceeds the maximum size of 200MB.");
-               
+
             } else {
                 tmpArray.push(event.target.files[i]);
                 temp[id]['genome' + (id + 1)][node] = tmpArray;
@@ -698,8 +698,31 @@ function Main() {
      * saves genome files
      */
     const saveGenomes = (gId, node, file) => {
+
+        const maxFileSize = 200000000;
+        var tmpArray = []
+        // annotation files
+        if (Array.isArray(file)) {
+
+            file.forEach((f) => {
+                // check file size
+                if (f.size > maxFileSize) {
+                    seteHeader("ERROR");
+                    showError("The file " + f.name + " exceeds the maximum size of 200MB.");
+                } else {
+                    tmpArray.push(f);
+                }
+            });
+        } else {
+            if (file.size > maxFileSize) {
+                seteHeader("ERROR");
+                showError("The file " + file.name + " exceeds the maximum size of 200MB.");
+            } else {
+                tmpArray.push(file);
+            }
+        }
         const temp = [...genomes];
-        temp[gId]['genome' + (gId + 1)][node] = file;
+        temp[gId]['genome' + (gId + 1)][node] = tmpArray;
         setGenomes([...temp]);
     }
 
@@ -709,13 +732,22 @@ function Main() {
      * rId: replicate index
      */
     const saveReplicates = (gId, rId, node, file) => {
-        const replicate = 'replicate' + String.fromCharCode(97 + rId);
 
-        let newValue = { ...replicates[gId]['genome' + (gId + 1)][rId][replicate] };
-        newValue[node] = file;
-        let temp = [...replicates];
-        temp[gId]['genome' + (gId + 1)][rId] = { [replicate]: newValue };
-        setReplicates([...temp]);
+        const maxFileSize = 200000000;
+        // check file size
+        if (file.size > maxFileSize) {
+            seteHeader("ERROR");
+            showError("The file " + file.name + " exceeds the maximum size of 200MB.");
+        } else {
+            const replicate = 'replicate' + String.fromCharCode(97 + rId);
+
+            let newValue = { ...replicates[gId]['genome' + (gId + 1)][rId][replicate] };
+            newValue[node] = file;
+            let temp = [...replicates];
+            temp[gId]['genome' + (gId + 1)][rId] = { [replicate]: newValue };
+            setReplicates([...temp]);
+        }
+
     }
 
     /**

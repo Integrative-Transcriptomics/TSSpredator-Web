@@ -630,13 +630,21 @@ function Main() {
         const id = event.target.id;
         const file = event.target.files[0];
 
-        // replicate
-        if (id.length > 5) {
-            saveReplicates(parseInt(id[0]), parseInt(id[2]), node, file);
-            // genome
+        const maxFileSize = 200000000;
+        if (file.size > maxFileSize) {
+            seteHeader("ERROR");
+            showError("The file exceeds the maximum size of 200MB.");
+
         } else {
-            saveGenomes(parseInt(id[0]), node, file);
+            // replicate
+            if (id.length > 5) {
+                saveReplicates(parseInt(id[0]), parseInt(id[2]), node, file);
+                // genome
+            } else {
+                saveGenomes(parseInt(id[0]), node, file);
+            }
         }
+
     }
 
     /**
@@ -644,21 +652,26 @@ function Main() {
     */
     const saveAnnotationFile = (event) => {
 
-        console.log(event.target.files)
-
         const node = event.target.name;
         const id = parseInt(event.target.id[0]);
         const temp = [...genomes];
         const tmpArray = [];
 
+        const maxFileSize = 200000000;
+
         for (let i = 0; i < (event.target.files).length; i++) {
-            tmpArray.push(event.target.files[i]);
+
+            if (event.target.files[i].size > maxFileSize) {
+                seteHeader("ERROR");
+                showError("The file exceeds the maximum size of 200MB.");
+               
+            } else {
+                tmpArray.push(event.target.files[i]);
+                temp[id]['genome' + (id + 1)][node] = tmpArray;
+                setGenomes([...temp]);
+            }
         }
-
-        temp[id]['genome' + (id + 1)][node] = tmpArray;
-        setGenomes([...temp]);
     }
-
     /** 
      * saves files that are uploaded over 'upload all files together' button
      */
@@ -881,12 +894,12 @@ function Main() {
 
         // save filenames in genomes
         const tmpGenome = [...genomes];
-        
+
         for (let i = 0; i < genomes.length; i++) {
 
             var tmpFasta = "";
             var tmpAnn = "";
-          
+
             try {
                 tmpFasta = genomes[i]['genome' + (i + 1)]['genomefasta'].webkitRelativePath;
                 tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = tmpFasta;
@@ -901,7 +914,7 @@ function Main() {
 
         // save file names in replicates
         const tmpRep = [...replicates];
-        
+
         for (let i = 0; i < tmpRep.length; i++) {
 
             var tmpG = tmpRep[i]['genome' + (i + 1)];
@@ -941,7 +954,7 @@ function Main() {
         try {
             tmpAlignFile = alignmentFile.webkitRelativePath;
 
-        } catch{
+        } catch {
             console.log('no alignment file')
         }
 
@@ -1061,11 +1074,11 @@ function Main() {
                     <p>or</p>
                     <button className='button save' type="button" onClick={() => saveConfigFile()}>Save</button>
                     <p>Configuration</p>
-                    {loading ? <div className='loading'><ClipLoader  color='#ffa000' loading={loading} size={30} /></div>
-                    : <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>Start TSS prediction</button>}
-                    
+                    {loading ? <div className='loading'><ClipLoader color='#ffa000' loading={loading} size={30} /></div>
+                        : <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>Start TSS prediction</button>}
+
                 </div>
-                
+
             </div>
         </div>
     )

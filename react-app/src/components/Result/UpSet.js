@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { extractCombinations, UpSetJS } from '@upsetjs/react';
 
-function UpSet({ rows, columns }) {
+function UpSet({ rows, columns, showUpSet }) {
 
   // get column index
   const primaryIdx = columns.findIndex((col) => col['Header'] === 'Primary');
@@ -131,7 +131,7 @@ function UpSet({ rows, columns }) {
   );
   const [selection, setSelection] = useState(null);
 
-  return <UpSetJS
+  return <UpSetJS className={showUpSet ? '' : 'hidden'}
     sets={sets}
     combinations={combinations}
     width={780} height={400} selection={selection} onHover={setSelection} />;

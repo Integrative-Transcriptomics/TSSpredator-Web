@@ -6,6 +6,7 @@ import '../css/App.css';
 import '../css/MasterTable.css';
 import MasterTable from './Result/MasterTable';
 import UpSet from './Result/UpSet';
+import Histogramm from './Result/Histogramm';
 
 /**
  * create page that displays result of TSS prediction 
@@ -20,6 +21,7 @@ function Result() {
     const [tableColumns, setTableColumns] = useState([]);
     const [tableData, setTableData] = useState([]);
     const [showTable, setShowTable] = useState(true);
+    const [showUpSet, setShowUpSet] = useState(true);
 
      /**
      * get all files from TSS prediction as .zip from server
@@ -116,9 +118,15 @@ function Result() {
                 </div>
 
                 <div >
-                    <h3 className='header click-param' > + TSS classes overview</h3>
-                    <UpSet rows={tableData} columns={tableColumns}/>
-                    
+                    <h3 className='header click-param'> + Step Height overview</h3>
+                    {tableColumns.length > 0 ? <Histogramm />
+                                             : <ClipLoader color='#ffa000' size={30} />}                       
+                </div>
+
+                <div >
+                    <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}> + TSS classes overview</h3>
+                    {tableColumns.length > 0 ? <UpSet rows={tableData} columns={tableColumns} showUpSet={showUpSet}/>
+                                             : <ClipLoader color='#ffa000' size={30} />}                       
                 </div>
 
                 <div>

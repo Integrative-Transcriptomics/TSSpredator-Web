@@ -26,6 +26,7 @@ function Result() {
     // histograms
     const [stepHeight, setStepHeight] = useState([]);
     const [showStepHeight, setShowStepHeight] = useState(false);
+    const stepHeightCap = 300;
     const [stepFactor, setStepFactor] = useState([]);
     const [showStepFactor, setShowStepFactor] = useState(false);
     const [enrichmentFactor, setEnrichmentFactor] = useState([]);
@@ -133,8 +134,8 @@ function Result() {
 
             if(row[stepHeightIdx] !== 'NA') {
                 // cap at 500 to make histogram readable
-                if(row[stepHeightIdx] > 500) {
-                    stepH.push(500);
+                if(row[stepHeightIdx] > stepHeightCap) {
+                    stepH.push(stepHeightCap);
                 } else {
                     const tmpSH = Math.round(row[stepHeightIdx]);
                     stepH.push(tmpSH);
@@ -187,7 +188,7 @@ function Result() {
 
                 <div >
                     <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}> + Step Height overview</h3>
-                    {stepHeight.length > 0 ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={10} cap='500' show={showStepHeight}/>
+                    {stepHeight.length > 0 ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={5} cap={stepHeightCap} show={showStepHeight}/>
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 

@@ -25,8 +25,11 @@ function Result() {
 
     // histograms
     const [stepHeight, setStepHeight] = useState([]);
+    const [showStepHeight, setShowStepHeight] = useState(false);
     const [stepFactor, setStepFactor] = useState([]);
+    const [showStepFactor, setShowStepFactor] = useState(false);
     const [enrichmentFactor, setEnrichmentFactor] = useState([]);
+    const [showEnrichFactor, setShowEnrichFactor] = useState(false);
 
     /**
     * get all files from TSS prediction as .zip from server
@@ -110,6 +113,9 @@ function Result() {
         stepHeightFactorEnrichementFreq(dataRows, col);
     }
 
+    /**
+     * calculate frequency for step height, step factor and enrichment factor
+     */
     const stepHeightFactorEnrichementFreq = (rows, columns) => {
 
         const stepHeightIdx = columns.findIndex((col) => col['Header'] === 'stepHeight');
@@ -122,32 +128,32 @@ function Result() {
 
         // count frequncy of stepheight, step factor and enrichment Factor
         rows.forEach((row, i) => {
-
            
             const tmpIdx =i.toString();
 
             if(row[stepHeightIdx] !== 'NA') {
-                if((row[stepHeightIdx]).includes('>')) {
-                    stepH.push({n:tmpIdx, a: row[stepHeightIdx]});
+                // cap at 500 to make histogram readable
+                if(row[stepHeightIdx] > 500) {
+                    stepH.push(500);
                 } else {
                     const tmpSH = Math.round(row[stepHeightIdx]);
-                    stepH.push({n:tmpIdx, a: tmpSH});
+                    stepH.push(tmpSH);
                 }
             }
 
             if(row[stepFactorIdx] !== 'NA') {
                 if((row[stepFactorIdx]).includes('>')) {
-                    stepF.push({n:tmpIdx, a: 101});
+                    stepF.push(100);
                 } else {
                     const tmpSF = Math.round(row[stepFactorIdx]);
-                    stepF.push({n:tmpIdx, a: tmpSF});
+                    stepF.push(tmpSF);
                     
                 }
             } 
 
             if(row[enrichFactorIdx] !== 'NA') {
                 if((row[enrichFactorIdx]).includes('>')) {
-                    enrichmentF.push(row[enrichFactorIdx]);
+                    enrichmentF.push(100);
                 } else {
                     const tmpEF = Math.round(row[enrichFactorIdx]);
                     enrichmentF.push(tmpEF);
@@ -174,14 +180,25 @@ function Result() {
                 </div>
 
                 <div >
-                    <h3 className='header click-param'> + Step Height overview</h3>
-                    {stepFactor.length > 0 ? <Histogramm elements={stepFactor}/>
+                    <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}> + TSS classes overview</h3>
+                    {tableColumns.length > 0 ? <UpSet rows={tableData} columns={tableColumns} showUpSet={showUpSet} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
                 <div >
-                    <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}> + TSS classes overview</h3>
-                    {tableColumns.length > 0 ? <UpSet rows={tableData} columns={tableColumns} showUpSet={showUpSet} />
+                    <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}> + Step Height overview</h3>
+                    {stepHeight.length > 0 ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={10} cap='500' show={showStepHeight}/>
+                        : <ClipLoader color='#ffa000' size={30} />}
+                </div>
+
+                <div >
+                    <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}> + Step Factor overview</h3>
+                    {stepFactor.length > 0 ? <Histogramm elements={stepFactor} xaxis='Step Factor' steps={2} cap='100' show={showStepFactor}/>
+                        : <ClipLoader color='#ffa000' size={30} />}
+                </div>
+                <div >
+                    <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}> + Enrichment Factor overview</h3>
+                    {enrichmentFactor.length > 0 ? <Histogramm elements={enrichmentFactor} xaxis='Enrichment Factor' steps={2} cap='100' show={showEnrichFactor}/>
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 

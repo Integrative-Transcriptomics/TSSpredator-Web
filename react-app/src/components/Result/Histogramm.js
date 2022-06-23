@@ -1,42 +1,30 @@
-import React, { useState, useMemo } from 'react';
-import Plotly from "plotly.js-basic-dist";
+import React from 'react';
+import Plotly from "plotly.js-cartesian-dist-min";
 import createPlotlyComponent from "react-plotly.js/factory";
 
-
-
-function Histogramm({ elements }) {
+/** creates a Histogram
+ * 
+ * @param elements: data for the histogram
+ * @param xaxis: xaxis label
+ * @param steps: bin width
+ * @param cap: the cap for the data
+ * @param show: boolean for showing/hiding the histogram
+ * @returns 
+ */
+function Histogramm({ elements, xaxis, steps, cap, show }) {
 
   const Plot = createPlotlyComponent(Plotly);
+  const title = 'Histogram over all ' + xaxis + 's with a cap at ' + cap
 
-  
   return (
-
-    
+    <div className={show ? '' : 'hidden'}>
       <Plot
-      data={[
-
-        {
-
-          x: [1, 2, 3],
-
-          y: [2, 6, 3],
-
-          type: 'scatter',
-
-          mode: 'lines+markers',
-
-          marker: {color: 'red'},
-
-        },
-
-        {type: 'bar', x: [1, 2, 3], y: [2, 5, 3]},
-
-      ]}
-
-      layout={ {width: 320, height: 240, title: 'A Fancy Plot'} }
-        
+        data={[
+          { type: 'histogram', x: elements, xbins: { size: steps }, marker: { color: 'black', line: { color: 'white', width: 1 } } },
+        ]}
+        layout={{ width: 1500, height: 450, title: title, xaxis: { title: xaxis }, yaxis: { title: 'Count' } }}
       />
-   
+    </div>
   )
 }
 

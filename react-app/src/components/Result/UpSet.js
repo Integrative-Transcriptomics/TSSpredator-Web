@@ -1,6 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { extractCombinations, UpSetJS } from '@upsetjs/react';
 
+/** creates an Upset plot for the tss classes
+ * 
+ * @param rows: all the rows from the master table, except the header row
+ * @param columns: the column labels
+ * @param showUpSet: boolean for showing/hiding the plot
+ * @returns 
+ */
 function UpSet({ rows, columns, showUpSet }) {
 
   // get column index

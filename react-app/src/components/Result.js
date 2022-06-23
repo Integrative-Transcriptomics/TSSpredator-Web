@@ -36,6 +36,44 @@ function Result() {
     * get all files from TSS prediction as .zip from server
     */
     useEffect(() => {
+
+        /**
+        * extract info from mastertable string
+        */
+        const handleMasterTable = (masterTable) => {
+
+            const allRows = masterTable.split('\n');
+            // remove last empty row
+            allRows.pop()
+
+            // column headers
+            const headers = (allRows[0]).split('\t');
+            // columns for the table
+            const col = [];
+            headers.forEach((h, i) => {
+                const char = i.toString();
+                col.push({ Header: h, accessor: char });
+            });
+            setTableColumns([...col]);
+
+            // save rows
+            const dataRows = [];
+            allRows.forEach((row, i) => {
+                if (i > 0) {
+                    const tmp = row.split('\t');
+                    var tmpRow = {};
+                    tmp.forEach((content, j) => {
+                        const char = j.toString()
+                        tmpRow[char] = content;
+                    });
+                    dataRows.push(tmpRow);
+                }
+            });
+            setTableData([...dataRows]);
+
+            stepHeightFactorEnrichementFreq(dataRows, col);
+        }
+
         fetch("/result/")
             .then(res => res.blob())
             .then(blob => {
@@ -47,7 +85,8 @@ function Result() {
                         try {
                             zip.file("MasterTable.tsv").async("string").then(data => {
                                 handleMasterTable(data);
-                            });
+                            })
+
                         } catch { console.log('No Master Table file'); }
                     });
             });
@@ -78,43 +117,6 @@ function Result() {
 
 
     /**
-     * extract info from mastertable string
-     */
-    const handleMasterTable = (masterTable) => {
-
-        const allRows = masterTable.split('\n');
-        // remove last empty row
-        allRows.pop()
-
-        // column headers
-        const headers = (allRows[0]).split('\t');
-        // columns for the table
-        const col = [];
-        headers.forEach((h, i) => {
-            const char = i.toString();
-            col.push({ Header: h, accessor: char });
-        });
-        setTableColumns([...col]);
-
-        // save rows
-        const dataRows = [];
-        allRows.forEach((row, i) => {
-            if (i > 0) {
-                const tmp = row.split('\t');
-                var tmpRow = {};
-                tmp.forEach((content, j) => {
-                    const char = j.toString()
-                    tmpRow[char] = content;
-                });
-                dataRows.push(tmpRow);
-            }
-        });
-        setTableData([...dataRows]);
-
-        stepHeightFactorEnrichementFreq(dataRows, col);
-    }
-
-    /**
      * calculate frequency for step height, step factor and enrichment factor
      */
     const stepHeightFactorEnrichementFreq = (rows, columns) => {
@@ -129,12 +131,10 @@ function Result() {
 
         // count frequncy of stepheight, step factor and enrichment Factor
         rows.forEach((row, i) => {
-           
-            const tmpIdx =i.toString();
 
-            if(row[stepHeightIdx] !== 'NA') {
+            if (row[stepHeightIdx] !== 'NA') {
                 // cap at 500 to make histogram readable
-                if(row[stepHeightIdx] > stepHeightCap) {
+                if (row[stepHeightIdx] > stepHeightCap) {
                     stepH.push(stepHeightCap);
                 } else {
                     const tmpSH = Math.round(row[stepHeightIdx]);
@@ -142,18 +142,18 @@ function Result() {
                 }
             }
 
-            if(row[stepFactorIdx] !== 'NA') {
-                if((row[stepFactorIdx]).includes('>')) {
+            if (row[stepFactorIdx] !== 'NA') {
+                if ((row[stepFactorIdx]).includes('>')) {
                     stepF.push(100);
                 } else {
                     const tmpSF = Math.round(row[stepFactorIdx]);
                     stepF.push(tmpSF);
-                    
-                }
-            } 
 
-            if(row[enrichFactorIdx] !== 'NA') {
-                if((row[enrichFactorIdx]).includes('>')) {
+                }
+            }
+
+            if (row[enrichFactorIdx] !== 'NA') {
+                if ((row[enrichFactorIdx]).includes('>')) {
                     enrichmentF.push(100);
                 } else {
                     const tmpEF = Math.round(row[enrichFactorIdx]);
@@ -188,18 +188,18 @@ function Result() {
 
                 <div >
                     <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}> + Step Height overview</h3>
-                    {stepHeight.length > 0 ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={5} cap={stepHeightCap} show={showStepHeight}/>
+                    {stepHeight.length > 0 ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={5} cap={stepHeightCap} show={showStepHeight} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
                 <div >
                     <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}> + Step Factor overview</h3>
-                    {stepFactor.length > 0 ? <Histogramm elements={stepFactor} xaxis='Step Factor' steps={2} cap='100' show={showStepFactor}/>
+                    {stepFactor.length > 0 ? <Histogramm elements={stepFactor} xaxis='Step Factor' steps={2} cap='100' show={showStepFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
                 <div >
                     <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}> + Enrichment Factor overview</h3>
-                    {enrichmentFactor.length > 0 ? <Histogramm elements={enrichmentFactor} xaxis='Enrichment Factor' steps={2} cap='100' show={showEnrichFactor}/>
+                    {enrichmentFactor.length > 0 ? <Histogramm elements={enrichmentFactor} xaxis='Enrichment Factor' steps={2} cap='100' show={showEnrichFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 

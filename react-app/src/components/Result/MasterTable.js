@@ -34,11 +34,11 @@ function MasterTable({ tableColumns, tableData, showTable }) {
 
     // seacrh string
     const startSearch = () => {
-        if(searchString.length === 0) return;
+        if (searchString.length === 0) return;
 
         const newData = [];
         tableData.forEach((row) => {
-            if(row[searchColumn].includes(searchString)) {
+            if (row[searchColumn].includes(searchString)) {
                 newData.push(row);
             }
         });
@@ -117,19 +117,6 @@ function MasterTable({ tableColumns, tableData, showTable }) {
 
 
     /**
-     * add new rows to current data
-     */
-    const fetchData = () => {
-        if (currentData.length - 100 <= allData.current.length) {
-            setCurrentData(current => [...current, ...allData.current.slice(counter, counter + 100)]);
-            setCounter(c => c + 100);
-        } else {
-            setMoreRows(false);
-        }
-        setLoading(false);
-    }
-
-    /**
      * add observer to 20th last row
      */
     const observer = useRef();
@@ -139,11 +126,20 @@ function MasterTable({ tableColumns, tableData, showTable }) {
         observer.current = new IntersectionObserver(rows => {
             if (rows[0].isIntersecting && moreRows) {
                 setLoading(true);
-                fetchData();
+                /**
+                 * add new rows to current data
+                */
+                if (currentData.length - 100 <= allData.current.length) {
+                    setCurrentData(current => [...current, ...allData.current.slice(counter, counter + 100)]);
+                    setCounter(c => c + 100);
+                } else {
+                    setMoreRows(false);
+                }
+                setLoading(false);
             }
         });
         if (node) observer.current.observe(node)
-    }, [loading, moreRows])
+    }, [loading, moreRows, counter, currentData])
 
     // prevent rerendering 
     const columns = useMemo(() => tableColumns, [tableColumns]);
@@ -155,64 +151,64 @@ function MasterTable({ tableColumns, tableData, showTable }) {
     return (
         <div className={showTable ? 'table-and-filter' : 'hidden'}>
             <div className='table-filter'>Search column
-                <select  onChange={(e) => setSearchColumn(e.target.value)} value={searchColumn}>
-                    {columns.map((col,i ) => {
+                <select onChange={(e) => setSearchColumn(e.target.value)} value={searchColumn}>
+                    {columns.map((col, i) => {
                         return <option value={i} key={i}>{col['Header']}</option>
                     })}
                 </select>
                 for
-                <input className='element' type='text' onChange={(e) => setSearchString(e.target.value)} value={searchString}/>
+                <input className='element' type='text' onChange={(e) => setSearchString(e.target.value)} value={searchString} />
                 <button className='button' onClick={() => startSearch()}>Search</button>
                 <p className='reset' onClick={() => resetTable()}>x</p>
             </div>
             <div className='table-container'>
-            <table {...getTableProps()}>
-                <thead >
-                    {headerGroups.map((headerGroup) => (
-                        <tr {...headerGroup.getHeaderGroupProps()} >
-                            {headerGroup.headers.map((column, i) => (
-                                <th {...column.getHeaderProps()} onClick={() => sortTable((i.toString()))}>
-                                    {column.render('Header')}
-                                    {currentSortedCol.current[0] === i.toString()
-                                        ? (currentSortedCol.current[1] === 'a' ? <i className="sort-arrow up"></i> : <i className="sort-arrow down"></i>)
-                                        : <span className='sort-symbol'>-</span>}
-                                </th>
-                            ))}
-                        </tr>
-                    ))}
-                </thead>
-                <tbody {...getTableBodyProps()} >
-                    {rows.map((row, i) => {
-                        // add ref for observer to 20th last row
-                        if (rows.length - 21 === i) {
-                            prepareRow(row)
-                            return (
-                                <tr {...row.getRowProps()} ref={lastRow}>
-                                    {row.cells.map((cell) => {
-                                        return (
-                                            <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                                        )
-                                    })}
-                                </tr>
-                            )
-                        } else {
-                            prepareRow(row)
-                            return (
-                                <tr {...row.getRowProps()}>
-                                    {row.cells.map((cell) => {
-                                        return (
-                                            <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                                        )
-                                    })}
-                                </tr>
-                            )
-                        }
-                    })}
-                </tbody>
-            </table>
+                <table {...getTableProps()}>
+                    <thead >
+                        {headerGroups.map((headerGroup) => (
+                            <tr {...headerGroup.getHeaderGroupProps()} >
+                                {headerGroup.headers.map((column, i) => (
+                                    <th {...column.getHeaderProps()} onClick={() => sortTable((i.toString()))}>
+                                        {column.render('Header')}
+                                        {currentSortedCol.current[0] === i.toString()
+                                            ? (currentSortedCol.current[1] === 'a' ? <i className="sort-arrow up"></i> : <i className="sort-arrow down"></i>)
+                                            : <span className='sort-symbol'>-</span>}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </thead>
+                    <tbody {...getTableBodyProps()} >
+                        {rows.map((row, i) => {
+                            // add ref for observer to 20th last row
+                            if (rows.length - 21 === i) {
+                                prepareRow(row)
+                                return (
+                                    <tr {...row.getRowProps()} ref={lastRow}>
+                                        {row.cells.map((cell) => {
+                                            return (
+                                                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                                            )
+                                        })}
+                                    </tr>
+                                )
+                            } else {
+                                prepareRow(row)
+                                return (
+                                    <tr {...row.getRowProps()}>
+                                        {row.cells.map((cell) => {
+                                            return (
+                                                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                                            )
+                                        })}
+                                    </tr>
+                                )
+                            }
+                        })}
+                    </tbody>
+                </table>
 
             </div>
-           
+
         </div>
     )
 }

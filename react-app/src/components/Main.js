@@ -764,6 +764,8 @@ function Main() {
      */
     const uploadConfig = (event) => {
 
+
+
         const file = event.target.files[0];
         const split = file.name.split('.');
         if (split[split.length - 1] !== 'config') {
@@ -781,14 +783,27 @@ function Main() {
      */
     const uploadConfFiles = (event) => {
 
+        const maxFileSize = 200000000;
+        var filesOK = true;
+
         const files = event.target.files;
         const tmpArray = [];
         for (let i = 0; i < files.length; i++) {
-            tmpArray.push(files[i]);
+            // check file size
+            if (files[i].size > maxFileSize) {
+                seteHeader("ERROR");
+                showError("The file " + files[i].name + " exceeds the maximum size of 200MB.");
+                filesOK = false;
+                return;
+            } else {
+                tmpArray.push(files[i]);
+            }
         }
         setConfPopup(false);
 
-        sendConfig(tmpArray);
+        if(filesOK) {
+            sendConfig(tmpArray);
+        }
     }
 
     /**

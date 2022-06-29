@@ -7,6 +7,7 @@ import '../css/MasterTable.css';
 import MasterTable from './Result/MasterTable';
 import UpSet from './Result/UpSet';
 import Histogramm from './Result/Histogramm';
+import LineChart from './Result/LineChart';
 
 /**
  * create page that displays result of TSS prediction 
@@ -21,7 +22,10 @@ function Result() {
     const [tableColumns, setTableColumns] = useState([]);
     const [tableData, setTableData] = useState([]);
     const [showTable, setShowTable] = useState(true);
+
+    // Upset
     const [showUpSet, setShowUpSet] = useState(true);
+    const [upsetClasses, setUpsetClasses] = useState([]);
 
     // histograms
     const [stepHeight, setStepHeight] = useState([]);
@@ -31,6 +35,17 @@ function Result() {
     const [showStepFactor, setShowStepFactor] = useState(false);
     const [enrichmentFactor, setEnrichmentFactor] = useState([]);
     const [showEnrichFactor, setShowEnrichFactor] = useState(false);
+
+    // line Chart
+    const [showLineChart, setShowLineChart] = useState(false);
+    const [linePrimary, setLinePrimary] = useState({});
+    const [lineSecondary, setLineSecondary] = useState({});
+    const [lineInternal, setLineInternal] = useState({});
+    const [lineAntisense, setLineAntisense] = useState({});
+    const [lineOrphan, setLineOrphan] = useState({});
+    const binSize = 50000;
+
+
 
     /**
     * get all files from TSS prediction as .zip from server
@@ -72,6 +87,7 @@ function Result() {
             setTableData([...dataRows]);
 
             stepHeightFactorEnrichementFreq(dataRows, col);
+            TSSperPosition(dataRows, col);
         }
 
         fetch("/result/")
@@ -166,6 +182,155 @@ function Result() {
         setEnrichmentFactor(enrichmentF);
     }
 
+    /** for upset plot: frequncy of the classes
+     * for line chart: TSS per position
+     * 
+     * @param {} rows 
+     * @param {*} columns 
+     */
+    const TSSperPosition = (rows, columns) => {
+
+        // get column index
+        const primaryIdx = columns.findIndex((col) => col['Header'] === 'Primary');
+        const secondaryIdx = columns.findIndex((col) => col['Header'] === 'Secondary');
+        const internalIdx = columns.findIndex((col) => col['Header'] === 'Internal');
+        const antisenseIdx = columns.findIndex((col) => col['Header'] === 'Antisense');
+        const superPosIdx = columns.findIndex((col) => col['Header'] === 'SuperPos');
+        const genomeIdx = columns.findIndex((col) => col['Header'] === 'Genome');
+      
+        // TSS per Position (line chart)
+        var primary = { [binSize]: 0 };
+        var secondary = { [binSize]: 0 };
+        var internal = { [binSize]: 0 };
+        var antisense = { [binSize]: 0 };
+        var orphan = { [binSize]: 0 };
+
+        // save frequency of classes for a TSS (upset)
+        var classes = { 'primary': 0, 'secondary': 0, 'internal': 0, 'antisense': 0, 'orphan': 0 };
+        var currentPos = "";
+        var currentGenome = "";
+        var currentClass = {};
+
+        rows.forEach(row => {
+
+            const tmpPos = row[superPosIdx];
+            const tmpGenome = row[genomeIdx];
+            var tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+
+            // upset plot --------------------
+            // new TSS found -> add classes from previous TSS
+            if (tmpPos !== currentPos || tmpGenome !== currentGenome) {
+                classes = addNewTSS(currentClass, classes);
+                // reset value
+                currentClass = {};
+            }
+            // reset values
+            currentPos = tmpPos;
+            currentGenome = tmpGenome;
+
+            // add class from current row 
+            if (tmpClass in currentClass) {
+                currentClass[tmpClass] += 1;
+            } else {
+                currentClass[tmpClass] = 1;
+            }
+
+            // ---------------------
+            // line chart
+            if (tmpClass === 'primary') {
+                primary = addTSSPosition(primary, binSize, tmpPos);
+            } else if (tmpClass === 'secondary') {
+                secondary = addTSSPosition(secondary, binSize, tmpPos);
+            } else if (tmpClass === 'internal') {
+               internal = addTSSPosition(internal, binSize, tmpPos);
+            } else if (tmpClass === 'antisense') {
+                antisense = addTSSPosition(antisense, binSize, tmpPos);
+            } else {
+                orphan = addTSSPosition(orphan, binSize,tmpPos);
+            }
+
+
+        });
+
+        // add last tss
+        classes = addNewTSS(currentClass, classes);
+
+        setUpsetClasses(classes);
+        setLinePrimary(primary);
+        setLineSecondary(secondary);
+        setLineInternal(internal);
+        setLineAntisense(antisense);
+        setLineOrphan(orphan);
+    }
+
+    const getClass = (row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx) => {
+        // get class of this row
+        if (row[primaryIdx] === '1') {
+            return 'primary';
+        } else if (row[secondaryIdx] === '1') {
+            return 'secondary';
+        } else if (row[internalIdx] === '1') {
+            return 'internal';
+        } else if (row[antisenseIdx] === '1') {
+            return 'antisense';
+            // orphan
+        } else {
+            return 'orphan';
+        }
+    }
+
+
+    const addNewTSS = (currentClass, classes) => {
+        // last tss has at least two different classes
+        if (Object.keys(currentClass).length > 1) {
+
+            // sort classes
+            const tmpKey = Object.keys(currentClass);
+            const sortClasses = {};
+            tmpKey.forEach(key => {
+                sortClasses[key] = currentClass[key];
+            })
+            // create new class-group
+            var node = "";
+            Object.keys(sortClasses).forEach(cl => {
+                node += cl + '-';
+            });
+            // remove last '-'
+            node = node.slice(0, -1)
+            // add class-group to classes
+            if (node in classes) {
+                classes[node] += 1;
+            } else {
+                classes[node] = 1;
+            }
+            // at least one class  
+        } else if (Object.keys(currentClass).length > 0) {
+            Object.keys(currentClass).forEach(cl => {
+                classes[cl] += currentClass[cl];
+            });
+        }
+        return classes;
+    }
+
+    const addTSSPosition = (tssClass, binSize, tmpPos) => {
+
+        const tmpKeys = Object.keys(tssClass);
+        var found = false;
+        tmpKeys.forEach(k => {
+            if (parseInt(tmpPos) <= parseInt(k)) {
+                tssClass[k] += 1;
+                found = true;
+                return;
+            }
+        });
+        if (!found) {
+            const arrOfNum = tmpKeys.map(str => {return Number(str);});
+            const index = Math.max.apply(Math, arrOfNum) + binSize;
+            tssClass[index] = 1;
+        }
+        return tssClass;
+    }
+
 
     return (
         <>
@@ -182,7 +347,7 @@ function Result() {
 
                 <div >
                     <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}> + TSS classes overview</h3>
-                    {tableColumns.length > 0 ? <UpSet rows={tableData} columns={tableColumns} showUpSet={showUpSet} />
+                    {tableColumns.length > 0 ? <UpSet classes={upsetClasses} showUpSet={showUpSet} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
@@ -200,6 +365,14 @@ function Result() {
                 <div >
                     <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}> + Enrichment Factor overview</h3>
                     {enrichmentFactor.length > 0 ? <Histogramm elements={enrichmentFactor} xaxis='Enrichment Factor' steps={2} cap='100' show={showEnrichFactor} />
+                        : <ClipLoader color='#ffa000' size={30} />}
+                </div>
+
+                <div >
+                    <h3 className='header click-param' onClick={() => setShowLineChart(!showLineChart)}> + TSS distribution per position in bp</h3>
+                    {enrichmentFactor.length > 0 ? 
+                        <LineChart primary={linePrimary} secondary={lineSecondary} internal={lineInternal} antisense={lineAntisense} orphan={lineOrphan}
+                                     binSize={binSize} show={showLineChart}/>
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 

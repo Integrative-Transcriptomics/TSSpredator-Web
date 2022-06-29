@@ -1,6 +1,6 @@
 :root {
-    --mainColor: rgb(255, 160, 0);
-    --complement: rgb(64, 0, 255);
+    --mainColor: #ffa000;
+    --complement: #4000ff;
 }
 * {
     box-sizing: border-box;

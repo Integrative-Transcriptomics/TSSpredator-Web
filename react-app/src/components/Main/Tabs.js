@@ -102,8 +102,14 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
                 {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid'] },
                 { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]}
                   studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
+                   <br></br>
+                  <input type="checkbox" style={{marginLeft:'0.2rem'}} name="cappable-seq" id='cappable-seq' />
+                  <label htmlFor='cappable-seq'
+                          data-title="When using Cappable-seq and no control library is given, the cappable-seq library will bes used as the control library.
+                                     Only enriched forward and enriched reverse files have to be uploaded.">Cappable-seq: Use cappable-seq library also as control library</label>
+                   <br></br>
                   <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
-
+                 
                   <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)}
                     saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} />
 

@@ -16,9 +16,10 @@ import PopupWindow from "./PopupWindow";
  * @param saveIndividualFile: saves an individual file
  * @param saveAnnotationFile: saves annotation files
  * @param showName: true <-> show name of genome tab
+ * @param cappableSeq: checkbox
  */
 
-function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs, numRep, saveFiles, saveIndividualFile, saveAnnotationFile, showName }) {
+function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs, numRep, saveFiles, saveIndividualFile, saveAnnotationFile, showName, cappableSeq }) {
 
   // current active tab
   const [state, setState] = useState(1);
@@ -95,18 +96,19 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
           }
 
           {genomes.map((g, i) => {
+            
 
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 
                 {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid'] },
-                { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]}
-                  studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
+                { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
                    <br></br>
-                  <input type="checkbox" style={{marginLeft:'0.2rem'}} name="cappable-seq" id='cappable-seq' />
-                  <label htmlFor='cappable-seq'
+                  <input type="checkbox" style={{marginLeft:'0.2rem'}} name="cappableSeq" id={i} checked={cappableSeq[i]} 
+                          onChange={(e) => handleTabs(e)}/>
+                  <label style={{fontSize: '0.8rem'}}
                           data-title="When using Cappable-seq and no control library is given, the cappable-seq library will bes used as the control library.
-                                     Only enriched forward and enriched reverse files have to be uploaded.">Cappable-seq: Use cappable-seq library also as control library</label>
+                                     Only enriched forward and enriched reverse files have to be uploaded. At least 2 Genomes/Conditions and Replicates are needed.">Cappable-seq: Use cappable-seq library also as control library</label>
                    <br></br>
                   <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
                  

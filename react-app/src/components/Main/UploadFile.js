@@ -37,21 +37,21 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
       if (fileArray.length > 0) {
         fileName = '';
         // less than 4 files, show all file names
-        if(fileArray.length < 4) {
+        if (fileArray.length < 4) {
           fileArray.forEach(file => {
             fileName += file.name + ', '
           });
           // remove last comma
           fileName = fileName.slice(0, -2);
 
-        // more than 4 files, show only first 3 file names
+          // more than 4 files, show only first 3 file names
         } else {
-          for(let i = 0; i < 3; i++) {
+          for (let i = 0; i < 3; i++) {
             fileName += fileArray[i].name + ', ';
           }
           fileName += '...'
         }
-   
+
       }
     } else {
       fileName = genomes[gIdx]['genome' + (gIdx + 1)][label].name;
@@ -66,11 +66,11 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
 
           <input disabled={disabled} className='element' type='file' name={label} id={id + 'annfile'} style={{ display: 'none' }}
             onChange={(e) => saveAnnotationFile(e)} directory=""
-            webkitdirectory=""  />
+            webkitdirectory="" />
 
           <p className={disabled ? 'button disabled' : 'button'}>Select Folder</p>
-          {typeof fileName === 'undefined' ?  (disabled === true ? <p className='file-name'>No file(s) needed.</p> : <p className='file-name'>No file(s) selected.</p>) 
-                                           : <div className='file-name'> {fileName}</div>}
+          {typeof fileName === 'undefined' ? (disabled === true ? <p className='file-name'>No file(s) needed.</p> : <p className='file-name'>No file(s) selected.</p>)
+            : <div className='file-name'> {fileName}</div>}
         </label>
       </div>
     )
@@ -84,8 +84,8 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
             onChange={(e) => saveIndividualFile(e)} />
 
           <p className={disabled ? 'button disabled' : 'button'}>Select File</p>
-          {typeof fileName === 'undefined' ? (disabled === true ? <p className='file-name'>No file needed.</p> : <p className='file-name'>No file selected.</p>) 
-                                            : <p className='file-name'>{fileName}</p>}
+          {typeof fileName === 'undefined' ? (disabled === true ? <p className='file-name'>No file needed.</p> : <p className='file-name'>No file selected.</p>)
+            : <p className='file-name'>{fileName}</p>}
         </label>
       </div>
     )

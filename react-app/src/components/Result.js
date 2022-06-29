@@ -83,9 +83,10 @@ function Result() {
                 }
             });
             setTableData([...dataRows]);
-
-            stepHeightFactorEnrichementFreq(dataRows, col);
-            TSSperPosition(dataRows, col);
+            if(dataRows.length > 0) {
+                stepHeightFactorEnrichementFreq(dataRows, col);
+                TSSperPosition(dataRows, col);
+            }
         }
         // get files from server
         fetch("/result/")
@@ -346,7 +347,7 @@ function Result() {
 
                 <div >
                     <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}> + TSS classes overview</h3>
-                    {tableColumns.length > 0 ? <UpSet classes={upsetClasses} showUpSet={showUpSet} />
+                    {stepHeight.length > 0 ? <UpSet classes={upsetClasses} showUpSet={showUpSet} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 

@@ -32,9 +32,8 @@ function UpSet({ classes, showUpSet }) {
     return newElements;
   }
 
-
   const elements = calcFreq();
-
+  // prevent rerendering
   const elems = useMemo(() => [...elements], [elements]);
  // create upset plot
   const { sets } = useMemo(() => extractCombinations(elems), [elems]);

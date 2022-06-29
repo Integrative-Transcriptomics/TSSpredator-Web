@@ -2,10 +2,21 @@ import React from 'react';
 import Plotly from "plotly.js-cartesian-dist-min";
 import createPlotlyComponent from "react-plotly.js/factory";
 
+/**
+ * creates a line chart over all TSS positions. Each TSS class has an own trace
+ * @param primary: data for primary trace (object)
+ * @param secondary: data for secondary trace (object)
+ * @param internal: data for internal trace (object)
+ * @param antisense: data for antisense trace (object)
+ * @param orphan: data for orphan trace (object)
+ * @param binSize: binSize 
+ * @param show: boolean for showing/hiding the plot
+ */
 function LineChart({ primary, secondary, internal, antisense, orphan, binSize, show }) {
 
     const Plot = createPlotlyComponent(Plotly);
 
+    // transform all objects to two arrays
     const pKeys = Object.keys(primary);
     const pValues = [];
     pKeys.forEach(k => pValues.push(primary[k]));
@@ -26,7 +37,7 @@ function LineChart({ primary, secondary, internal, antisense, orphan, binSize, s
     const oValues = [];
     oKeys.forEach(k => oValues.push(orphan[k]));
 
-
+    // initialize all traces
     var trace1 = {
         x: pKeys, y: pValues, type: 'scatter', name: 'Primary',
         line: {
@@ -63,7 +74,7 @@ function LineChart({ primary, secondary, internal, antisense, orphan, binSize, s
         }
     };
 
-
+    // initialize data
     var data = [trace1, trace2, trace3, trace4, trace5];
 
     return (
@@ -71,7 +82,6 @@ function LineChart({ primary, secondary, internal, antisense, orphan, binSize, s
             <Plot
                 data={data}
                 layout={{ width: 1700, height: 550, title: 'TSS distribution over all Positions with a bin size of ' + binSize, xaxis: { title: 'Position in bp' }, yaxis: { title: 'Count' } }}
-
             />
         </div>
     )

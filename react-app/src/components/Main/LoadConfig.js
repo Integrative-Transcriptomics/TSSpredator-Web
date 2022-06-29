@@ -1,5 +1,12 @@
 import React from 'react';
 
+/**
+ * popup window for uploading config file and folder that contains all needed files
+ * @param header: header of the popup
+ * @param text: text in the popup
+ * @param uploadConfig: function for uploading the config file
+ * @param uploadConfFiles: function for uploading all files
+ */
 function LoadConfig({ header, text, uploadConfig, uploadFiles }) {
 
     return (

@@ -31,6 +31,7 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
     setState(1)
   }
 
+  // file upload button disabled?
   let disabled = false;
   if (studyType === 'condition' && state > 1) {
     disabled = true;
@@ -65,22 +66,22 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
             if (showName) {
               val = genomes[i]['genome' + (i + 1)].name;
             }
-            // tolltip or not
+            // tooltip or not
             if (genome) {
               return (
                 <div className={state === (i + 1) ? tabClass + ' tab-active' : tabClass} key={(i + 1)} onClick={() => { setState((i + 1)) }}
                   data-tabs-title="Brief unique name for this strain/condition. Special characters (including spaces) should be avoided.">
                   {genome ? <input className={state === (i + 1) ? 'tab-input tab-input-active' : 'tab-input'} type="text" id={i} name="name" value={val}
-                            placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} />
-                          : "Replicate " + String.fromCharCode(97 + i)}
+                    placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} />
+                    : "Replicate " + String.fromCharCode(97 + i)}
                 </div>
               )
             } else {
               return (
                 <div className={state === (i + 1) ? tabClass + ' tab-active' : tabClass} key={(i + 1)} onClick={() => { setState((i + 1)) }}>
                   {genome ? <input className={state === (i + 1) ? 'tab-input tab-input-active' : 'tab-input'} type="text" id={i} name="name" value={val}
-                            placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} />
-                          : "Replicate " + String.fromCharCode(97 + i)}
+                    placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} />
+                    : "Replicate " + String.fromCharCode(97 + i)}
                 </div>
               )
             }
@@ -98,9 +99,9 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 
-                {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid'] }, 
-                                                      { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid']}]} 
-                                            studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)}/>
+                {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid'] },
+                { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]}
+                  studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
                   <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
 
                   <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)}

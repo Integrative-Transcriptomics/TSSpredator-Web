@@ -417,7 +417,7 @@ function Main() {
     }
 
     /**
-     * update number of replicates
+     * update number of replicate tabs
      */
     const updateReplicates = (val) => {
         setnumRep(val);
@@ -462,7 +462,7 @@ function Main() {
     }
 
     /**
-     * update number of genomes 
+     * update number of genome tabs
      * @param val: the new number of genomes
      * @param data: object with genome names and ids from the alignment file
      */
@@ -523,7 +523,7 @@ function Main() {
         }
     }
     /**
-    * update parameter value in setup box
+    * update parameter value in setup box (type of study, number of conditions, number of replicates)
     */
     const updateSetupBox = (node, element, value) => {
         setParameters(current => (
@@ -553,7 +553,7 @@ function Main() {
     }
 
     /**
-     * checks of parameter preset for current parameter values exists
+     * checks if parameter preset for current parameter values exists
      */
     const checkPreset = (value, parameterName) => {
         const names = ['stepheight', 'stepheightreduction', 'stepfactor', 'stepfactorreduction', 'enrichmentfactor', 'processingsitefactor'];
@@ -610,9 +610,10 @@ function Main() {
      */
     const handleTabs = (event) => {
 
-        setShowGName(true);
-
         const name = event.target.name;
+        if (name === 'name') {
+            setShowGName(true);
+        }
         const value = event.target.value;
         const id = parseInt(event.target.id);
 
@@ -644,11 +645,10 @@ function Main() {
                 saveGenomes(parseInt(id[0]), node, file);
             }
         }
-
     }
 
     /**
-    * saves individual uploaded annotation file(s)
+    * saves uploaded annotation folder from upload files individually
     */
     const saveAnnotationFile = (event) => {
 
@@ -760,11 +760,9 @@ function Main() {
     }
 
     /**
-     * upload config file
+     * save uploaded config file
      */
     const uploadConfig = (event) => {
-
-
 
         const file = event.target.files[0];
         const split = file.name.split('.');
@@ -779,7 +777,7 @@ function Main() {
     }
 
     /**
-     * upload files that are needed for the config file
+     * save uploaded files that are needed for the config file
      */
     const uploadConfFiles = (event) => {
 
@@ -801,13 +799,13 @@ function Main() {
         }
         setConfPopup(false);
 
-        if(filesOK) {
+        if (filesOK) {
             sendConfig(tmpArray);
         }
     }
 
     /**
-     * send config file to flask server
+     * send all uploaded files for the config to the flask server
      */
     const sendConfig = (tmpArray) => {
 
@@ -935,7 +933,7 @@ function Main() {
     }
 
     /**
-     * save input in config file
+     * save input to config file and download given config file
      */
     const saveConfigFile = () => {
 
@@ -1000,7 +998,6 @@ function Main() {
         var tmpAlignFile = "";
         try {
             tmpAlignFile = alignmentFile.webkitRelativePath;
-
         } catch {
             console.log('no alignment file')
         }

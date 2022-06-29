@@ -15,7 +15,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
     // saves all uploaded files
     const [allFiles, setAllFiles] = useState([]);
 
-    // save file names to drag and drop
+    // save file names for drag and drop
     const [upload, setUpload] = useState([]);
     const [genomeFasta, setGenomeFasta] = useState([]);
     // each index in the objects stands for one replicate
@@ -28,20 +28,27 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
     const [genomeAnn, setGenomeAnn] = useState([]);
     const [genomeAnnfolder, setGenomAnnFolder] = useState("");
 
+    /*
+    * save uploaded annotation files
+    */
     const saveAnnotationFile = (event) => {
         const tmpArray = [];
 
+        // save all files from uploaded folder
         for(let i = 0; i < (event.target.files).length; i++) {
             tmpArray.push(event.target.files[i]);
         }
         setGenomeAnn([...tmpArray]);
 
+        // get folder name
         var relativePath = (event.target.files)[0].webkitRelativePath;
         var folder = relativePath.split("/")[0];
         setGenomAnnFolder(folder);
     }
 
-    // save all uploaded Files
+   /**
+    * save all uploaded files
+    */
     const handleNewFiles = (event) => {
         // check if file is already uploaded
         event.forEach((file, i) => {
@@ -51,7 +58,10 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
         })
         setAllFiles([...allFiles, ...event]);
     }
-    // add item to drop container
+
+    /**
+     * add item to drag n drop container
+     */
     const handleAdd = (event, state, set, index) => {
 
         // for all non-replicate files
@@ -63,22 +73,23 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
             } else {
                 set([...state, event]);
             }
-            // for replicate-files
+        // for replicate-files
         } else {
             // when file is dropped directly in container
             if (Array.isArray(event)) {
                 set(current => ({
                     ...current, [index]: event[0]
-                }))
+                })) 
             } else {
                 set(current => ({
                     ...current, [index]: event
                 }))
             }
-
         }
     }
-    // remove item from drop container
+    /*
+    * remove item from drag n drop container
+    */
     const handleRemove = (event, oldState, index) => {
 
         switch (oldState) {
@@ -107,11 +118,16 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
         }
     }
 
+    /**
+     * button:save
+     * assign all uploaded files to the correct genome/replicate
+     */
     const saveFiles = (event) => {
 
         let genomeFiles = { 'genomefasta': '', 'genomeannotation': [...genomeAnn] };
         let genomeFastaFound = false;
 
+        // each index in the replicate objects stands for one of the replicate X in the current genome
         let enrichedForwardFiles = { '0': '' };
         let numEF = 0;
 

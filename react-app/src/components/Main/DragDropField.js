@@ -41,8 +41,6 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
         event.stopPropagation();
         const newFiles = [...event.dataTransfer.files];
 
-
-
         // no new file uploaded, just a item moved from a different container
         if (newFiles.length === 0) {
             handleAdd(event.dataTransfer.getData('name'));
@@ -57,7 +55,7 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
             } else {
                 handleRemove(name, oldState);
             }
-            // new files uploaded    
+        // new files uploaded    
         } else {
             const names = [];
             newFiles.forEach(file => {

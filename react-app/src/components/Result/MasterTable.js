@@ -22,7 +22,6 @@ function MasterTable({ tableColumns, tableData, showTable }) {
     const [searchColumn, setSearchColumn] = useState('0');
     const [searchString, setSearchString] = useState("");
 
-
     // reset table
     const resetTable = () => {
         setSearchColumn('0');
@@ -32,7 +31,7 @@ function MasterTable({ tableColumns, tableData, showTable }) {
         setCurrentData(tableData.slice(0, 200));
     }
 
-    // seacrh string
+    // search for string in table column
     const startSearch = () => {
         if (searchString.length === 0) return;
 
@@ -47,7 +46,7 @@ function MasterTable({ tableColumns, tableData, showTable }) {
         setCurrentData(newData.slice(0, 200));
     }
 
-    // sort Table
+    // sort Table according to the given column
     const sortTable = (column) => {
 
         const sortData = [...allData.current];
@@ -78,6 +77,9 @@ function MasterTable({ tableColumns, tableData, showTable }) {
         setCurrentData(sortData.slice(0, 200));
     }
 
+    /**
+     * do the sorting 
+     */
     const callSort = (first, second, biggerA, biggerB) => {
 
         // check if undefinde
@@ -206,9 +208,7 @@ function MasterTable({ tableColumns, tableData, showTable }) {
                         })}
                     </tbody>
                 </table>
-
             </div>
-
         </div>
     )
 }

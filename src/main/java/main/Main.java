@@ -602,10 +602,15 @@ public class Main {
             tssMap.put(id, tmpTssList);
         }
 
+        String genomeCol = "Condition";
+        if (Config.getString("mode").equalsIgnoreCase("align")) {
+            genomeCol = "Genome";
+        }
+
         if (printRepStats)
-            bw.append("SuperPos\tSuperStrand\tmapCount\tdetCount\tGenome\tdetected\tenriched\tstepHeight\trepStepHeights\tstepFactor\trepStepFactors\tenrichmentFactor\trepEnrichmentFactors\tclassCount\tPos\tStrand\tLocus_tag\tsRNA/asRNA\tProduct\tUTRlength\tGeneLength\tPrimary\tSecondary\tInternal\tAntisense\tAntisenseOrientation\tAutomated\tManual\tPutative sRNA\tPutative asRNA\tComment\tSequence -50 nt upstream + TSS (51nt)\tcontigPos\tcontigID\n");
+            bw.append("SuperPos\tSuperStrand\tmapCount\tdetCount\t").append(genomeCol).append("\tdetected\tenriched\tstepHeight\trepStepHeights\tstepFactor\trepStepFactors\tenrichmentFactor\trepEnrichmentFactors\tclassCount\tPos\tStrand\tLocus_tag\tsRNA/asRNA\tProduct\tUTRlength\tGeneLength\tPrimary\tSecondary\tInternal\tAntisense\tAntisenseOrientation\tAutomated\tManual\tPutative sRNA\tPutative asRNA\tComment\tSequence -50 nt upstream + TSS (51nt)\tcontigPos\tcontigID\n");
         else
-            bw.append("SuperPos\tSuperStrand\tmapCount\tdetCount\tGenome\tdetected\tenriched\tstepHeight\tstepFactor\tenrichmentFactor\tclassCount\tPos\tStrand\tLocus_tag\tsRNA/asRNA\tProduct\tUTRlength\tGeneLength\tPrimary\tSecondary\tInternal\tAntisense\tAntisenseOrientation\tAutomated\tManual\tPutative sRNA\tPutative asRNA\tComment\tSequence -50 nt upstream + TSS (51nt)\tcontigPos\tcontigID\n");
+            bw.append("SuperPos\tSuperStrand\tmapCount\tdetCount\t").append(genomeCol).append("\tdetected\tenriched\tstepHeight\tstepFactor\tenrichmentFactor\tclassCount\tPos\tStrand\tLocus_tag\tsRNA/asRNA\tProduct\tUTRlength\tGeneLength\tPrimary\tSecondary\tInternal\tAntisense\tAntisenseOrientation\tAutomated\tManual\tPutative sRNA\tPutative asRNA\tComment\tSequence -50 nt upstream + TSS (51nt)\tcontigPos\tcontigID\n");
 
         //write very big classification table
         TSS gTSS;

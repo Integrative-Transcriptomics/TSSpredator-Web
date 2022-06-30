@@ -149,3 +149,26 @@
   min-width: 0.5rem;
   margin-left: -0.5rem;
 }
+
+.info-icon {
+  border: 2px solid #4000ff;
+  border-radius: 50%;
+  text-align: center;
+  color: #4000ff;
+  font-weight: bold;
+  font-size: 0.8rem;
+  width: 1.3rem;
+}
+.info-text {
+  color: rgba(0, 0, 0, 0.5);
+  font-style: italic;
+  font-size: 0.9rem;
+  max-width:90%;
+  padding-top: 0.1rem;
+}
+.info-row {
+  display: flex;
+  flex-direction: row;
+  column-gap: 0.5rem;
+  margin: 1rem 0;
+}

@@ -72,7 +72,7 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
     }
 
     return (
-        <div className={disabled ? className + ' disabled-zone' : className} onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)} data-title={tooltip}>
+        <div className={disabled ? className + ' disabled-zone' : className} onDrop={(e) => handleDrop(e)} onDragOver={(e) => handleDragOver(e)} data-tooltip={tooltip}>
             {currentFiles.length === 0 || typeof currentFiles[0] === 'undefined' ? <p>{label}</p> : <></>}
 
             {typeof currentFiles !== 'undefined' ?

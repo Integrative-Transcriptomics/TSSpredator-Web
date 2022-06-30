@@ -16,10 +16,9 @@ import PopupWindow from "./PopupWindow";
  * @param saveIndividualFile: saves an individual file
  * @param saveAnnotationFile: saves annotation files
  * @param showName: true <-> show name of genome tab
- * @param cappableSeq: checkbox
  */
 
-function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs, numRep, saveFiles, saveIndividualFile, saveAnnotationFile, showName, cappableSeq }) {
+function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs, numRep, saveFiles, saveIndividualFile, saveAnnotationFile, showName }) {
 
   // current active tab
   const [state, setState] = useState(1);
@@ -48,16 +47,17 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
     { "name": "Genome Annotation", "value": "Genome Annotation", "tooltip": "Folder containing all GFF/GTF genomic annotation files for this genome." }]
   } else {
     tabClass = 'tab-rep'
-    fileNames = [{ "name": "enriched forward", "value": "enriched forward", "tooltip": "Graph file containing the RNA-seq expression graph for the forward strand from the 5' enrichment library." },
-    { "name": "enriched reverse", "value": "enriched reverse", "tooltip": "Graph file containing the RNA-seq expression graph for the reverse strand from the 5' enrichment library." },
-    { "name": "normal forward", "value": "normal forward", "tooltip": "Graph file containing the RNA-seq expression graph for the forward strand from library without 5' enrichment." },
-    { "name": "normal reverse", "value": "normal reverse", "tooltip": "Graph file containing the RNA-seq expression graph for the reverse strand from library without 5' enrichment." }]
+    fileNames = [{ "name": "enriched forward", "value": "enriched forward", "tooltip": "Graph file containing the RNA-seq expression graph for the forward strand from the 5' enrichment library. tagRNA-seq: Use the TSS reads here." },
+    { "name": "enriched reverse", "value": "enriched reverse", "tooltip": "Graph file containing the RNA-seq expression graph for the reverse strand from the 5' enrichment library. tagRNA-seq: Use the TSS reads here." },
+    { "name": "normal forward", "value": "normal forward", "tooltip": "Graph file containing the RNA-seq expression graph for the forward strand from library without 5' enrichment. tagRNA-seq: Use the PSS reads here." },
+    { "name": "normal reverse", "value": "normal reverse", "tooltip": "Graph file containing the RNA-seq expression graph for the reverse strand from library without 5' enrichment. tagRNA-seq: Use the PSS reads here." }]
   }
 
+  
   return (
     <>
       {popup && <PopupWindow closePopup={(e) => setPopup(!popup)} numRep={numRep} gIdx={state} disabled={disabled}
-        saveAllFiles={(g, ef, er, nf, nr) => saveFiles(g, ef, er, nf, nr, state - 1)} />}
+        saveAllFiles={(g, ef, er, nf, nr) => saveFiles(g, ef, er, nf, nr, state - 1)} studyType={(studyType[0].toUpperCase() + studyType.slice(1))} />}
 
       <div className='container'>
         <div className='tab-row'>
@@ -103,13 +103,7 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
 
                 {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid'] },
                 { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
-                   <br></br>
-                  <input type="checkbox" style={{marginLeft:'0.2rem'}} name="cappableSeq" id={i} checked={cappableSeq[i]} 
-                          onChange={(e) => handleTabs(e)}/>
-                  <label style={{fontSize: '0.8rem'}}
-                          data-title="When using Cappable-seq and no control library is given, the cappable-seq library will bes used as the control library.
-                                     Only enriched forward and enriched reverse files have to be uploaded. At least 2 Genomes/Conditions and Replicates are needed.">Cappable-seq: Use cappable-seq library also as control library</label>
-                   <br></br>
+                  
                   <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
                  
                   <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)}
@@ -118,8 +112,9 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
                   <Tabs genomes={replicates[i]['genome' + (i + 1)]} genome={false} whichGenome={i} handleTabs={(e) => handleTabs(e)}
                     saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} />
                 </>
-                  : <UploadFilesIndividually files={fileNames} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)}
-                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} />}
+                  : <><div className="info-row"><div className='info-icon'>i</div><div className="info-text">tagRNA-seq: Use the TSS reads as the enriched library and the PSS reads as the normal library.</div></div>
+                  <UploadFilesIndividually files={fileNames} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)}
+                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} /> </>} 
               </div>
             )
           })

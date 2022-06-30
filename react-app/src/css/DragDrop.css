@@ -175,7 +175,7 @@
 }
 .arrow-line {
   margin-top: 0.6rem;
-  width: 6.2rem;
+  width: 6.25rem;
   background: rgb(255, 160, 0);
   height: 0.2rem;
   float: left;
@@ -197,4 +197,27 @@
 
 .no-drag {
   cursor: default;
+}
+ /* tooltips */
+ [data-tooltip]:hover:after {
+  opacity: 1;
+  transition: all 0.1s ease 0.8s;
+  visibility: visible;
+}
+[data-tooltip]:after {
+  content: attr(data-tooltip);
+  font-size: 0.8rem;
+  background-color: #e0e0e0;
+  position: absolute;
+  width: 15rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 0.1rem 0.3rem rgb(0, 0, 0, 0.5);
+  border: 1px solid transparent;
+  opacity: 0;
+  z-index: 99;
+  visibility: hidden;
+}
+[data-tooltip] {
+  position: relative;
 }

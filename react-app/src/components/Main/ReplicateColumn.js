@@ -54,19 +54,19 @@ function ReplicateColumn({ handleRemove, handleFiles, handleAddEF, handleAddER, 
                         <div className={state === i ? 'drop-box' : 'drop-box-rep'} >
                             <DragDropField label='enriched forward file' currentFiles={[currentEF[i]]} state='enrichF' index={i}
                                 handleAdd={(e) => handleAddEF(e, i)} handleRemove={(e, s, idx) => handleRemove(e, s, idx)} handleFiles={(e) => handleFiles(e)}
-                                tooltip="Graph file containing the RNA-seq expression graph for the forward strand from the 5' enrichment library." />
+                                tooltip="Graph file containing the RNA-seq expression graph for the forward strand from the 5' enrichment library. tagRNA-seq: Use the TSS reads here." />
 
                             <DragDropField label='enriched reverse file' currentFiles={[currentER[i]]} state='enrichR' index={i}
                                 handleAdd={(e) => handleAddER(e, i)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} 
-                                tooltip="Graph file containing the RNA-seq expression graph for the reverse strand from the 5' enrichment library."/>
+                                tooltip="Graph file containing the RNA-seq expression graph for the reverse strand from the 5' enrichment library. tagRNA-seq: Use the TSS reads here."/>
 
                             <DragDropField label='normal forward file' currentFiles={[currentNF[i]]} state='normalF' index={i}
                                 handleAdd={(e) => handleAddNF(e, i)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)}
-                                tooltip="Graph file containing the RNA-seq expression graph for the forward strand from library without 5' enrichment." />
+                                tooltip="Graph file containing the RNA-seq expression graph for the forward strand from library without 5' enrichment. tagRNA-seq: Use the PSS reads here." />
 
                             <DragDropField label='normal reverse file' currentFiles={[currentNR[i]]} state='normalR' index={i}
                                 handleAdd={(e) => handleAddNR(e, i)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} 
-                                tooltip="Graph file containing the RNA-seq expression graph for the reverse strand from library without 5' enrichment."/>
+                                tooltip="Graph file containing the RNA-seq expression graph for the reverse strand from library without 5' enrichment. tagRNA-seq: Use the PSS reads here."/>
 
                         </div>
                     </div>

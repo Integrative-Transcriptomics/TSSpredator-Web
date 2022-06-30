@@ -10,7 +10,7 @@ import ReplicateColumn from './ReplicateColumn';
  * @param gIdx: current genome tab
  * @param disabled: studytype condition
  */
-function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
+function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyType }) {
 
     // saves all uploaded files
     const [allFiles, setAllFiles] = useState([]);
@@ -193,12 +193,12 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
     return (
         <div className='popup'>
             <div className='popup-inner'>
-                <h3 className='header popup-header'>Upload Files - Genome {gIdx}</h3>
+                <h3 className='header popup-header'>Upload Files - {studyType} {gIdx}</h3>
 
                 <div className='popup-columns'>
 
                     <div className='drop-box-column column-active'>
-                        <DragDropField label={'Drop your files for Genome ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
+                        <DragDropField label={'Drop your files for '+ studyType + ' ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
                             handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} 
                             />
                     </div>
@@ -217,7 +217,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled }) {
                                 handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)}
                                 tooltip="FASTA/multiFASTA file containing the genomic sequence of this genome." />
 
-                            <label className={disabled ? ' disabled-zone drag-drop-zone' : 'drag-drop-zone'} data-title="Folder containing all GFF/GTF genomic annotation files for this genome.">
+                            <label className={disabled ? ' disabled-zone drag-drop-zone' : 'drag-drop-zone'} data-tooltip="Folder containing all GFF/GTF genomic annotation files for this genome.">
                             {genomeAnnfolder.length === 0 ? (disabled ? <p>no file needed</p> : <p>Click to select Genome Annotation folder</p>) 
                                                         : <div  className='drag-box no-drag'> {genomeAnnfolder}</div>} 
                             

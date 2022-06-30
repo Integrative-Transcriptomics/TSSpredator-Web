@@ -20,7 +20,7 @@ function Main() {
     const [parameterPreset, setParameterPreset] = useState("default");
     // checkbox
     const [rnaGraph, setRnaGraph] = useState(false);
-    const [genomes, setGenomes] = useState([{ "genome1": { "name": "Condition_1", "placeholder": "Condition_1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": []} }]);
+    const [genomes, setGenomes] = useState([{ "genome1": { "name": "Condition_1", "placeholder": "Condition_1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": [] } }]);
     const [replicates, setReplicates] = useState([{ "genome1": [{ "replicatea": { "name": "Replicate a", "enrichedforward": "", "enrichedreverse": "", "normalforward": "", "normalreverse": "" } }] }]);
     const [alignmentFile, setAlignmentFile] = useState("");
 
@@ -46,9 +46,6 @@ function Main() {
     // show name of genom tab: set to true when genome names of alignment file are used
     const [showGName, setShowGName] = useState(false);
 
-    // cappable-seq: every index is one genome
-    const [cappableSeq, setCappableSeq] = useState([false]);
-
     // loading spinner
     let [loading, setLoading] = useState(false);
 
@@ -70,8 +67,6 @@ function Main() {
         setLoading(!loading);
         // if studytype condition: fill out alignment and output id
         fillGenomes();
-        // if cappable seq checked use enriched files as normal files
-        fillReplicates();
 
         var run = checkInput();
 
@@ -95,7 +90,7 @@ function Main() {
             const fasta = temp[0]['genome1']['genomefasta'];
             const annotation = temp[0]['genome1']['genomeannotation'];
             var outputId = temp[0]['genome1']['outputid'];
-            
+
             for (let i = 0; i < genomes.length; i++) {
                 temp[i]['genome' + (i + 1)]['alignmentid'] = (i + 1);
                 temp[i]['genome' + (i + 1)]['outputid'] = outputId;
@@ -106,29 +101,6 @@ function Main() {
         }
     }
 
-    /**
-     * if cappable-seq checked use enriched files also as normal files
-     */
-    const fillReplicates = () => {
-
-        const temp = [...replicates];
-
-        for (let i = 0; i < temp.length; i++) {
-
-            if(cappableSeq[i]){
-                
-                const tmpG = temp[i]['genome' + (i + 1)];
-
-                for (let j = 0; j < tmpG.length; j++) {
-    
-                    const letter = String.fromCharCode(97 + j);
-                    tmpG[j]['replicate' + letter]['normalforward'] = tmpG[j]['replicate' + letter]['enrichedforward'];
-                    tmpG[j]['replicate' + letter]['normalreverse'] = tmpG[j]['replicate' + letter]['enrichedreverse'];
-                }
-            }            
-        }
-        setReplicates([...temp]);
-    }
 
     /**
      * check if input is correct
@@ -522,9 +494,6 @@ function Main() {
                     ["genome" + i]: { name: genomeName, placeholder: placeholder, alignmentid: alignmentID, outputid: "", genomefasta: "", genomeannotation: [] }
                 });
                 setGenomes(genomes);
-                // Cappable-seq checkbox
-                cappableSeq.push(false);
-                setCappableSeq(cappableSeq);
                 // add new genome to replicates
                 replicates.push({ ["genome" + i]: [...replicateTemplate] });
                 setReplicates(replicates);
@@ -548,9 +517,6 @@ function Main() {
                 // remove genome from replicates
                 replicates.pop();
                 setReplicates(replicates);
-                // cappable-seq checkbox
-                cappableSeq.pop();
-                setCappableSeq(cappableSeq);
             }
             // update genome names and alignment ids
             if (typeof data !== 'undefined') {
@@ -655,18 +621,11 @@ function Main() {
         }
         const value = event.target.value;
         const id = parseInt(event.target.id);
-       
-        // for checkbox
-        if (name === 'cappableSeq') {
-            let temp = [...cappableSeq];
-            temp[id] = !cappableSeq[id];
-            setCappableSeq([...temp]);
-        // for text fields    
-        } else {
-            let temp = [...genomes];
-            temp[id]['genome' + (id + 1)][name] = value;
-            setGenomes([...temp]);
-        }
+
+        let temp = [...genomes];
+        temp[id]['genome' + (id + 1)][name] = value;
+        setGenomes([...temp]);
+
     }
 
     /**
@@ -773,7 +732,7 @@ function Main() {
                 temp[gId]['genome' + (gId + 1)][node] = file;
             }
         }
-       
+
         setGenomes([...temp]);
     }
 
@@ -1128,7 +1087,7 @@ function Main() {
 
                                 <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value}
                                     handleTabs={(e) => handleTabs(e)} numRep={numRep} saveFiles={(g, ef, er, nf, nr, idx) => saveFiles(g, ef, er, nf, nr, idx)}
-                                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} showName={showGName} cappableSeq={cappableSeq}/>
+                                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} showName={showGName} />
                             </>
                         }
                     </div>

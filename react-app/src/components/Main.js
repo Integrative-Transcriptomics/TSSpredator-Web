@@ -475,6 +475,9 @@ function Main() {
 
         parameters.setup.numberofgenomes.value = val;
 
+        var tmpGenome = [...genomes];
+        var tmpReplicate = [...replicates];
+
         // add genom tab
         const numGenomes = Object.keys(genomes).length;
         if (val > numGenomes) {
@@ -489,43 +492,40 @@ function Main() {
                     genomeName = data['genome_' + i];
                     alignmentID = data['id_' + i];
                 }
-
-                genomes.push({
+                tmpGenome.push({
                     ["genome" + i]: { name: genomeName, placeholder: placeholder, alignmentid: alignmentID, outputid: "", genomefasta: "", genomeannotation: [] }
                 });
-                setGenomes(genomes);
                 // add new genome to replicates
-                replicates.push({ ["genome" + i]: [...replicateTemplate] });
-                setReplicates(replicates);
+                tmpReplicate.push({ ["genome" + i]: [...replicateTemplate] });
             }
             // update genome names and alignmetn ids
             if (typeof data !== 'undefined') {
                 for (let i = 0; i < numGenomes; i++) {
-                    genomes[i]["genome" + (i + 1)]['name'] = data['genome_' + (i + 1)];
-                    genomes[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
+                    tmpGenome[i]["genome" + (i + 1)]['name'] = data['genome_' + (i + 1)];
+                    tmpGenome[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
                 }
             }
 
-            // remove genome tab   
+        // remove genome tab   
         } else if (val < numGenomes && val > 0) {
             // remove all genomes
             const difference = numGenomes - val;
             for (let i = 0; i < difference; i++) {
                 // remove last genome
-                genomes.pop();
-                setGenomes(genomes);
+                tmpGenome.pop();
                 // remove genome from replicates
-                replicates.pop();
-                setReplicates(replicates);
+                tmpReplicate.pop();
             }
             // update genome names and alignment ids
             if (typeof data !== 'undefined') {
                 for (let i = 0; i < val; i++) {
-                    genomes[i]["genome" + (i + 1)]['name'] = data['genome_' + (i + 1)];
-                    genomes[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
+                    tmpGenome[i]["genome" + (i + 1)]['name'] = data['genome_' + (i + 1)];
+                    tmpGenome[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
                 }
             }
         }
+        setGenomes([...tmpGenome]);
+        setReplicates([...tmpReplicate]);
     }
     /**
     * update parameter value in setup box (type of study, number of conditions, number of replicates)

@@ -53,7 +53,7 @@
 .parameter-grid {
     display: grid;
     width: 100%;
-    grid-template-columns: 57% 43%;
+    grid-template-columns: 56% 44%;
     margin-left: 0.5rem;
 }
 .parameter-select {

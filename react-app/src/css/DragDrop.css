@@ -37,11 +37,10 @@
   align-items: center;
   margin-top: 0.8rem;
   margin-bottom: 0.8rem;
-  height: 79%;
-  max-height: 34rem;
+  height: 78%;
+  max-height: 78%;
   width: 98%;
   margin-left: 1rem;
-
 }
 /* überschrift der drop box + drop box*/
 .drop-box-column {
@@ -175,7 +174,7 @@
 }
 .arrow-line {
   margin-top: 0.6rem;
-  width: 6.25rem;
+  width: 6.2rem;
   background: rgb(255, 160, 0);
   height: 0.2rem;
   float: left;

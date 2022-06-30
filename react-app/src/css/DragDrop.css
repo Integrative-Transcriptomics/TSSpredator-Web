@@ -1,0 +1,223 @@
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background-color: rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.popup-inner {
+  height: 75%;
+  width: 65%;
+  background: white;
+  border-radius: 0.65rem;
+  margin: 0;
+  z-index: 100;
+}
+
+.popup-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  padding-top: 1rem;
+  height: 8%;
+  width: 100%;
+  text-align: center;
+  margin: 0;
+}
+.popup-columns {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 0.8rem;
+  margin-bottom: 0.8rem;
+  height: 79%;
+  max-height: 34rem;
+  width: 98%;
+  margin-left: 1rem;
+
+}
+/* überschrift der drop box + drop box*/
+.drop-box-column {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 90%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0 0.5rem;
+}
+
+/* Boxen die dropzones enthalten*/
+.drop-box {
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  max-height: 96%;
+}
+.drop-box-rep {
+  display: none;
+}
+.drag-drop-zone {
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+  justify-content: center;
+  background: #e0e0e0;
+  border-radius: 0.5rem;
+  height: 100%;
+  max-height: 100%;
+  width: 100%;
+  max-width:100%;
+  box-shadow: 0 0.1rem 0.2rem rgb(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+/*upload box*/
+.scroll {
+  overflow: auto;
+} 
+
+.drag-drop-zone p {
+  color: black;
+}
+/* einzelne drag elemente*/
+.drag-box {
+  margin: 2px;
+  background-color: #4000ff;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width:100%;
+  height: fit-content;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: grab;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+.replicate-container {
+  height: 100%;
+  max-height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  margin: 0;
+  /*margin-top: 1.8%;*/
+}
+.replicate-column {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 90%;
+  height:100%;
+  max-height: 100%;
+}
+
+.popup-footer {
+  border-top: 1px solid rgb(0,0,0,0.3);
+  padding: 1.5rem 2rem;
+  height: 10%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 10% 10%;
+  grid-gap: 80%;
+}
+.column-active {
+  display: flex;
+}
+
+
+/* arrows to flip through replicates*/
+.arrows {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-color: black;
+  cursor: pointer;
+  margin-top: 0.3rem;
+}
+.arrows:hover {
+  border-color: rgba(0, 0, 0, 0.5);
+}
+.prev {
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+  transform: rotate(45deg);
+  margin-right: 1rem;
+}
+.next {
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+  transform: rotate(-135deg);
+  margin-left: 1rem;
+}
+
+.long-arrow {
+  width: 7rem;
+  margin: 0.5rem;
+}
+.arrow-line {
+  margin-top: 0.6rem;
+  width: 6.25rem;
+  background: rgb(255, 160, 0);
+  height: 0.2rem;
+  float: left;
+}
+.arrow-point {
+  width: 0;
+  height: 0;
+  border-top: 0.8rem solid transparent;
+  border-bottom: 0.8rem solid transparent;
+  border-left: 0.8rem solid rgb(255, 160, 0);
+ float: right;
+}
+.disabled-zone {
+  background: rgb(0,0,0,0.7);
+}
+.disabled-zone p {
+  color: white;
+}
+
+.no-drag {
+  cursor: default;
+}
+ /* tooltips */
+ [data-tooltip]:hover:after {
+  opacity: 1;
+  transition: all 0.1s ease 0.8s;
+  visibility: visible;
+}
+[data-tooltip]:after {
+  content: attr(data-tooltip);
+  font-size: 0.8rem;
+  background-color: #e0e0e0;
+  position: absolute;
+  width: 15rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 0.1rem 0.3rem rgb(0, 0, 0, 0.5);
+  border: 1px solid transparent;
+  opacity: 0;
+  z-index: 99;
+  visibility: hidden;
+}
+[data-tooltip] {
+  position: relative;
+}

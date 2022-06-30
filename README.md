@@ -5,6 +5,5 @@
 - pip install flask
 - pip install python-dotenv
 - flask run
-
 - npm install
 - npm start

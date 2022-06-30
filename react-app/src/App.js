@@ -1,34 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Main from './components/Main';
+import Result from './components/Result';
 
 function App() {
-
-  const [data, setData] = useState([{}]);
-
-  useEffect(() => {
-
-    fetch("/obst/").then(
-      res => res.json())
-      .then(
-        data => {
-          setData(data)
-          console.log(data)
-        }
-        )
-  }, []);
-
-
+  
   return (
-    <div>
+    <BrowserRouter>
+      <Routes>
 
-      {(typeof data.obst === 'undefined') ? (
-        <p>Loading...</p>
-      ) : (
-        data.obst.map((obst, i) => (
-          <p key={i}>{obst}</p>
-        ))
-      )}
-      
-    </div>
+        <Route path="/" element={<Main/>} />
+        <Route path="/result" element={<Result />} />
+
+      </Routes>
+    </BrowserRouter>
   )
 }
 

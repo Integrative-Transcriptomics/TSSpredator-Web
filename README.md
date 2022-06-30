@@ -7,4 +7,3 @@
 - flask run
 - npm install
 - npm start
-

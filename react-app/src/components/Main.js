@@ -50,6 +50,8 @@ function Main() {
     // loading spinner
     let [loading, setLoading] = useState(false);
 
+    // cappable-seq: use the same control library for all replicates
+
 
     /**
       * GETs Parameters from flask 
@@ -225,8 +227,8 @@ function Main() {
             } else {
                 for (let j = 0; j < tmpAnnotation.length; j++) {
                     const split = tmpAnnotation[j].name.split('.');
-                    if (!['gff', 'gtf'].includes(split[split.length - 1])) {
-                        showError("Annotation file (number: " + (i + 1) + ") for " + studyType + " " + (i + 1) + " has the wrong format. GFF/GTF file format (.gff, .gtf) is needed.");
+                    if (!['gff', 'gtf', 'gff3'].includes(split[split.length - 1])) {
+                        showError("Annotation file (number: " + (i + 1) + ") for " + studyType + " " + (i + 1) + " has the wrong format. GFF/GTF file format (.gff, .gtf, .gff3) is needed.");
                         return false;
                     }
                 }

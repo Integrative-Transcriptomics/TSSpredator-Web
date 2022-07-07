@@ -977,10 +977,10 @@ function Main() {
                 } catch { console.log('Wrong fasta file') }
                 try {
                     tmpAnn = genomes[i]['genome' + (i + 1)]['genomeannotation'][0].webkitRelativePath;
-                    var name = tmpAnn.split("/").pop();
-                    tmpAnn = tmpAnn.replace(name, '');
+                    var name = tmpAnn.split("/")
+                    tmpAnn = name[name.length - 2] + '/';
                     tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = tmpAnn;
-                } catch { console.log('Wrong fasta file') }
+                } catch { console.log('Wrong annotation file') }
             }
 
             // save file names from replicates
@@ -1002,19 +1002,19 @@ function Main() {
                     try {
                         tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'].name;
                         tmpG[k]['replicate' + letter]['enrichedforward'] = tmpEF;
-                    } catch { console.log('Wrong fasta file') }
+                    } catch { console.log('Wrong enriched forward file') }
                     try {
                         tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'].name;
                         tmpG[k]['replicate' + letter]['enrichedreverse'] = tmpER;
-                    } catch { console.log('Wrong fasta file') }
+                    } catch { console.log('Wrong enriched reverse file') }
                     try {
                         tmpNF = tmpG[k]['replicate' + letter]['normalforward'].name;
                         tmpG[k]['replicate' + letter]['normalforward'] = tmpNF;
-                    } catch { console.log('Wrong fasta file') }
+                    } catch { console.log('Wrong normal forward file') }
                     try {
                         tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].name;
                         tmpG[k]['replicate' + letter]['normalreverse'] = tmpNR;
-                    } catch { console.log('Wrong fasta file') }
+                    } catch { console.log('Wrong normal reverse file') }
                 }
                 tmpRep[i]['genome' + (i + 1)] = tmpG;
             }
@@ -1040,7 +1040,7 @@ function Main() {
                 method: 'POST',
                 body: formData
             })
-                .then(response => response.blob)
+                .then(response => response.blob())
                 .then((blob) => {
 
                     var name = projectName.replace(' ', '_') + '.config';

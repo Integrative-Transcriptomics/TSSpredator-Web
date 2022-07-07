@@ -80,9 +80,6 @@ input:focus {
     display: grid;
     grid-template-columns: 23% 77%;
 }
-.margin-left {
-    margin-left: 1.5rem;
-}
 
 .element {
     margin: 0.5rem 0;
@@ -93,6 +90,10 @@ input:focus {
     flex-direction: row;
     margin: 0.5rem 0;
 }
+.margin-left {
+    margin-left: 1.5rem;
+}
+
 .checkbox {
     width: 30rem;
 }
@@ -335,6 +336,7 @@ select:hover {
 .loading {
     margin-left: 65%;
 }
+
 
 
 

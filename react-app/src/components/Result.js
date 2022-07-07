@@ -205,7 +205,7 @@ function Result() {
         var currentGenome = "";
         var currentClass = {};
 
-        rows.forEach(row => {
+        rows.forEach((row,i) => {
 
             const tmpPos = row[superPosIdx];
             const tmpGenome = row[genomeIdx];
@@ -214,7 +214,7 @@ function Result() {
             // upset plot --------------------
             // new TSS found -> add classes from previous TSS
             if (tmpPos !== currentPos || tmpGenome !== currentGenome) {
-                classes = addNewTSS(currentClass, classes);
+                classes = addNewTSS(currentClass, classes, i);
                 // reset value
                 currentClass = {};
             }
@@ -246,6 +246,7 @@ function Result() {
         });
         // add last tss (upset plot)
         classes = addNewTSS(currentClass, classes);
+        console.log(classes)
        
         setUpsetClasses(classes);
         setLinePrimary(primary);
@@ -277,20 +278,19 @@ function Result() {
     /**
      * upset plot: add last tss to classes object
      */
-    const addNewTSS = (currentClass, classes) => {
-        // last tss has at least two different classes
+    const addNewTSS = (currentClass, classes,row) => {
+        // at least two different classes
         if (Object.keys(currentClass).length > 1) {
-
-            // sort classes
+          
+            // sort classes and create new class-group
             const tmpKey = Object.keys(currentClass);
-            const sortClasses = {};
-            tmpKey.forEach(key => {
-                sortClasses[key] = currentClass[key];
-            })
-            // create new class-group
-            var node = "";
-            Object.keys(sortClasses).forEach(cl => {
-                node += cl + '-';
+            var node = '';
+            tmpKey.sort().forEach(key  => {
+                node += key + '-';
+                // class multiple times
+                if(currentClass[key] > 1) {
+                    classes[key] += 1;
+                }
             });
             // remove last '-'
             node = node.slice(0, -1)

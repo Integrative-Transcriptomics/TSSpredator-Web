@@ -50,6 +50,8 @@ function Main() {
     // loading spinner
     let [loading, setLoading] = useState(false);
 
+    // cappable-seq: use the same control library for all replicates
+
 
     /**
       * GETs Parameters from flask 
@@ -87,7 +89,7 @@ function Main() {
     */
     const fillGenomes = () => {
         if (parameters.setup.typeofstudy.value === 'condition') {
-            const temp = [...genomes];
+            const temp = _.cloneDeep(genomes);
             const fasta = temp[0]['genome1']['genomefasta'];
             const annotation = temp[0]['genome1']['genomeannotation'];
             var outputId = temp[0]['genome1']['outputid'];
@@ -98,7 +100,7 @@ function Main() {
                 temp[i]['genome' + (i + 1)]['genomefasta'] = fasta;
                 temp[i]['genome' + (i + 1)]['genomeannotation'] = annotation;
             }
-            setGenomes([...temp]);
+            setGenomes(_.cloneDeep(temp));
         }
     }
 
@@ -225,8 +227,8 @@ function Main() {
             } else {
                 for (let j = 0; j < tmpAnnotation.length; j++) {
                     const split = tmpAnnotation[j].name.split('.');
-                    if (!['gff', 'gtf'].includes(split[split.length - 1])) {
-                        showError("Annotation file (number: " + (i + 1) + ") for " + studyType + " " + (i + 1) + " has the wrong format. GFF/GTF file format (.gff, .gtf) is needed.");
+                    if (!['gff', 'gtf', 'gff3'].includes(split[split.length - 1])) {
+                        showError("Annotation file (number: " + (i + 1) + ") for " + studyType + " " + (i + 1) + " has the wrong format. GFF/GTF file format (.gff, .gtf, .gff3) is needed.");
                         return false;
                     }
                 }
@@ -305,10 +307,7 @@ function Main() {
                     window.open('/result', '_blank', 'noopener,noreferrer');
                 } else {
                     var error = (data.result);
-                    var idx = error.indexOf('at');
-                    if (idx > 0) {
-                        error = error.slice(0, idx);
-                    }
+                    error = error.split(':')[0] + ':' + error.split(':')[1];
                     showError(error);
                 }
             })
@@ -476,8 +475,8 @@ function Main() {
 
         parameters.setup.numberofgenomes.value = val;
 
-        var tmpGenome = [...genomes];
-        var tmpReplicate = [...replicates];
+        var tmpGenome = _.cloneDeep(genomes);
+        var tmpReplicate = _.cloneDeep(replicates);
 
         // add genom tab
         const numGenomes = Object.keys(genomes).length;
@@ -507,7 +506,7 @@ function Main() {
                 }
             }
 
-        // remove genome tab   
+            // remove genome tab   
         } else if (val < numGenomes && val > 0) {
             // remove all genomes
             const difference = numGenomes - val;
@@ -524,18 +523,18 @@ function Main() {
                     tmpGenome[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
                 }
             }
-        // data from alignment file    
+            // data from alignment file    
         } else if (val === numGenomes) {
-             // update genome names and alignment ids
-             if (typeof data !== 'undefined') {
+            // update genome names and alignment ids
+            if (typeof data !== 'undefined') {
                 for (let i = 0; i < numGenomes; i++) {
                     tmpGenome[i]["genome" + (i + 1)]['name'] = data['genome_' + (i + 1)];
                     tmpGenome[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
                 }
             }
         }
-        setGenomes([...tmpGenome]);
-        setReplicates([...tmpReplicate]);
+        setGenomes(_.cloneDeep(tmpGenome));
+        setReplicates(_.cloneDeep(tmpReplicate));
     }
     /**
     * update parameter value in setup box (type of study, number of conditions, number of replicates)
@@ -632,9 +631,9 @@ function Main() {
         const value = event.target.value;
         const id = parseInt(event.target.id);
 
-        let temp = [...genomes];
+        let temp = _.cloneDeep(genomes);
         temp[id]['genome' + (id + 1)][name] = value;
-        setGenomes([...temp]);
+        setGenomes(_.cloneDeep(temp));
 
     }
 
@@ -646,7 +645,6 @@ function Main() {
         const node = event.target.name;
         const id = event.target.id;
         const file = event.target.files[0];
-        console.log(file)
 
         const maxFileSize = 200000000;
         if (file.size > maxFileSize) {
@@ -671,7 +669,7 @@ function Main() {
 
         const node = event.target.name;
         const id = parseInt(event.target.id[0]);
-        const temp = [...genomes];
+        const temp = _.cloneDeep(genomes);
         const tmpArray = [];
 
         const maxFileSize = 200000000;
@@ -685,7 +683,7 @@ function Main() {
             } else {
                 tmpArray.push(event.target.files[i]);
                 temp[id]['genome' + (id + 1)][node] = tmpArray;
-                setGenomes([...temp]);
+                setGenomes(_.cloneDeep(temp));
             }
         }
     }
@@ -719,7 +717,7 @@ function Main() {
         const maxFileSize = 200000000;
         var tmpArray = [];
 
-        const temp = [...genomes];
+        const temp = _.cloneDeep(genomes);
 
         // annotation files
         if (Array.isArray(file)) {
@@ -743,7 +741,7 @@ function Main() {
             }
         }
 
-        setGenomes([...temp]);
+        setGenomes(_.cloneDeep(temp));
     }
 
     /**
@@ -763,9 +761,9 @@ function Main() {
 
             let newValue = { ...replicates[gId]['genome' + (gId + 1)][rId][replicate] };
             newValue[node] = file;
-            let temp = [...replicates];
+            let temp = _.cloneDeep(replicates);
             temp[gId]['genome' + (gId + 1)][rId] = { [replicate]: newValue };
-            setReplicates([...temp]);
+            setReplicates(_.cloneDeep(temp));
         }
 
     }
@@ -862,8 +860,8 @@ function Main() {
                         for (let j = 0; j < allFiles.length; j++) {
                             var str = allFiles[j].webkitRelativePath;
                             var name = str.split("/")[0];
-                            str = str.replace(name+'/', '');
-                           
+                            str = str.replace(name + '/', '');
+
                             if (allFiles[j].name === tmpFasta) {
                                 tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = allFiles[j];
 
@@ -893,7 +891,7 @@ function Main() {
 
                                 str = allFiles[j].webkitRelativePath;
                                 name = str.split("/")[0];
-                                str = str.replace(name+'/', '');
+                                str = str.replace(name + '/', '');
 
                                 if (str === tmpEF) {
                                     tmpG[k]['replicate' + letter]['enrichedforward'] = allFiles[j];
@@ -940,7 +938,7 @@ function Main() {
                         for (let j = 0; j < allFiles.length; j++) {
                             str = allFiles[j].webkitRelativePath;
                             name = str.split("/")[0];
-                            str = str.replace(name+'/', '');
+                            str = str.replace(name + '/', '');
 
                             if (str === result['alignmentFile']) {
                                 setAlignmentFile(allFiles[j]);
@@ -961,113 +959,115 @@ function Main() {
      */
     const saveConfigFile = () => {
 
-         // if studytype condition: fill out alignment and output id
+        // if studytype condition: fill out alignment and output id
         fillGenomes();
 
-        // save filenames from genomes
-        const tmpGenome = _.cloneDeep(genomes); 
+        if (checkInput()) {
+            // save filenames from genomes
+            const tmpGenome = _.cloneDeep(genomes);
 
-        for (let i = 0; i < genomes.length; i++) {
+            for (let i = 0; i < genomes.length; i++) {
 
-            var tmpFasta = "";
-            var tmpAnn = "";
-
-            try {
-                tmpFasta = genomes[i]['genome' + (i + 1)]['genomefasta'].name;
-                tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = tmpFasta;
-            } catch { console.log('Missing fasta file'); }
-            try {
-                tmpAnn = genomes[i]['genome' + (i + 1)]['genomeannotation'][0].webkitRelativePath;
-                var name = tmpAnn.split("/").pop();
-                tmpAnn = tmpAnn.replace(name, '');
-                tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = tmpAnn;
-            } catch { console.log('missing annotation file'); }
-        }
-
-        // save file names from replicates
-        const tmpRep = _.cloneDeep(replicates);
-
-        for (let i = 0; i < tmpRep.length; i++) {
-
-            var tmpG = tmpRep[i]['genome' + (i + 1)];
-
-            for (let k = 0; k < tmpG.length; k++) {
-
-                const letter = String.fromCharCode(97 + k);
-
-                var tmpEF = "";
-                var tmpER = "";
-                var tmpNF = "";
-                var tmpNR = "";
+                var tmpFasta = "";
+                var tmpAnn = "";
 
                 try {
-                    tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'].name;
-                    tmpG[k]['replicate' + letter]['enrichedforward'] = tmpEF;
-                } catch { console.log('no file'); }
+                    tmpFasta = genomes[i]['genome' + (i + 1)]['genomefasta'].name;
+                    tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = tmpFasta;
+                } catch { console.log('Wrong fasta file') }
                 try {
-                    tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'].name;
-                    tmpG[k]['replicate' + letter]['enrichedreverse'] = tmpER;
-                } catch { console.log('no file'); }
-                try {
-                    tmpNF = tmpG[k]['replicate' + letter]['normalforward'].name;
-                    tmpG[k]['replicate' + letter]['normalforward'] = tmpNF;
-                } catch { console.log('no file'); }
-                try {
-                    tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].name;
-                    tmpG[k]['replicate' + letter]['normalreverse'] = tmpNR;
-                } catch { console.log('no file'); }
-
+                    tmpAnn = genomes[i]['genome' + (i + 1)]['genomeannotation'][0].webkitRelativePath;
+                    var name = tmpAnn.split("/").pop();
+                    tmpAnn = tmpAnn.replace(name, '');
+                    tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = tmpAnn;
+                } catch { console.log('Wrong fasta file') }
             }
-            tmpRep[i]['genome' + (i + 1)] = tmpG;
-        }
 
-        // alignmentFile
-        var tmpAlignFile = " ";
-        try {
-            tmpAlignFile = alignmentFile.name;
-        } catch {
-            console.log('no alignment file')
-        }
-      
-        // send input parameters to server
-        const formData = new FormData();
-        formData.append('projectname', JSON.stringify(projectName));
-        formData.append('parameters', JSON.stringify(parameters));
-        formData.append('rnagraph', JSON.stringify(rnaGraph));
-        formData.append('replicateNum', JSON.stringify({ 'num': numRep }));
-        formData.append('genomes', JSON.stringify(tmpGenome));
-        formData.append('replicates', JSON.stringify(tmpRep));
-        formData.append('alignmentFile', JSON.stringify(tmpAlignFile));
-        fetch('/saveConfig/', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.blob())
-            .then((blob) => {
+            // save file names from replicates
+            const tmpRep = _.cloneDeep(replicates);
 
-                var name = projectName.replace(' ', '_') + '.config';
+            for (let i = 0; i < tmpRep.length; i++) {
 
-                // Create blob link to download
-                const url = window.URL.createObjectURL(
-                    new Blob([blob]),
-                );
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute(
-                    'download',
-                    name,
-                );
+                var tmpG = tmpRep[i]['genome' + (i + 1)];
 
-                // Append to html link element page
-                document.body.appendChild(link);
+                for (let k = 0; k < tmpG.length; k++) {
 
-                // Start download
-                link.click();
+                    const letter = String.fromCharCode(97 + k);
 
-                // Clean up and remove the link
-                link.parentNode.removeChild(link);
+                    var tmpEF = "";
+                    var tmpER = "";
+                    var tmpNF = "";
+                    var tmpNR = "";
+
+                    try {
+                        tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'].name;
+                        tmpG[k]['replicate' + letter]['enrichedforward'] = tmpEF;
+                    } catch { console.log('Wrong fasta file') }
+                    try {
+                        tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'].name;
+                        tmpG[k]['replicate' + letter]['enrichedreverse'] = tmpER;
+                    } catch { console.log('Wrong fasta file') }
+                    try {
+                        tmpNF = tmpG[k]['replicate' + letter]['normalforward'].name;
+                        tmpG[k]['replicate' + letter]['normalforward'] = tmpNF;
+                    } catch { console.log('Wrong fasta file') }
+                    try {
+                        tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].name;
+                        tmpG[k]['replicate' + letter]['normalreverse'] = tmpNR;
+                    } catch { console.log('Wrong fasta file') }
+                }
+                tmpRep[i]['genome' + (i + 1)] = tmpG;
+            }
+
+            // alignmentFile
+            var tmpAlignFile = " ";
+            try {
+                tmpAlignFile = alignmentFile.name;
+            } catch {
+                console.log('no alignment file')
+            }
+
+            // send input parameters to server
+            const formData = new FormData();
+            formData.append('projectname', JSON.stringify(projectName));
+            formData.append('parameters', JSON.stringify(parameters));
+            formData.append('rnagraph', JSON.stringify(rnaGraph));
+            formData.append('replicateNum', JSON.stringify({ 'num': numRep }));
+            formData.append('genomes', JSON.stringify(tmpGenome));
+            formData.append('replicates', JSON.stringify(tmpRep));
+            formData.append('alignmentFile', JSON.stringify(tmpAlignFile));
+            fetch('/saveConfig/', {
+                method: 'POST',
+                body: formData
             })
-            .catch(err => console.log(err));
+                .then(response => response.blob)
+                .then((blob) => {
+
+                    var name = projectName.replace(' ', '_') + '.config';
+
+                    // Create blob link to download
+                    const url = window.URL.createObjectURL(
+                        new Blob([blob]),
+                    );
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute(
+                        'download',
+                        name,
+                    );
+
+                    // Append to html link element page
+                    document.body.appendChild(link);
+
+                    // Start download
+                    link.click();
+
+                    // Clean up and remove the link
+                    link.parentNode.removeChild(link);
+                })
+                .catch(err => console.log(err));
+        }
+
     }
 
     return (

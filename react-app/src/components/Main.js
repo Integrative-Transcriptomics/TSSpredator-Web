@@ -89,7 +89,7 @@ function Main() {
     */
     const fillGenomes = () => {
         if (parameters.setup.typeofstudy.value === 'condition') {
-            const temp = _.cloneDeep(genomes);
+            const temp = [...genomes];
             const fasta = temp[0]['genome1']['genomefasta'];
             const annotation = temp[0]['genome1']['genomeannotation'];
             var outputId = temp[0]['genome1']['outputid'];
@@ -100,7 +100,7 @@ function Main() {
                 temp[i]['genome' + (i + 1)]['genomefasta'] = fasta;
                 temp[i]['genome' + (i + 1)]['genomeannotation'] = annotation;
             }
-            setGenomes(_.cloneDeep(temp));
+            setGenomes([...temp]);
         }
     }
 
@@ -475,8 +475,8 @@ function Main() {
 
         parameters.setup.numberofgenomes.value = val;
 
-        var tmpGenome = _.cloneDeep(genomes);
-        var tmpReplicate = _.cloneDeep(replicates);
+        var tmpGenome = [...genomes];
+        var tmpReplicate = [...replicates];
 
         // add genom tab
         const numGenomes = Object.keys(genomes).length;
@@ -533,8 +533,8 @@ function Main() {
                 }
             }
         }
-        setGenomes(_.cloneDeep(tmpGenome));
-        setReplicates(_.cloneDeep(tmpReplicate));
+        setGenomes([...tmpGenome]);
+        setReplicates([...tmpReplicate]);
     }
     /**
     * update parameter value in setup box (type of study, number of conditions, number of replicates)
@@ -631,9 +631,9 @@ function Main() {
         const value = event.target.value;
         const id = parseInt(event.target.id);
 
-        let temp = _.cloneDeep(genomes);
+        let temp =[...genomes];
         temp[id]['genome' + (id + 1)][name] = value;
-        setGenomes(_.cloneDeep(temp));
+        setGenomes([...temp]);
 
     }
 
@@ -669,7 +669,7 @@ function Main() {
 
         const node = event.target.name;
         const id = parseInt(event.target.id[0]);
-        const temp = _.cloneDeep(genomes);
+        const temp = [...genomes];
         const tmpArray = [];
 
         const maxFileSize = 200000000;
@@ -683,7 +683,7 @@ function Main() {
             } else {
                 tmpArray.push(event.target.files[i]);
                 temp[id]['genome' + (id + 1)][node] = tmpArray;
-                setGenomes(_.cloneDeep(temp));
+                setGenomes([...temp]);
             }
         }
     }
@@ -717,7 +717,7 @@ function Main() {
         const maxFileSize = 200000000;
         var tmpArray = [];
 
-        const temp = _.cloneDeep(genomes);
+        const temp =[...genomes];
 
         // annotation files
         if (Array.isArray(file)) {
@@ -741,7 +741,7 @@ function Main() {
             }
         }
 
-        setGenomes(_.cloneDeep(temp));
+        setGenomes([...temp]);
     }
 
     /**
@@ -761,9 +761,9 @@ function Main() {
 
             let newValue = { ...replicates[gId]['genome' + (gId + 1)][rId][replicate] };
             newValue[node] = file;
-            let temp = _.cloneDeep(replicates);
+            let temp =[...replicates];
             temp[gId]['genome' + (gId + 1)][rId] = { [replicate]: newValue };
-            setReplicates(_.cloneDeep(temp));
+            setReplicates([...temp]);
         }
 
     }

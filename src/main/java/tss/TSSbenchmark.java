@@ -29,7 +29,7 @@ public class TSSbenchmark {
             cells = line.split("[\\s]+");
 
             if (cells.length != 2) {
-                System.err.println("Error while parsing line '" + line + "' from " + file.getAbsolutePath());
+                System.out.println("Error while parsing line '" + line + "' from " + file.getAbsolutePath());
                 continue;
             }
 

@@ -327,7 +327,7 @@ public class TSS implements Comparable<TSS> {
             if (this.strand == '-')
                 res = reverseComplementDNA(res);
         } catch (StringIndexOutOfBoundsException e) {
-            System.err.println("Cannot get upstream sequence for a TSS. Out of genome borders.");
+            System.out.println("Cannot get upstream sequence for a TSS. Out of genome borders.");
             res = "NA";
         }
 
@@ -377,7 +377,7 @@ public class TSS implements Comparable<TSS> {
                     break;
                 default:
                     complChar = 'N';
-                    System.err.println("Cannot create reverse complement!");
+                    System.out.println("Cannot create reverse complement!");
             }
             res.append(complChar);
         }

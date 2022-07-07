@@ -190,7 +190,7 @@ function Result() {
         const internalIdx = columns.findIndex((col) => col['Header'] === 'Internal');
         const antisenseIdx = columns.findIndex((col) => col['Header'] === 'Antisense');
         const superPosIdx = columns.findIndex((col) => col['Header'] === 'SuperPos');
-        const genomeIdx = columns.findIndex((col) => col['Header'] === 'Genome');
+        const genomeIdx = columns.findIndex((col) => (col['Header'] === 'Genome' || col['Header'] === 'Condition'));
 
         // TSS per Position (line chart)
         var primary = { [binSize]: 0 };
@@ -246,7 +246,7 @@ function Result() {
         });
         // add last tss (upset plot)
         classes = addNewTSS(currentClass, classes);
-
+       
         setUpsetClasses(classes);
         setLinePrimary(primary);
         setLineSecondary(secondary);
@@ -300,7 +300,7 @@ function Result() {
             } else {
                 classes[node] = 1;
             }
-        // last tss has at least one class
+        // only one class
         } else if (Object.keys(currentClass).length > 0) {
             Object.keys(currentClass).forEach(cl => {
                 classes[cl] += currentClass[cl];

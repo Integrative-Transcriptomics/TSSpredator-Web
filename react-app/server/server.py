@@ -174,7 +174,11 @@ def saveConfig():
 
     # get all inputs
     projectName = request.form['projectname']
-    alignmentFile = json.loads(request.form['alignmentFile'])
+    alignmentFile = ""
+    try:
+        alignmentFile = json.loads(request.form['alignmentFile'])
+    except:
+        print('no alignment file')
     parameters = json.loads(request.form['parameters'])
     rnaGraph = request.form['rnagraph']
     genomes = json.loads(request.form['genomes'])

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ClipLoader from "react-spinners/ClipLoader";
+import _ from 'lodash';
 import ParameterGroup from './Main/ParameterGroup';
 import ParameterAllGroups from './Main/ParameterAllGroups';
 import Tabs from './Main/Tabs';
@@ -523,6 +524,15 @@ function Main() {
                     tmpGenome[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
                 }
             }
+        // data from alignment file    
+        } else if (val === numGenomes) {
+             // update genome names and alignment ids
+             if (typeof data !== 'undefined') {
+                for (let i = 0; i < numGenomes; i++) {
+                    tmpGenome[i]["genome" + (i + 1)]['name'] = data['genome_' + (i + 1)];
+                    tmpGenome[i]["genome" + (i + 1)]['alignmentid'] = data['id_' + (i + 1)];
+                }
+            }
         }
         setGenomes([...tmpGenome]);
         setReplicates([...tmpReplicate]);
@@ -851,13 +861,13 @@ function Main() {
 
                         for (let j = 0; j < allFiles.length; j++) {
                             var str = allFiles[j].webkitRelativePath;
-                            var name = str.split("/").pop();
-                            str = str.replace(name, '');
-
-                            if (allFiles[j].webkitRelativePath === tmpFasta) {
+                            var name = str.split("/")[0];
+                            str = str.replace(name+'/', '');
+                           
+                            if (allFiles[j].name === tmpFasta) {
                                 tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = allFiles[j];
 
-                            } else if (str === tmpAnnotation) {
+                            } else if (str.split('/')[0] + '/' === tmpAnnotation) {
                                 tmpGenome[i]['genome' + (i + 1)]['genomeannotation'].push(allFiles[j]);
                             }
                         }
@@ -881,7 +891,9 @@ function Main() {
 
                             for (let j = 0; j < allFiles.length; j++) {
 
-                                const str = allFiles[j].webkitRelativePath;
+                                str = allFiles[j].webkitRelativePath;
+                                name = str.split("/")[0];
+                                str = str.replace(name+'/', '');
 
                                 if (str === tmpEF) {
                                     tmpG[k]['replicate' + letter]['enrichedforward'] = allFiles[j];
@@ -927,6 +939,8 @@ function Main() {
                     if (result['alignmentFile'].length > 0) {
                         for (let j = 0; j < allFiles.length; j++) {
                             str = allFiles[j].webkitRelativePath;
+                            name = str.split("/")[0];
+                            str = str.replace(name+'/', '');
 
                             if (str === result['alignmentFile']) {
                                 setAlignmentFile(allFiles[j]);
@@ -947,8 +961,11 @@ function Main() {
      */
     const saveConfigFile = () => {
 
-        // save filenames in genomes
-        const tmpGenome = [...genomes];
+         // if studytype condition: fill out alignment and output id
+        fillGenomes();
+
+        // save filenames from genomes
+        const tmpGenome = _.cloneDeep(genomes); 
 
         for (let i = 0; i < genomes.length; i++) {
 
@@ -956,7 +973,7 @@ function Main() {
             var tmpAnn = "";
 
             try {
-                tmpFasta = genomes[i]['genome' + (i + 1)]['genomefasta'].webkitRelativePath;
+                tmpFasta = genomes[i]['genome' + (i + 1)]['genomefasta'].name;
                 tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = tmpFasta;
             } catch { console.log('Missing fasta file'); }
             try {
@@ -967,8 +984,8 @@ function Main() {
             } catch { console.log('missing annotation file'); }
         }
 
-        // save file names in replicates
-        const tmpRep = [...replicates];
+        // save file names from replicates
+        const tmpRep = _.cloneDeep(replicates);
 
         for (let i = 0; i < tmpRep.length; i++) {
 
@@ -984,19 +1001,19 @@ function Main() {
                 var tmpNR = "";
 
                 try {
-                    tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'].webkitRelativePath;
+                    tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'].name;
                     tmpG[k]['replicate' + letter]['enrichedforward'] = tmpEF;
                 } catch { console.log('no file'); }
                 try {
-                    tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'].webkitRelativePath;
+                    tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'].name;
                     tmpG[k]['replicate' + letter]['enrichedreverse'] = tmpER;
                 } catch { console.log('no file'); }
                 try {
-                    tmpNF = tmpG[k]['replicate' + letter]['normalforward'].webkitRelativePath;
+                    tmpNF = tmpG[k]['replicate' + letter]['normalforward'].name;
                     tmpG[k]['replicate' + letter]['normalforward'] = tmpNF;
                 } catch { console.log('no file'); }
                 try {
-                    tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].webkitRelativePath;
+                    tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].name;
                     tmpG[k]['replicate' + letter]['normalreverse'] = tmpNR;
                 } catch { console.log('no file'); }
 
@@ -1005,13 +1022,13 @@ function Main() {
         }
 
         // alignmentFile
-        var tmpAlignFile = "";
+        var tmpAlignFile = " ";
         try {
-            tmpAlignFile = alignmentFile.webkitRelativePath;
+            tmpAlignFile = alignmentFile.name;
         } catch {
             console.log('no alignment file')
         }
-
+      
         // send input parameters to server
         const formData = new FormData();
         formData.append('projectname', JSON.stringify(projectName));

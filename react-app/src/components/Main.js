@@ -372,7 +372,11 @@ function Main() {
             // input=number -> save value as number
         } else {
             val = event.target.valueAsNumber;
+            if(isNaN(val)) {
+                return;
+            }
         }
+       
 
         if (directParent === "setup") {
             updateSetupBox(name, 'value', val);

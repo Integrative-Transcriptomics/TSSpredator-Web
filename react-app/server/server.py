@@ -27,8 +27,7 @@ def getInput():
     '''get the input from the form and execute TSS prediction'''
 
     # get genome fasta files
-    genomeFasta = request.files.to_dict(flat=False)['genomefasta']
-   
+    genomeFasta = request.files.to_dict(flat=False)['genomefasta']  
 
    # multiple genomannotation files per genome possible
     genomeAnnotation = []

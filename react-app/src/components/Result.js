@@ -289,7 +289,7 @@ function Result() {
                 node += key + '-';
                 // class multiple times
                 if(currentClass[key] > 1) {
-                    classes[key] += 1;
+                    classes[key] += currentClass[key] - 1;
                 }
             });
             // remove last '-'

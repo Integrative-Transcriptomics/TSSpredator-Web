@@ -29,7 +29,7 @@ function Result() {
     const [showTable, setShowTable] = useState(true);
 
     // Upset Plot
-    const [showUpSet, setShowUpSet] = useState(true);
+    const [showUpSet, setShowUpSet] = useState(false);
     const [upsetClasses, setUpsetClasses] = useState([]);
 
     // histograms
@@ -393,7 +393,7 @@ function Result() {
                 </div>
 
                 <div className='result-select'>
-                    <h3 className='header click-param'> Show Plots for</h3>
+                    <h3 className='select-header'>Show Plots for</h3>
                     <select onChange={(e) => updateDataForPlots(e)} value={currentData}>
                         <option value='all'>all Conditions/Genomes combined</option>
                         {allGenomes.map((col, i) => {
@@ -402,30 +402,30 @@ function Result() {
                     </select>
                 </div>
 
-                <div >
+                <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>{showUpSet ? '-' : '+'} TSS classes overview</h3>
                     {stepHeight.length > 0 ? <UpSet classes={upsetClasses} showUpSet={showUpSet} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
-                <div >
+                <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}>{showStepHeight ? '-' : '+'} Step Height overview</h3>
                     {stepHeight.length > 0 ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={5} cap={stepHeightCap} show={showStepHeight} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
-                <div >
+                <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}>{showStepFactor ? '-' : '+'} Step Factor overview</h3>
                     {stepFactor.length > 0 ? <Histogramm elements={stepFactor} xaxis='Step Factor' steps={2} cap='100' show={showStepFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
-                <div >
+                <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}>{showEnrichFactor ? '-' : '+'} Enrichment Factor overview</h3>
                     {enrichmentFactor.length > 0 ? <Histogramm elements={enrichmentFactor} xaxis='Enrichment Factor' steps={2} cap='100' show={showEnrichFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
-                <div >
+                <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowLineChart(!showLineChart)}>{showLineChart ? '-' : '+'} TSS distribution per position in bp</h3>
                     {enrichmentFactor.length > 0 ?
                         <LineChart primary={linePrimary} secondary={lineSecondary} internal={lineInternal} antisense={lineAntisense} orphan={lineOrphan}

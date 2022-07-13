@@ -18,13 +18,18 @@ function Result() {
     const [blob, setBlob] = useState(new Blob());
     const [showDownload, setShowDownload] = useState(true);
 
+    // all genomes/conditions names
+    const [allGenomes, setAllGenomes] = useState([]);
+    // currently used genome/condition data for the plot
+    const [currentData, setCurrentData] = useState('all');
+
     // for master table
     const [tableColumns, setTableColumns] = useState([]);
     const [tableData, setTableData] = useState([]);
     const [showTable, setShowTable] = useState(true);
 
     // Upset Plot
-    const [showUpSet, setShowUpSet] = useState(true);
+    const [showUpSet, setShowUpSet] = useState(false);
     const [upsetClasses, setUpsetClasses] = useState([]);
 
     // histograms
@@ -83,11 +88,12 @@ function Result() {
                 }
             });
             setTableData([...dataRows]);
-            if(dataRows.length > 0) {
+            if (dataRows.length > 0) {
                 stepHeightFactorEnrichementFreq(dataRows, col);
-                TSSperPosition(dataRows, col);
+                TSSperPosition(dataRows, col, true);
             }
         }
+
         // get files from server
         fetch("/result/")
             .then(res => res.blob())
@@ -181,8 +187,9 @@ function Result() {
     /** 
      * for upset plot: count frequncy of each tss class
      * for line chart: count TSS per position
+     * and get all genome/condition names
      */
-    const TSSperPosition = (rows, columns) => {
+    const TSSperPosition = (rows, columns, updateGenomes) => {
 
         // get column indices
         const primaryIdx = columns.findIndex((col) => col['Header'] === 'Primary');
@@ -191,6 +198,9 @@ function Result() {
         const antisenseIdx = columns.findIndex((col) => col['Header'] === 'Antisense');
         const superPosIdx = columns.findIndex((col) => col['Header'] === 'SuperPos');
         const genomeIdx = columns.findIndex((col) => (col['Header'] === 'Genome' || col['Header'] === 'Condition'));
+
+        // all genomes/conditions
+        const allG = [];
 
         // TSS per Position (line chart)
         var primary = { [binSize]: 0 };
@@ -205,11 +215,16 @@ function Result() {
         var currentGenome = "";
         var currentClass = {};
 
-        rows.forEach((row,i) => {
+        rows.forEach((row, i) => {
 
             const tmpPos = row[superPosIdx];
             const tmpGenome = row[genomeIdx];
             var tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+
+            // add genome to all genomes
+            if (!allG.includes(tmpGenome) && updateGenomes) {
+                allG.push(tmpGenome);
+            }
 
             // upset plot --------------------
             // new TSS found -> add classes from previous TSS
@@ -246,8 +261,10 @@ function Result() {
         });
         // add last tss (upset plot)
         classes = addNewTSS(currentClass, classes);
-        console.log(classes)
-       
+
+        if(updateGenomes) {
+            setAllGenomes(allG);
+        }
         setUpsetClasses(classes);
         setLinePrimary(primary);
         setLineSecondary(secondary);
@@ -278,17 +295,17 @@ function Result() {
     /**
      * upset plot: add last tss to classes object
      */
-    const addNewTSS = (currentClass, classes,row) => {
+    const addNewTSS = (currentClass, classes, row) => {
         // at least two different classes
         if (Object.keys(currentClass).length > 1) {
-          
+
             // sort classes and create new class-group
             const tmpKey = Object.keys(currentClass);
             var node = '';
-            tmpKey.sort().forEach(key  => {
+            tmpKey.sort().forEach(key => {
                 node += key + '-';
                 // class multiple times
-                if(currentClass[key] > 1) {
+                if (currentClass[key] > 1) {
                     classes[key] += currentClass[key] - 1;
                 }
             });
@@ -300,7 +317,7 @@ function Result() {
             } else {
                 classes[node] = 1;
             }
-        // only one class
+            // only one class
         } else if (Object.keys(currentClass).length > 0) {
             Object.keys(currentClass).forEach(cl => {
                 classes[cl] += currentClass[cl];
@@ -331,6 +348,36 @@ function Result() {
         return tssClass;
     }
 
+    /**
+     * 
+     */
+    const updateDataForPlots = (event) => {
+
+        const value = event.target.value;
+        setCurrentData(value);
+
+        if (value !== currentData) {
+
+            if (value === 'all') {
+                // create new plots
+                stepHeightFactorEnrichementFreq(tableData, tableColumns);
+                TSSperPosition(tableData, tableColumns, false);
+            } else {
+                const genomeIdx = tableColumns.findIndex((col) => (col['Header'] === 'Genome' || col['Header'] === 'Condition'));
+                // filter table
+                const newData = [];
+                tableData.forEach((row) => {
+                    if (row[genomeIdx] === value) {
+                        newData.push(row);
+                    }
+                });
+                // create new plots
+                stepHeightFactorEnrichementFreq(newData, tableColumns);
+                TSSperPosition(newData, tableColumns, false);
+            }
+        }
+    }
+
 
     return (
         <>
@@ -341,35 +388,45 @@ function Result() {
             <div className='result-container'>
 
                 <div >
-                    <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}> + Download result of TSS prediction</h3>
+                    <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>{showDownload ? '-' : '+'} Download result of TSS prediction</h3>
                     <div className={showDownload ? 'download-link' : ' hidden'} onClick={() => downloadFiles()}>TSSpredator-prediction.zip</div>
                 </div>
 
-                <div >
-                    <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}> + TSS classes overview</h3>
+                <div className='result-select'>
+                    <h3 className='select-header'>Show Plots for</h3>
+                    <select onChange={(e) => updateDataForPlots(e)} value={currentData}>
+                        <option value='all'>all Conditions/Genomes combined</option>
+                        {allGenomes.map((col, i) => {
+                            return <option value={col} key={i}>{col}</option>
+                        })}
+                    </select>
+                </div>
+
+                <div className='result-margin-left'>
+                    <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>{showUpSet ? '-' : '+'} TSS classes overview</h3>
                     {stepHeight.length > 0 ? <UpSet classes={upsetClasses} showUpSet={showUpSet} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
-                <div >
-                    <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}> + Step Height overview</h3>
+                <div className='result-margin-left'>
+                    <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}>{showStepHeight ? '-' : '+'} Step Height overview</h3>
                     {stepHeight.length > 0 ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={5} cap={stepHeightCap} show={showStepHeight} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
-                <div >
-                    <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}> + Step Factor overview</h3>
+                <div className='result-margin-left'>
+                    <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}>{showStepFactor ? '-' : '+'} Step Factor overview</h3>
                     {stepFactor.length > 0 ? <Histogramm elements={stepFactor} xaxis='Step Factor' steps={2} cap='100' show={showStepFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
-                <div >
-                    <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}> + Enrichment Factor overview</h3>
+                <div className='result-margin-left'>
+                    <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}>{showEnrichFactor ? '-' : '+'} Enrichment Factor overview</h3>
                     {enrichmentFactor.length > 0 ? <Histogramm elements={enrichmentFactor} xaxis='Enrichment Factor' steps={2} cap='100' show={showEnrichFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
-                <div >
-                    <h3 className='header click-param' onClick={() => setShowLineChart(!showLineChart)}> + TSS distribution per position in bp</h3>
+                <div className='result-margin-left'>
+                    <h3 className='header click-param' onClick={() => setShowLineChart(!showLineChart)}>{showLineChart ? '-' : '+'} TSS distribution per position in bp</h3>
                     {enrichmentFactor.length > 0 ?
                         <LineChart primary={linePrimary} secondary={lineSecondary} internal={lineInternal} antisense={lineAntisense} orphan={lineOrphan}
                             binSize={binSize} show={showLineChart} />
@@ -377,7 +434,7 @@ function Result() {
                 </div>
 
                 <div>
-                    <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>+ Master Table</h3>
+                    <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>{showTable ? '-' : '+'} Master Table</h3>
                     {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable}
                     /> : <ClipLoader color='#ffa000' size={30} />}
                 </div>

@@ -13,4 +13,21 @@
     padding: 4rem 5rem;
     row-gap: 3rem;
 }
-
+.result-select {
+    display: flex;
+    flex-direction: row;
+    column-gap: 1rem;
+    align-items: center;
+    margin-left: 1rem;
+    padding-top: 0.5rem;
+    margin-bottom: -0.5rem;
+}
+.select-header {
+    font-size: 1.1rem;
+    color: #ffa000;
+    margin-bottom: 0.8rem;
+   
+}
+.result-margin-left {
+    margin-left: 3rem;
+}

@@ -17,7 +17,7 @@ function UploadFilesIndividually({ files, id, studyType, genomes, handleTabs, sa
 
   return (
     <div>
-      <p className='element click' onClick={() => setShow(!show)}>+ Upload Files individually</p>
+      <p className='element click' onClick={() => setShow(!show)}>{show ? '-' : '+'} Upload Files individually</p>
       <UploadFilesGroup files={files} id={id} studyType={studyType} genomes={genomes} handleTabs={(e) => handleTabs(e)}
                         saveIndividualFile={(e) => saveIndividualFile(e)} show={show} saveAnnotationFile={(e) => saveAnnotationFile(e)} />
     </div>

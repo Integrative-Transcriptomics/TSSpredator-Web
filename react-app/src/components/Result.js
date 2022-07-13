@@ -83,11 +83,12 @@ function Result() {
                 }
             });
             setTableData([...dataRows]);
-            if(dataRows.length > 0) {
+            if (dataRows.length > 0) {
                 stepHeightFactorEnrichementFreq(dataRows, col);
                 TSSperPosition(dataRows, col);
             }
         }
+       
         // get files from server
         fetch("/result/")
             .then(res => res.blob())
@@ -205,7 +206,7 @@ function Result() {
         var currentGenome = "";
         var currentClass = {};
 
-        rows.forEach((row,i) => {
+        rows.forEach((row, i) => {
 
             const tmpPos = row[superPosIdx];
             const tmpGenome = row[genomeIdx];
@@ -246,8 +247,7 @@ function Result() {
         });
         // add last tss (upset plot)
         classes = addNewTSS(currentClass, classes);
-        console.log(classes)
-       
+
         setUpsetClasses(classes);
         setLinePrimary(primary);
         setLineSecondary(secondary);
@@ -278,17 +278,17 @@ function Result() {
     /**
      * upset plot: add last tss to classes object
      */
-    const addNewTSS = (currentClass, classes,row) => {
+    const addNewTSS = (currentClass, classes, row) => {
         // at least two different classes
         if (Object.keys(currentClass).length > 1) {
-          
+
             // sort classes and create new class-group
             const tmpKey = Object.keys(currentClass);
             var node = '';
-            tmpKey.sort().forEach(key  => {
+            tmpKey.sort().forEach(key => {
                 node += key + '-';
                 // class multiple times
-                if(currentClass[key] > 1) {
+                if (currentClass[key] > 1) {
                     classes[key] += currentClass[key] - 1;
                 }
             });
@@ -300,7 +300,7 @@ function Result() {
             } else {
                 classes[node] = 1;
             }
-        // only one class
+            // only one class
         } else if (Object.keys(currentClass).length > 0) {
             Object.keys(currentClass).forEach(cl => {
                 classes[cl] += currentClass[cl];
@@ -341,35 +341,35 @@ function Result() {
             <div className='result-container'>
 
                 <div >
-                    <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}> + Download result of TSS prediction</h3>
+                    <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>{showDownload ? '-' : '+'} Download result of TSS prediction</h3>
                     <div className={showDownload ? 'download-link' : ' hidden'} onClick={() => downloadFiles()}>TSSpredator-prediction.zip</div>
                 </div>
 
                 <div >
-                    <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}> + TSS classes overview</h3>
+                    <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>{showUpSet ? '-' : '+'} TSS classes overview</h3>
                     {stepHeight.length > 0 ? <UpSet classes={upsetClasses} showUpSet={showUpSet} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
                 <div >
-                    <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}> + Step Height overview</h3>
+                    <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}>{showStepHeight ? '-' : '+'} Step Height overview</h3>
                     {stepHeight.length > 0 ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={5} cap={stepHeightCap} show={showStepHeight} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
                 <div >
-                    <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}> + Step Factor overview</h3>
+                    <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}>{showStepFactor ? '-' : '+'} Step Factor overview</h3>
                     {stepFactor.length > 0 ? <Histogramm elements={stepFactor} xaxis='Step Factor' steps={2} cap='100' show={showStepFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
                 <div >
-                    <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}> + Enrichment Factor overview</h3>
+                    <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}>{showEnrichFactor ? '-' : '+'} Enrichment Factor overview</h3>
                     {enrichmentFactor.length > 0 ? <Histogramm elements={enrichmentFactor} xaxis='Enrichment Factor' steps={2} cap='100' show={showEnrichFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
                 <div >
-                    <h3 className='header click-param' onClick={() => setShowLineChart(!showLineChart)}> + TSS distribution per position in bp</h3>
+                    <h3 className='header click-param' onClick={() => setShowLineChart(!showLineChart)}>{showLineChart ? '-' : '+'} TSS distribution per position in bp</h3>
                     {enrichmentFactor.length > 0 ?
                         <LineChart primary={linePrimary} secondary={lineSecondary} internal={lineInternal} antisense={lineAntisense} orphan={lineOrphan}
                             binSize={binSize} show={showLineChart} />
@@ -377,7 +377,7 @@ function Result() {
                 </div>
 
                 <div>
-                    <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>+ Master Table</h3>
+                    <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>{showTable ? '-' : '+'} Master Table</h3>
                     {tableColumns.length > 0 ? <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable}
                     /> : <ClipLoader color='#ffa000' size={30} />}
                 </div>

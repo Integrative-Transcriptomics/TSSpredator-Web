@@ -1115,7 +1115,7 @@ function Main() {
                 </div>
 
                 <div className='content-box'>
-                    <h3 className='header click-param' onClick={(e) => setShowParam(!showParam)}>+ Parameters</h3>
+                    <h3 className='header click-param' onClick={(e) => setShowParam(!showParam)}>{showParam ? '-' : '+'} Parameters</h3>
 
                     <div className={showParam ? 'show margin-left file-column' : 'hidden'}>
 

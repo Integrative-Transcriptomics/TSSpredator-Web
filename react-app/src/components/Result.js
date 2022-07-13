@@ -18,6 +18,11 @@ function Result() {
     const [blob, setBlob] = useState(new Blob());
     const [showDownload, setShowDownload] = useState(true);
 
+    // all genomes/conditions names
+    const [allGenomes, setAllGenomes] = useState([]);
+    // currently used genome/condition data for the plot
+    const [currentData, setCurrentData] = useState('all');
+
     // for master table
     const [tableColumns, setTableColumns] = useState([]);
     const [tableData, setTableData] = useState([]);
@@ -85,10 +90,10 @@ function Result() {
             setTableData([...dataRows]);
             if (dataRows.length > 0) {
                 stepHeightFactorEnrichementFreq(dataRows, col);
-                TSSperPosition(dataRows, col);
+                TSSperPosition(dataRows, col, true);
             }
         }
-       
+
         // get files from server
         fetch("/result/")
             .then(res => res.blob())
@@ -182,8 +187,9 @@ function Result() {
     /** 
      * for upset plot: count frequncy of each tss class
      * for line chart: count TSS per position
+     * and get all genome/condition names
      */
-    const TSSperPosition = (rows, columns) => {
+    const TSSperPosition = (rows, columns, updateGenomes) => {
 
         // get column indices
         const primaryIdx = columns.findIndex((col) => col['Header'] === 'Primary');
@@ -192,6 +198,9 @@ function Result() {
         const antisenseIdx = columns.findIndex((col) => col['Header'] === 'Antisense');
         const superPosIdx = columns.findIndex((col) => col['Header'] === 'SuperPos');
         const genomeIdx = columns.findIndex((col) => (col['Header'] === 'Genome' || col['Header'] === 'Condition'));
+
+        // all genomes/conditions
+        const allG = [];
 
         // TSS per Position (line chart)
         var primary = { [binSize]: 0 };
@@ -211,6 +220,11 @@ function Result() {
             const tmpPos = row[superPosIdx];
             const tmpGenome = row[genomeIdx];
             var tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+
+            // add genome to all genomes
+            if (!allG.includes(tmpGenome) && updateGenomes) {
+                allG.push(tmpGenome);
+            }
 
             // upset plot --------------------
             // new TSS found -> add classes from previous TSS
@@ -248,6 +262,9 @@ function Result() {
         // add last tss (upset plot)
         classes = addNewTSS(currentClass, classes);
 
+        if(updateGenomes) {
+            setAllGenomes(allG);
+        }
         setUpsetClasses(classes);
         setLinePrimary(primary);
         setLineSecondary(secondary);
@@ -331,6 +348,36 @@ function Result() {
         return tssClass;
     }
 
+    /**
+     * 
+     */
+    const updateDataForPlots = (event) => {
+
+        const value = event.target.value;
+        setCurrentData(value);
+
+        if (value !== currentData) {
+
+            if (value === 'all') {
+                // create new plots
+                stepHeightFactorEnrichementFreq(tableData, tableColumns);
+                TSSperPosition(tableData, tableColumns, false);
+            } else {
+                const genomeIdx = tableColumns.findIndex((col) => (col['Header'] === 'Genome' || col['Header'] === 'Condition'));
+                // filter table
+                const newData = [];
+                tableData.forEach((row) => {
+                    if (row[genomeIdx] === value) {
+                        newData.push(row);
+                    }
+                });
+                // create new plots
+                stepHeightFactorEnrichementFreq(newData, tableColumns);
+                TSSperPosition(newData, tableColumns, false);
+            }
+        }
+    }
+
 
     return (
         <>
@@ -343,6 +390,16 @@ function Result() {
                 <div >
                     <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>{showDownload ? '-' : '+'} Download result of TSS prediction</h3>
                     <div className={showDownload ? 'download-link' : ' hidden'} onClick={() => downloadFiles()}>TSSpredator-prediction.zip</div>
+                </div>
+
+                <div className='result-select'>
+                    <h3 className='header click-param'> Show Plots for</h3>
+                    <select onChange={(e) => updateDataForPlots(e)} value={currentData}>
+                        <option value='all'>all Conditions/Genomes combined</option>
+                        {allGenomes.map((col, i) => {
+                            return <option value={col} key={i}>{col}</option>
+                        })}
+                    </select>
                 </div>
 
                 <div >

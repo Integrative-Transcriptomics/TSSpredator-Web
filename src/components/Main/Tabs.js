@@ -90,14 +90,12 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
 
         </div>
 
-        <div className={genome ? 'tab-content content-border' : 'tab-content'}>
-          {genome ? <div className={genomes.length > 8 ? "line line-top line" + (genomes.length % 8) : "line line" + (genomes.length % 8)}></div>
-            : <div className={"line line-rep rep-line" + (genomes.length % 7)}></div>
-          }
+        <div className={genome ? 'content-border' : ''}>
+         
+          <div className={genome ? "line" :"line line-rep" }></div>          
 
           {genomes.map((g, i) => {
             
-
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 

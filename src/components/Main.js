@@ -1084,14 +1084,14 @@ function Main() {
             </header>
 
             <div className='form-container'>
-                <div className='content-box'>
-                    <label >
+                <div>
+                    <label>
                         <input className='project-name' type="text" name="project-name" placeholder="Enter Project Name" defaultValue={projectName} onChange={(e) => setProjectName(e.target.value)} />
                     </label>
                     {(typeof parameters.setup === 'undefined') ? (<p></p>) : (<ParameterGroup parameters={parameters.setup} grid={false} onChange={(e) => handleParameters(e)} />)}
                 </div>
 
-                <div className='content-box'>
+                <div>
                     <h3 className='header'>Upload Data</h3>
                     <div className='margin-left'>
                         {(typeof parameters.setup === 'undefined')
@@ -1114,7 +1114,7 @@ function Main() {
                     </div>
                 </div>
 
-                <div className='content-box'>
+                <div>
                     <h3 className='header click-param' onClick={(e) => setShowParam(!showParam)}>{showParam ? '-' : '+'} Parameters</h3>
 
                     <div className={showParam ? 'show margin-left file-column' : 'hidden'}>
@@ -1144,10 +1144,10 @@ function Main() {
 
 
                 <div className='footer'>
-                    <button className='button load' type="button"
+                    <button className='button no-margin' type="button"
                         onClick={() => { setConfHeader("Upload Config File"); setText("Select the config file (.config)."); setConfPopup(true); }}>Load</button>
                     <p>or</p>
-                    <button className='button save' type="button" onClick={() => saveConfigFile()}>Save</button>
+                    <button className='button no-margin' type="button" onClick={() => saveConfigFile()}>Save</button>
                     <p>Configuration</p>
                     {loading ? <div className='loading'><ClipLoader color='#ffa000' loading={loading} size={30} /></div>
                         : <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>Start TSS prediction</button>}

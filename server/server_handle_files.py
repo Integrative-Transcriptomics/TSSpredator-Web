@@ -5,16 +5,19 @@ def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genom
     '''save files in temporary directory and save file paths in json string, so that the .jar can read the files'''
 
     # genomefasta files
-    for x in range(len(genomeFasta)):
-        genomes = save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta')
+    #for x in range(len(genomeFasta)):
+        #genomes = save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta')
+    genomes = [save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta') for x in range(len(genomeFasta))]
 
     # genomeannotation files 
     if(len(genomeAnnotation) <= 0):
-        for x in range(len(genomes)):
-            genomes = save_genome_file(annotationDir, "", genomes, x, 'genomeannotation')
+        #for x in range(len(genomes)):
+            #genomes = save_genome_file(annotationDir, "", genomes, x, 'genomeannotation')
+        genomes = [save_genome_file(annotationDir, "", genomes, x, 'genomeannotation') for x in range(len(genomes))]
     else:
-        for x in range(len(genomeAnnotation)):
-            genomes = save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
+        #for x in range(len(genomeAnnotation)):
+            #genomes = save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
+        genomes = [save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation') for x in range(len(genomeAnnotation))]
 
         
     # enriched forward/reverse and normal forward/reverse files
@@ -58,7 +61,6 @@ def save_genome_file(directory, file, genomeObject, idx, node):
         if(len(file) > 0):
             # go over list for genome Z, with all annotation files for genome Z
             for x in file:
-                  
                 # save file x in tempDirectory
                 filename = directory + '/' + secure_filename(x.filename)
                 x.save(filename)
@@ -161,7 +163,6 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"idList": "' + idList + '",'
 
     # add replicate files
-   
     for x in range(len(replicates)):
         currentGenome = replicates[x]['genome'+str(x+1)]
 

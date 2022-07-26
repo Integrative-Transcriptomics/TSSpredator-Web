@@ -81,7 +81,9 @@ function LineChart({ primary, secondary, internal, antisense, orphan, binSize, s
         <div className={show ? '' : 'hidden'}>
             <Plot
                 data={data}
-                layout={{ width: 1570, height: 550, title: 'TSS distribution over all Positions with a bin size of ' + binSize, xaxis: { title: 'Position in bp' }, yaxis: { title: 'Count' } }}
+                useResizeHandler={true}
+                layout={{ title: 'TSS distribution over all Positions with a bin size of ' + binSize, xaxis: { title: 'Position in bp' }, yaxis: { title: 'Count' } }}
+                style={{width: '100%', height: '100%'}}
             />
         </div>
     )

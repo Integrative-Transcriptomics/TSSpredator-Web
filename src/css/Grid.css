@@ -56,6 +56,9 @@
     grid-template-columns: 62% 38%;
     margin-left: 0.5rem;
 }
+.parameter-grid input[type=number] {
+    max-height: 2rem;
+}
 .parameter-select {
     display: grid;
     min-width: fit-content;

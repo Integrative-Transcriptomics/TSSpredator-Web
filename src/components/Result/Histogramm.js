@@ -22,7 +22,9 @@ function Histogramm({ elements, xaxis, steps, cap, show }) {
         data={[
           { type: 'histogram', x: elements, xbins: { size: steps }, marker: { color: 'black', line: { color: 'white', width: 1 } } },
         ]}
-        layout={{ width: 1500, height: 450, title: title, xaxis: { title: xaxis }, yaxis: { title: 'Count' } }}
+        useResizeHandler={true}
+        layout={{title: title, xaxis: { title: xaxis }, yaxis: { title: 'Count' } }}
+        style={{width: '100%', height: '100%'}}
       />
     </div>
   )

@@ -62,7 +62,7 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
     return (
       <div className={show ? 'file-box' : 'hidden'} data-title={file.tooltip}>
         <p className='file-row'>{file.name}</p>
-        <label className='element-row file-row'>
+        <label className='element-row file-row element-text'>
 
           <input disabled={disabled} className='element' type='file' name={label} id={id + 'annfile'} style={{ display: 'none' }}
             onChange={(e) => saveAnnotationFile(e)} directory=""
@@ -78,7 +78,7 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
     return (
       <div className={show ? 'file-box' : 'hidden'} data-title={file.tooltip}>
         <p className='file-row'>{file.name}</p>
-        <label className='element-row file-row'>
+        <label className='element-row file-row element-text'>
 
           <input disabled={disabled} className='element' type="file" name={label} id={id + 'file'} style={{ display: 'none' }}
             onChange={(e) => saveIndividualFile(e)} />

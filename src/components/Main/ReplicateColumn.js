@@ -47,11 +47,12 @@ function ReplicateColumn({ handleRemove, handleFiles, handleAddEF, handleAddER, 
                 return (
                     <div className={state === i ? 'replicate-column column-active' : 'replicate-column'} key={i}>
                         <div className='row'>
-                            <div className="arrows prev" onClick={() => flipLeft(i)}></div>
+                            { numRep > 1 ? <div className="arrows prev" onClick={() => flipLeft(i)}></div> : <></>}
                             <h4> Replicate {String.fromCharCode(97 + i)} </h4>
-                            <div className="arrows next" onClick={() => flipRight(i)}></div>
+                            { numRep > 1 ? <div className="arrows next" onClick={() => flipRight(i)}></div> : <></>}
+                            
                         </div>
-                        <div className={state === i ? 'drop-box' : 'drop-box-rep'} >
+                        <div className={state === i ? 'drop-box' : 'drop-box drop-box-rep'} >
                             <DragDropField label='enriched forward file' currentFiles={[currentEF[i]]} state='enrichF' index={i}
                                 handleAdd={(e) => handleAddEF(e, i)} handleRemove={(e, s, idx) => handleRemove(e, s, idx)} handleFiles={(e) => handleFiles(e)}
                                 tooltip="Graph file containing the RNA-seq expression graph for the forward strand from the 5' enrichment library. tagRNA-seq: Use the TSS reads here." />

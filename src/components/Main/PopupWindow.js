@@ -192,16 +192,12 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
 
     return (
         <div className='popup'>
-            <div className='popup-inner'>
+              <div className='popup-inner'>                                   
                 <h3 className='header popup-header'>Upload Files - {studyType} {gIdx}</h3>
-
                 <div className='popup-columns'>
-
-                    <div className='drop-box-column column-active'>
-                        <DragDropField label={'Drop your files for '+ studyType + ' ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
+                    <DragDropField label={'Drop your files for '+ studyType + ' ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
                             handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} 
                             />
-                    </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column' }} >
                         <div className="long-arrow">
@@ -210,7 +206,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
                         </div>
                     </div>
 
-                    <div className='drop-box-column column-active'>
+                    <div className='drop-box-column'>
                         <h4>Genome Files</h4>
                         <div className='drop-box'>
                             <DragDropField label={disabled ? 'no file needed' : 'Genome FASTA file'} currentFiles={genomeFasta} state='genomeFasta' disabled={disabled}
@@ -238,10 +234,11 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
                 <div className='popup-footer'>
                     <button className='button' type='button' onClick={(e) => closePopup(e)}>Cancel</button>
                     <button className='button' type='button' onClick={(e) => saveFiles(e)}>Save</button>
-                </div>
+                </div> 
             </div>
         </div>
-    )
+        )
+    
 }
 
 export default PopupWindow

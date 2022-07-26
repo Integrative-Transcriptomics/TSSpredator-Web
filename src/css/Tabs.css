@@ -9,6 +9,7 @@
 
 .tab-row {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   padding: 0;
   margin: 0;
@@ -19,23 +20,24 @@
   padding: 1.03%;
   justify-content: center;
   min-width: 10.41%;
+  width: 10.41%;
   max-width: 12%;
   background-color: #e0e0e0;
   cursor: pointer;
   box-sizing: content-box;
   position: relative;
   box-shadow: 1px 0 0 0 black, 0 1px 0 0 black, 1px 1px 0 0 black,
-    /* Just to fix the corner */ 1px 0 0 0 black inset, 0 1px 0 0 black inset;
+    /* Just to fix the corner*/  1px 0 0 0 black inset, 0 1px 0 0 black inset;
 }
 .tab-rep {
-  min-width: 10.2%;
-  max-width: 13%;
+  min-width: fit-content;
 }
 
 .tab-active {
   background: white;
-  box-shadow: 1px 0 0 0 black, 0 1px 0 0 white, 1px 1px 0 0 black,
+  box-shadow: 1px 0 0 0 black, 0 2px 0 0 white, 1px 1px 0 0 black,
   /* Just to fix the corner */ 1px 0 0 0 black inset, 0 1px 0 0 black inset;
+  z-index: 2;
 }
 
 .tab-input {
@@ -72,14 +74,13 @@
 }
 
 .line {
-  border-bottom: 1px solid black;
+  box-shadow: 0 0 0 0 black, 0 1px 0 0 black, 0 0 0 0 black,
+  /* Just to fix the corner */ 0 0 0 0 black inset, 0 0 0 0 black inset;
   width: 100%;
   margin-top: -0.1%;
+  z-index: 1;
 }
 
-.line-rep {
-  margin-top: 0%;
-}
 
 .left-line {
   box-shadow: 1px 0 0 0 white, 0 1px 0 0 black, 1px 1px 0 0 white,

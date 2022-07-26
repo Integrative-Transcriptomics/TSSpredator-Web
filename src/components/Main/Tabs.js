@@ -73,7 +73,7 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
                 <div className={state === (i + 1) ? tabClass + ' tab-active' : tabClass} key={(i + 1)} onClick={() => { setState((i + 1)) }}
                   data-tabs-title="Brief unique name for this strain/condition. Special characters (including spaces) should be avoided.">
                   {genome ? <input className={state === (i + 1) ? 'tab-input tab-input-active' : 'tab-input'} type="text" id={i} name="name" value={val}
-                    placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} />
+                    placeholder={genomes[i]['genome' + (i + 1)].placeholder} onChange={(e) => handleTabs(e)} onClick={() => { setState((i + 1)) }} />
                     : "Replicate " + String.fromCharCode(97 + i)}
                 </div>
               )
@@ -88,11 +88,11 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
             }
           })}
 
+          <div className={genome ? "line" :"line line-rep" }></div> 
+
         </div>
 
-        <div className={genome ? 'content-border' : ''}>
-         
-          <div className={genome ? "line" :"line line-rep" }></div>          
+        <div className={genome ? 'content-border' : ''}>                  
 
           {genomes.map((g, i) => {
             

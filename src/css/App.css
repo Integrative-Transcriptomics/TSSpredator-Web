@@ -65,7 +65,7 @@ input:focus {
 }
 
 .form-container {
-    padding: 2.5% 0;
+    padding: 1% 0;
     margin: auto;
     width: 50.55%;   
     display: flex;
@@ -210,6 +210,7 @@ select:hover {
     font-size: 1rem;
     margin-left: auto;
     margin-right: 0;
+    padding-top: 0.8%;
 }
 .footer {
     margin-top: 2%;
@@ -253,39 +254,41 @@ select:hover {
   }
   
   .error-popup-inner {
-    height: 30%;
     width: 35%;
+    height: 35%;
     background: white;
     border-radius: 0.65rem;
     z-index: 100;
     display: flex;
     flex-direction: column;
+    column-gap: 0;
   }
   .error-popup-header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.3);
-    padding-top: 1%;
     height: 15%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    text-align: center;
     z-index: 100;
+    padding: 0;
+    margin: 0;
   }
   .error-field {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
       min-width: fit-content;
       height: 65%;
-      padding: 5%;
   }
   .error-button {
       display: flex;
       flex-direction: row;
       align-items: center;
       justify-content: center;
+      height: 20%;
       border-top: 1px solid rgba(0, 0, 0, 0.3);
-     padding-top: 2%;
   }
 
   /* tooltips */

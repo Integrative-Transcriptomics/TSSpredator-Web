@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
 import JSZip from 'jszip';
 import '../css/Result.css';
@@ -14,6 +15,9 @@ import LineChart from './Result/LineChart';
  */
 
 function Result() {
+    // filePath on server
+    let { filePath } = useParams();
+
     // save files
     const [blob, setBlob] = useState(new Blob());
     const [showDownload, setShowDownload] = useState(true);
@@ -95,7 +99,7 @@ function Result() {
         }
 
         // get files from server
-        fetch("/result/")
+        fetch(`/api-result/${filePath}/`)
             .then(res => res.blob())
             .then(blob => {
 

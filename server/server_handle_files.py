@@ -5,19 +5,19 @@ def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genom
     '''save files in temporary directory and save file paths in json string, so that the .jar can read the files'''
 
     # genomefasta files
-    #for x in range(len(genomeFasta)):
-        #genomes = save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta')
-    genomes = [save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta') for x in range(len(genomeFasta))]
+    for x in range(len(genomeFasta)):
+        genomes = save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta')
+    #genomes = [save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta') for x in range(len(genomeFasta))]
 
     # genomeannotation files 
     if(len(genomeAnnotation) <= 0):
-        #for x in range(len(genomes)):
-            #genomes = save_genome_file(annotationDir, "", genomes, x, 'genomeannotation')
-        genomes = [save_genome_file(annotationDir, "", genomes, x, 'genomeannotation') for x in range(len(genomes))]
+        for x in range(len(genomes)):
+            genomes = save_genome_file(annotationDir, "", genomes, x, 'genomeannotation')
+        #genomes = [save_genome_file(annotationDir, "", genomes, x, 'genomeannotation') for x in range(len(genomes))]
     else:
-        #for x in range(len(genomeAnnotation)):
-            #genomes = save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
-        genomes = [save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation') for x in range(len(genomeAnnotation))]
+        for x in range(len(genomeAnnotation)):
+            genomes = save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
+        #genomes = [save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation') for x in range(len(genomeAnnotation))]
 
         
     # enriched forward/reverse and normal forward/reverse files

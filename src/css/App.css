@@ -148,7 +148,7 @@ input:focus {
     grid-template-columns: 23% 77%;
 }
 .file-box-align {
-    width: 100%;
+    width: 99%;
     display: grid;
     grid-template-columns: 16% 69%;
     column-gap: 5%;

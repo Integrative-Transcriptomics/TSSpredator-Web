@@ -57,7 +57,7 @@ function Main() {
       * GETs Parameters from flask 
       */
     useEffect(() => {
-        fetch("/parameters/")
+        fetch("/api-parameters/")
             .then(res => res.json())
             .then(parameters => setParameters(parameters))
     }, []);
@@ -293,18 +293,20 @@ function Main() {
 
         formData.append('alignmentfile', alignmentFile);
 
-        fetch('/input/', {
+        fetch('/api-input/', {
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
+            .then( response => response.json())
             .then(data => {
-
+              
                 setLoading(false);
 
                 if (data.result === 'success') {
                     // open result in new tab
-                    window.open('/result', '_blank', 'noopener,noreferrer');
+                    //window.open('/result', '_blank', 'noopener,noreferrer');
+                    let filePath = data.filePath;
+                    window.open(`/result/${filePath}`, '_blank');
                 } else {
                     var error = (data.result);
                     error = error.split(':')[0] + ':' + error.split(':')[1];
@@ -336,7 +338,7 @@ function Main() {
         // send file to server
         const formData = new FormData();
         formData.append('alignmentFile', alignmentFile);
-        fetch('/alignment/', {
+        fetch('/api-alignment/', {
             method: 'POST',
             body: formData
         })
@@ -372,11 +374,11 @@ function Main() {
             // input=number -> save value as number
         } else {
             val = event.target.valueAsNumber;
-            if(isNaN(val)) {
+            if (isNaN(val)) {
                 return;
             }
         }
-       
+
 
         if (directParent === "setup") {
             updateSetupBox(name, 'value', val);
@@ -635,7 +637,7 @@ function Main() {
         const value = event.target.value;
         const id = parseInt(event.target.id);
 
-        let temp =[...genomes];
+        let temp = [...genomes];
         temp[id]['genome' + (id + 1)][name] = value;
         setGenomes([...temp]);
 
@@ -721,7 +723,7 @@ function Main() {
         const maxFileSize = 200000000;
         var tmpArray = [];
 
-        const temp =[...genomes];
+        const temp = [...genomes];
 
         // annotation files
         if (Array.isArray(file)) {
@@ -765,7 +767,7 @@ function Main() {
 
             let newValue = { ...replicates[gId]['genome' + (gId + 1)][rId][replicate] };
             newValue[node] = file;
-            let temp =[...replicates];
+            let temp = [...replicates];
             temp[gId]['genome' + (gId + 1)][rId] = { [replicate]: newValue };
             setReplicates([...temp]);
         }
@@ -839,7 +841,7 @@ function Main() {
         formData.append('parameters', JSON.stringify(parameters));
         formData.append('genomes', JSON.stringify(genomes));
         formData.append('replicates', JSON.stringify(replicates));
-        fetch('/loadConfig/', {
+        fetch('/api-loadConfig/', {
             method: 'POST',
             body: formData
         })
@@ -1040,7 +1042,7 @@ function Main() {
             formData.append('genomes', JSON.stringify(tmpGenome));
             formData.append('replicates', JSON.stringify(tmpRep));
             formData.append('alignmentFile', JSON.stringify(tmpAlignFile));
-            fetch('/saveConfig/', {
+            fetch('/api-saveConfig/', {
                 method: 'POST',
                 body: formData
             })
@@ -1092,20 +1094,20 @@ function Main() {
                 </div>
 
                 <div>
-                    <h3 className='header'>Upload Data</h3>
+                    <h3 className='header'>Data Upload:</h3>
                     <div className='margin-left'>
                         {(typeof parameters.setup === 'undefined')
                             ? <></>
                             : <>
-                                <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'file-box-align vis-hidden'} title='Select the xmfa alignment file containing the aligned genomes.'>
-                                    <p className='file-row'>Alignment File</p>
-                                    <label className='element-row file-row' htmlFor='alignment-file'>
-                                        <input className='element hidden' type="file" id='alignment-file' onChange={(e) => saveAlignmentFile(e)} />
-                                        <p className='button'>Select File</p>
-                                        {alignmentFile.length <= 0 ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{alignmentFile.name}</p>}
-                                    </label>
-                                </div>
-
+                                {parameters.setup.typeofstudy.value === "genome" ?
+                                    <div className={parameters.setup.typeofstudy.value === "genome" ? 'file-box-align' : 'file-box-align vis-hidden'} title='Select the xmfa alignment file containing the aligned genomes.'>
+                                        <p className='file-row'>Alignment File</p>
+                                        <label className='element-row file-row' htmlFor='alignment-file'>
+                                            <input className='element hidden' type="file" id='alignment-file' onChange={(e) => saveAlignmentFile(e)} />
+                                            <p className='button'>Select File</p>
+                                            {alignmentFile.length <= 0 ? <p className='file-name'>No file selected.</p> : <p className='file-name'>{alignmentFile.name}</p>}
+                                        </label>
+                                    </div> : <></>}
                                 <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value}
                                     handleTabs={(e) => handleTabs(e)} numRep={numRep} saveFiles={(g, ef, er, nf, nr, idx) => saveFiles(g, ef, er, nf, nr, idx)}
                                     saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} showName={showGName} />

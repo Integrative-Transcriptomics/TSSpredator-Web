@@ -275,6 +275,10 @@ def handle_config_genomes(config, genomes, parameters):
     studyType = (parameters['setup']['typeofstudy']['value']).capitalize()
     genomeNum = int(parameters['setup']['numberofgenomes']['value'])
 
+    if (genomeNum < len(genomes)):
+        difference = len(genomes) - genomeNum
+        genomes = genomes[:-difference or None]
+
     for x in range(genomeNum):
         currentGenomeName = 'genome' + str(x+1)
         genomePlaceholder = studyType + '_' + str(x+1)

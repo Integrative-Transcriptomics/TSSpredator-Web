@@ -379,7 +379,6 @@ function Main() {
             }
         }
 
-
         if (directParent === "setup") {
             updateSetupBox(name, 'value', val);
         } else {
@@ -795,7 +794,7 @@ function Main() {
             showError('Config File has wrong format. Config file format (.config) needed.')
         } else {
             setConfHeader("Upload Folder");
-            setText("Select the folder that contains all needed files. The genome annotation files for each Genome/Condition have to be in seperate directories.")
+            setText("Select the folder that contains all needed files. The genome annotation files for each Genome/Condition have to be in separate directories.")
             setConfFile(file);
         }
     }
@@ -920,7 +919,7 @@ function Main() {
                     var newRepNum = parseInt(result['numReplicate']);
                     if (newRepNum > numRep) {
                         for (let i = numRep; i < newRepNum; i++) {
-                            const repLetter = String.fromCharCode(96 + i);
+                            const repLetter = String.fromCharCode(97 + i);
                             const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
                             // update replicate template
                             replicateTemplate.push(newRep);
@@ -933,7 +932,7 @@ function Main() {
                             setReplicateTemplate(replicateTemplate);
                         }
                     }
-
+                    
                     setReplicates(tmpRep);
                     setnumRep(newRepNum);
                     setGenomes(tmpGenome);

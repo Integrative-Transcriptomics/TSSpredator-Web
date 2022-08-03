@@ -37,7 +37,10 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
 
         // save all files from uploaded folder
         for (let i = 0; i < (event.target.files).length; i++) {
-            tmpArray.push(event.target.files[i]);
+            // ignore hidden files
+            if(event.target.files[i].name[0] !== '.') {
+                tmpArray.push(event.target.files[i]);
+            }
         }
         setGenomeAnn([...tmpArray]);
 

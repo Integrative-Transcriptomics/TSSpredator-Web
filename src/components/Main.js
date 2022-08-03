@@ -693,12 +693,15 @@ function Main() {
 
             if (event.target.files[i].size > maxFileSize) {
                 seteHeader("ERROR");
-                showError("The file exceeds the maximum size of 200MB.");
+                showError("The file " + event.target.files[i].name + " exceeds the maximum size of 200MB.");
 
             } else {
-                tmpArray.push(event.target.files[i]);
-                temp[id]['genome' + (id + 1)][node] = tmpArray;
-                setGenomes([...temp]);
+                // ignore hidden files
+                if(event.target.files[i].name[0] !== '.') {
+                    tmpArray.push(event.target.files[i]);
+                    temp[id]['genome' + (id + 1)][node] = tmpArray;
+                    setGenomes([...temp]);
+                } 
             }
         }
     }

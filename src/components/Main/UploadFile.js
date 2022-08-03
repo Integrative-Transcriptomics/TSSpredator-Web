@@ -8,8 +8,9 @@ import React from 'react';
  * @param studyType: 'condtion' oder 'genome'
  * @param saveIndividualFile: saves selected file
  * @param saveAnnotationFile: saves annotation files
+ * @param multiFasta: true <-> genome file for this genome is multiFasta, else false
  */
-function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, saveAnnotationFile }) {
+function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, saveAnnotationFile, multiFasta }) {
 
   let disabled = false;
   if (studyType === 'condition' && id > 0) {
@@ -64,13 +65,24 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
         <p className='file-row'>{file.name}</p>
         <label className='element-row file-row element-text'>
 
-          <input disabled={disabled} className='element' type='file' name={label} id={id + 'annfile'} style={{ display: 'none' }}
-            onChange={(e) => saveAnnotationFile(e)} directory=""
-            webkitdirectory="" />
+          {multiFasta ?
+            <><input disabled={disabled} className='element' type='file' name={label} id={id + 'annfile'} style={{ display: 'none' }}
+              onChange={(e) => saveAnnotationFile(e)} directory=""
+              webkitdirectory="" />
 
-          <p className={disabled ? 'button disabled' : 'button'}>Select Folder</p>
-          {typeof fileName === 'undefined' ? (disabled === true ? <p className='file-name'>No file(s) needed.</p> : <p className='file-name'>No file(s) selected.</p>)
-            : <div className='file-name'> {fileName}</div>}
+              <p className={disabled ? 'button disabled' : 'button'}>Select Folder</p>
+              {typeof fileName === 'undefined' ? (disabled === true ? <p className='file-name'>No file(s) needed.</p> : <p className='file-name'>No file(s) selected.</p>)
+                : <div className='file-name'> {fileName}</div>}
+            </>
+            : <>
+              <input disabled={disabled} className='element' type='file' name={label} id={id + 'annfile'} style={{ display: 'none' }}
+                onChange={(e) => saveAnnotationFile(e)} />
+
+              <p className={disabled ? 'button disabled' : 'button'}>Select File</p>
+              {typeof fileName === 'undefined' ? (disabled === true ? <p className='file-name'>No file needed.</p> : <p className='file-name'>No file selected.</p>)
+                : <div className='file-name'> {fileName}</div>}
+            </>
+          }
         </label>
       </div>
     )

@@ -11,13 +11,14 @@ import UploadFile from './UploadFile';
  * @param handleTabs: saves input in text fields of genome tab
  * @param saveIndividualFile: saves a selected file
  * @param saveAnnotationFile: saves annotation files
+ * @param multiFasta: true <-> genome file for this genome is multiFasta, else false
  */
-function UploadFilesGroup({ files, id, studyType, genomes, handleTabs, saveIndividualFile, show, saveAnnotationFile }) {
+function UploadFilesGroup({ files, id, studyType, genomes, handleTabs, saveIndividualFile, show, saveAnnotationFile, multiFasta}) {
   return (
     <div className='margin-left file-column'>
       {files.map((file, i) => {
         return <UploadFile file={file} key={i} id={id} studyType={studyType} genomes={genomes} handleTabs={(e) => handleTabs(e)}
-          saveIndividualFile={(e) => saveIndividualFile(e)} show={show} saveAnnotationFile={(e) => saveAnnotationFile(e)} />
+          saveIndividualFile={(e) => saveIndividualFile(e)} show={show} saveAnnotationFile={(e) => saveAnnotationFile(e)} multiFasta={multiFasta} />
       })
       }
     </div>

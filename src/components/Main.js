@@ -21,9 +21,12 @@ function Main() {
     const [parameterPreset, setParameterPreset] = useState("default");
     // checkbox
     const [rnaGraph, setRnaGraph] = useState(false);
+
     const [genomes, setGenomes] = useState([{ "genome1": { "name": "Condition_1", "placeholder": "Condition_1", "alignmentid": "", "outputid": "", "genomefasta": "", "genomeannotation": [] } }]);
     const [replicates, setReplicates] = useState([{ "genome1": [{ "replicatea": { "name": "Replicate a", "enrichedforward": "", "enrichedreverse": "", "normalforward": "", "normalreverse": "" } }] }]);
     const [alignmentFile, setAlignmentFile] = useState("");
+    // saves the value of the checkbox: if genome file is multiFasta or not
+    const [multiFasta, setMultiFasta] = useState([false])
 
     // new GenomeTab: use replicateTemplate to update replicates
     const [replicateTemplate, setReplicateTemplate] = useState([{ "replicatea": { "name": "Replicate a", "enrichedforward": "", "enrichedreverse": "", "normalforward": "", "normalreverse": "" } }]);
@@ -500,6 +503,7 @@ function Main() {
                 tmpGenome.push({
                     ["genome" + i]: { name: genomeName, placeholder: placeholder, alignmentid: alignmentID, outputid: "", genomefasta: "", genomeannotation: [] }
                 });
+                multiFasta.push(false)
                 // add new genome to replicates
                 tmpReplicate.push({ ["genome" + i]: [...replicateTemplate] });
             }
@@ -518,6 +522,7 @@ function Main() {
             for (let i = 0; i < difference; i++) {
                 // remove last genome
                 tmpGenome.pop();
+                multiFasta.pop();
                 // remove genome from replicates
                 tmpReplicate.pop();
             }
@@ -539,6 +544,7 @@ function Main() {
             }
         }
         setGenomes([...tmpGenome]);
+        setMultiFasta([...multiFasta]);
         setReplicates([...tmpReplicate]);
     }
     /**
@@ -629,17 +635,21 @@ function Main() {
      */
     const handleTabs = (event) => {
 
+
         const name = event.target.name;
+        const id = parseInt(event.target.id);
         if (name === 'name') {
             setShowGName(true);
         }
-        const value = event.target.value;
-        const id = parseInt(event.target.id);
-
-        let temp = [...genomes];
-        temp[id]['genome' + (id + 1)][name] = value;
-        setGenomes([...temp]);
-
+        if(name === 'multiFasta') {
+            multiFasta[id] = !multiFasta[id];
+            setMultiFasta([...multiFasta]);
+        } else {
+            const value = event.target.value;    
+            let temp = [...genomes];
+            temp[id]['genome' + (id + 1)][name] = value;
+            setGenomes([...temp]);
+        }
     }
 
     /**
@@ -668,7 +678,7 @@ function Main() {
     }
 
     /**
-    * saves uploaded annotation folder from upload files individually
+    * saves uploaded annotation folder/file from upload files individually
     */
     const saveAnnotationFile = (event) => {
 
@@ -1109,7 +1119,7 @@ function Main() {
                                     </div> : <></>}
                                 <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value}
                                     handleTabs={(e) => handleTabs(e)} numRep={numRep} saveFiles={(g, ef, er, nf, nr, idx) => saveFiles(g, ef, er, nf, nr, idx)}
-                                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} showName={showGName} />
+                                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} showName={showGName} multiFasta={multiFasta}/>
                             </>
                         }
                     </div>

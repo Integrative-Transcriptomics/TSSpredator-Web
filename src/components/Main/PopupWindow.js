@@ -9,8 +9,9 @@ import ReplicateColumn from './ReplicateColumn';
  * @param saveAllFiles: function to save files in the corresponding usestate in App.js
  * @param gIdx: current genome tab
  * @param disabled: studytype condition
+ * @param multiFASTA: true <-> genome file for this genome is a multiFasta file (need annotation folder), else false (need annotation file)
  */
-function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyType }) {
+function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyType, multiFasta }) {
 
     // saves all uploaded files
     const [allFiles, setAllFiles] = useState([]);
@@ -24,7 +25,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
     const [normalF, setNormalF] = useState({});
     const [normalR, setNormalR] = useState({});
 
-    // save files from annotation folder
+    // save files from annotation folder/file
     const [genomeAnn, setGenomeAnn] = useState([]);
     const [genomeAnnfolder, setGenomAnnFolder] = useState("");
 
@@ -35,7 +36,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
         const tmpArray = [];
 
         // save all files from uploaded folder
-        for(let i = 0; i < (event.target.files).length; i++) {
+        for (let i = 0; i < (event.target.files).length; i++) {
             tmpArray.push(event.target.files[i]);
         }
         setGenomeAnn([...tmpArray]);
@@ -46,9 +47,9 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
         setGenomAnnFolder(folder);
     }
 
-   /**
-    * save all uploaded files
-    */
+    /**
+     * save all uploaded files
+     */
     const handleNewFiles = (event) => {
         // check if file is already uploaded
         event.forEach((file, i) => {
@@ -73,13 +74,13 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
             } else {
                 set([...state, event]);
             }
-        // for replicate-files
+            // for replicate-files
         } else {
             // when file is dropped directly in container
             if (Array.isArray(event)) {
                 set(current => ({
                     ...current, [index]: event[0]
-                })) 
+                }))
             } else {
                 set(current => ({
                     ...current, [index]: event
@@ -126,6 +127,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
 
         let genomeFiles = { 'genomefasta': '', 'genomeannotation': [...genomeAnn] };
         let genomeFastaFound = false;
+        let genomeAnnotationFound = false;
 
         // each index in the replicate objects stands for one of the replicate X in the current genome
         let enrichedForwardFiles = { '0': '' };
@@ -141,9 +143,13 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
         let numNR = 0;
 
         allFiles.forEach((file) => {
-            if (genomeFasta.includes(file.name) && !genomeFastaFound) {
+            if (!genomeFastaFound && genomeFasta.includes(file.name)) {
                 genomeFiles.genomefasta = file;
                 genomeFastaFound = true;
+                return;
+            } else if(!genomeAnnotationFound && !multiFasta && genomeAnn.includes(file.name)) {
+                genomeFiles.genomeannotation = [file];
+                genomeAnnotationFound = true;
                 return;
             } else {
                 if (numEF <= numRep) {
@@ -184,7 +190,7 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
                 }
             }
         })
-      
+
         saveAllFiles(genomeFiles, enrichedForwardFiles, enrichedReverseFiles, normalForwardFiles, normalReverseFiles);
         closePopup(event);
     }
@@ -192,12 +198,12 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
 
     return (
         <div className='popup'>
-              <div className='popup-inner'>                                   
+            <div className='popup-inner'>
                 <h3 className='header popup-header'>Upload Files - {studyType} {gIdx}</h3>
                 <div className='popup-columns'>
-                    <DragDropField label={'Drop your files for '+ studyType + ' ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
-                            handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} 
-                            />
+                    <DragDropField label={'Drop your files for ' + studyType + ' ' + gIdx + ' here and drag them into the corresponding field'} currentFiles={upload} state='upload'
+                        handleAdd={(e) => handleAdd(e, upload, setUpload)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)}
+                    />
 
                     <div style={{ display: 'flex', flexDirection: 'column' }} >
                         <div className="long-arrow">
@@ -213,14 +219,19 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
                                 handleAdd={(e) => handleAdd(e, genomeFasta, setGenomeFasta)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)}
                                 tooltip="FASTA/multiFASTA file containing the genomic sequence of this genome." />
 
-                            <label className={disabled ? ' disabled-zone drag-drop-zone' : 'drag-drop-zone'} data-tooltip="Folder containing all GFF/GTF genomic annotation files for this genome.">
-                            {genomeAnnfolder.length === 0 ? (disabled ? <p>no file needed</p> : <p>Click to select Genome Annotation folder</p>) 
-                                                        : <div  className='drag-box no-drag'> {genomeAnnfolder}</div>} 
+                            {multiFasta ? 
+                                <label className={disabled ? ' disabled-zone drag-drop-zone' : 'drag-drop-zone'} data-tooltip="Folder containing all GFF/GTF genomic annotation files for this genome.">
+                                {genomeAnnfolder.length === 0 ? (disabled ? <p>no file needed</p> : <p>Click to select Genome Annotation folder</p>)
+                                    : <div className='drag-box no-drag'> {genomeAnnfolder}</div>}
+                                <input disabled={disabled} type='file' style={{ display: 'none' }} directory="" webkitdirectory="" onChange={(e) => saveAnnotationFile(e)} />
+                                </label>
                             
-
-                                <input disabled={disabled} type='file' style={{ display: 'none' }} directory="" webkitdirectory="" onChange={(e) => saveAnnotationFile(e)}/>
-
-                            </label>
+                                :
+                                <DragDropField label={disabled ? 'no file needed' : 'Genome Annotation file'} currentFiles={genomeAnn} state='genomeAnn' disabled={disabled}
+                                handleAdd={(e) => handleAdd(e, genomeAnn, setGenomeAnn)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleNewFiles(e)} 
+                                tooltip="Annotation file for this genome."/>
+                        }
+                            
                         </div>
                     </div>
 
@@ -234,11 +245,11 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
                 <div className='popup-footer'>
                     <button className='button' type='button' onClick={(e) => closePopup(e)}>Cancel</button>
                     <button className='button' type='button' onClick={(e) => saveFiles(e)}>Save</button>
-                </div> 
+                </div>
             </div>
         </div>
-        )
-    
+    )
+
 }
 
 export default PopupWindow

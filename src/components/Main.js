@@ -60,7 +60,7 @@ function Main() {
       * GETs Parameters from flask 
       */
     useEffect(() => {
-        fetch("/api-parameters/")
+        fetch("/api/parameters/")
             .then(res => res.json())
             .then(parameters => setParameters(parameters))
     }, []);
@@ -296,13 +296,13 @@ function Main() {
 
         formData.append('alignmentfile', alignmentFile);
 
-        fetch('/api-input/', {
+        fetch('/api/input/', {
             method: 'POST',
             body: formData
         })
-            .then( response => response.json())
+            .then(response => response.json())
             .then(data => {
-              
+
                 setLoading(false);
 
                 if (data.result === 'success') {
@@ -341,7 +341,7 @@ function Main() {
         // send file to server
         const formData = new FormData();
         formData.append('alignmentFile', alignmentFile);
-        fetch('/api-alignment/', {
+        fetch('/api/alignment/', {
             method: 'POST',
             body: formData
         })
@@ -641,11 +641,11 @@ function Main() {
         if (name === 'name') {
             setShowGName(true);
         }
-        if(name === 'multiFasta') {
+        if (name === 'multiFasta') {
             multiFasta[id] = !multiFasta[id];
             setMultiFasta([...multiFasta]);
         } else {
-            const value = event.target.value;    
+            const value = event.target.value;
             let temp = [...genomes];
             temp[id]['genome' + (id + 1)][name] = value;
             setGenomes([...temp]);
@@ -697,11 +697,11 @@ function Main() {
 
             } else {
                 // ignore hidden files
-                if(event.target.files[i].name[0] !== '.') {
+                if (event.target.files[i].name[0] !== '.') {
                     tmpArray.push(event.target.files[i]);
                     temp[id]['genome' + (id + 1)][node] = tmpArray;
                     setGenomes([...temp]);
-                } 
+                }
             }
         }
     }
@@ -710,20 +710,33 @@ function Main() {
      */
     const saveFiles = (genomeFiles, enrichFor, enrichRev, normalFor, normalRev, genomeIdx) => {
 
-        saveGenomes(genomeIdx, 'genomefasta', genomeFiles.genomefasta);
-        saveGenomes(genomeIdx, 'genomeannotation', genomeFiles.genomeannotation);
+
+        if (genomeFiles.genomefasta.name) {
+            saveGenomes(genomeIdx, 'genomefasta', genomeFiles.genomefasta);
+        }
+        if (genomeFiles.genomeannotation.length > 0) {
+            saveGenomes(genomeIdx, 'genomeannotation', genomeFiles.genomeannotation);
+        }
 
         Object.keys(enrichFor).forEach((key) => {
-            saveReplicates(genomeIdx, parseInt(key), 'enrichedforward', enrichFor[key]);
+            if (enrichFor[key].name) {
+                saveReplicates(genomeIdx, parseInt(key), 'enrichedforward', enrichFor[key]);
+            }
         });
         Object.keys(enrichRev).forEach((key) => {
-            saveReplicates(genomeIdx, parseInt(key), 'enrichedreverse', enrichRev[key]);
+            if (enrichRev[key].name) {
+                saveReplicates(genomeIdx, parseInt(key), 'enrichedreverse', enrichRev[key]);
+            }
         });
         Object.keys(normalFor).forEach((key) => {
-            saveReplicates(genomeIdx, parseInt(key), 'normalforward', normalFor[key]);
+            if (normalFor[key].name) {
+                saveReplicates(genomeIdx, parseInt(key), 'normalforward', normalFor[key]);
+            }
         });
         Object.keys(normalRev).forEach((key) => {
-            saveReplicates(genomeIdx, parseInt(key), 'normalreverse', normalRev[key]);
+            if (normalRev[key].name) {
+                saveReplicates(genomeIdx, parseInt(key), 'normalreverse', normalRev[key]);
+            }
         });
     }
 
@@ -853,7 +866,7 @@ function Main() {
         formData.append('parameters', JSON.stringify(parameters));
         formData.append('genomes', JSON.stringify(genomes));
         formData.append('replicates', JSON.stringify(replicates));
-        fetch('/api-loadConfig/', {
+        fetch('/api/loadConfig/', {
             method: 'POST',
             body: formData
         })
@@ -945,7 +958,7 @@ function Main() {
                             setReplicateTemplate(replicateTemplate);
                         }
                     }
-                    
+
                     setReplicates(tmpRep);
                     setnumRep(newRepNum);
                     setGenomes(tmpGenome);
@@ -1054,7 +1067,7 @@ function Main() {
             formData.append('genomes', JSON.stringify(tmpGenome));
             formData.append('replicates', JSON.stringify(tmpRep));
             formData.append('alignmentFile', JSON.stringify(tmpAlignFile));
-            fetch('/api-saveConfig/', {
+            fetch('/api/saveConfig/', {
                 method: 'POST',
                 body: formData
             })
@@ -1122,7 +1135,7 @@ function Main() {
                                     </div> : <></>}
                                 <Tabs genomes={genomes} genome={true} replicates={replicates} studyType={parameters.setup.typeofstudy.value}
                                     handleTabs={(e) => handleTabs(e)} numRep={numRep} saveFiles={(g, ef, er, nf, nr, idx) => saveFiles(g, ef, er, nf, nr, idx)}
-                                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} showName={showGName} multiFasta={multiFasta}/>
+                                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} showName={showGName} multiFasta={multiFasta} />
                             </>
                         }
                     </div>

@@ -99,7 +99,7 @@ function Result() {
         }
 
         // get files from server
-        fetch(`/api-result/${filePath}/`)
+        fetch(`/api/result/${filePath}/`)
             .then(res => res.blob())
             .then(blob => {
 

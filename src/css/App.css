@@ -342,6 +342,17 @@ select:hover {
     margin-left: 65%;
 }
 
+@media only screen and (max-width: 1450px) {
+    .form-container, .error-popup-inner{
+        width: 70%;
+    }
+  }
+  @media only screen and (max-width: 1100px) {
+    .form-container, .error-popup-inner {
+        width: 95%;
+    }
+  }
+
 
 
 

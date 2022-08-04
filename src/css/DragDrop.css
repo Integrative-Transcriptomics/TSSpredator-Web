@@ -28,6 +28,16 @@
   margin: 0;
   z-index: 100;
 }
+@media only screen and (max-width: 1450px) {
+  .popup-inner {
+      width: 80%;
+  }
+}
+@media only screen and (max-width: 1100px) {
+  .popup-inner {
+      width: 95%;
+  }
+}
 
 .popup-header {
   border-bottom: 1px solid rgba(0, 0, 0, 0.3);

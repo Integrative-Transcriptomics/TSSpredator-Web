@@ -122,6 +122,9 @@
 .multiFasta-checkbox {
   margin-top: 5rem;
 }
+.disabled-text {
+  color:rgba(0, 0, 0, 0.5);
+}
 
 input[type=checkbox] {
   margin-right: 1%;

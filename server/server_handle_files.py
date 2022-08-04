@@ -94,8 +94,8 @@ def save_replicate_file(directory, file, replicateObject, genomeCounter, replica
 
     return tmpRep
 
-def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory, multiFasta, 
-                        loadConfig='false', saveConfig='false', configFile=" "):
+def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory, 
+                        loadConfig='false', saveConfig='false', configFile=" ", multiFasta=''):
     '''create json string that is needed as input for  TSSpredator.jar'''
 
     jsonString = '{"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "loadAlignment": "false", "configFile": "' + configFile + '",'
@@ -207,6 +207,9 @@ def handle_config_file(parameters, config, genomes, replicates):
     parameters = handle_config_param(parameters, config, 'normPercentile','parameterBox', 'Normalization', 'normalizationpercentile')
     parameters = handle_config_param(parameters, config, 'texNormPercentile','parameterBox', 'Normalization', 'enrichmentnormalizationpercentile')
         
+    # save multiFasta string as list
+    multiFasta = config['multiFasta'].split(',')
+
     # update genomes
     genomes = handle_config_genomes(config, genomes, parameters)
 
@@ -216,7 +219,7 @@ def handle_config_file(parameters, config, genomes, replicates):
     # alignment file
     alignmentFile = get_value(config, 'xmfa')    
 
-    return [parameters, genomes, replicates, alignmentFile]
+    return [parameters, genomes, replicates, alignmentFile, multiFasta]
 
 
 def handle_config_param(parameters, config, configVariable, parameterNode1, parameterNode2, parameterNode3=""):

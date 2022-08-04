@@ -154,7 +154,7 @@ def loadConfig():
       
         if(len(result.stderr) == 0):
             config = json.loads((result.stdout).decode())
-            parameters, genomes, replicates, alignmentFile = sf.handle_config_file(parameters, config, genomes, replicates)
+            parameters, genomes, replicates, alignmentFile, multiFasta = sf.handle_config_file(parameters, config, genomes, replicates)
 
             projectName = sf.get_value(config, 'projectName')
 
@@ -165,7 +165,7 @@ def loadConfig():
             # use json.dumps() to keep order            
             return {'result': 'success', 'data': {'parameters': json.dumps(parameters), 'genomes': json.dumps(genomes), 
                     'replicates': json.dumps(replicates), 'projectName': projectName, 'rnaGraph': rnaGraph, 'alignmentFile': alignmentFile, 
-                    'numReplicate': parameters['setup']['numberofreplicates']['value']}}
+                    'numReplicate': parameters['setup']['numberofreplicates']['value'], 'multiFasta': multiFasta}}
         else:
             return {'result': 'error', 'data': json.loads((result.stderr).decode())}
      
@@ -195,7 +195,7 @@ def saveConfig():
     configFilename = newTmpDir + '/configFile.config'
 
     # write JSON string 
-    jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", multiFasta, 'false', 'true', configFilename)
+    jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", 'false', 'true', configFilename, multiFasta)
 
     # call jar file for to write config file
     subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString])

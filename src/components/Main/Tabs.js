@@ -101,8 +101,8 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
                 { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />                
 
                   <br></br>
-                  <label className='multiFasta-checkbox' data-title="Check the box if the given genome file is a multi FASTA file.">
-                    <input type="checkbox" name="multiFasta" id={i} checked={multiFasta[i]} onChange={(e) => handleTabs(e)} />
+                  <label className={disabled ? 'multiFasta-checkbox disabled-text' : 'multiFasta-checkbox'} data-title="Check the box if the given genome file is a multi FASTA file.">
+                    <input type="checkbox" name="multiFasta" id={i} checked={multiFasta[i]} onChange={(e) => handleTabs(e)} disabled={disabled}/>
                     Is the genome file a multiFASTA file?
                   </label>
                   <br></br>

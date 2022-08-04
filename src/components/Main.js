@@ -71,7 +71,7 @@ function Main() {
     const handleSubmit = (event, check = true) => {
         event.preventDefault();
         setLoading(!loading);
-        // if studytype condition: fill out alignment and output id
+        // if studytype condition: fill out alignment, output id and multiFasta
         fillGenomes();
 
         var run = checkInput();
@@ -88,7 +88,7 @@ function Main() {
     }
 
     /**
-    * if studytype: condition -> fill out alignment id, output id, fasta, annotation in genomes
+    * if studytype: condition -> fill out alignment id, output id, fasta, annotation in genomes nad multiFasta
     */
     const fillGenomes = () => {
         if (parameters.setup.typeofstudy.value === 'condition') {
@@ -96,6 +96,10 @@ function Main() {
             const fasta = temp[0]['genome1']['genomefasta'];
             const annotation = temp[0]['genome1']['genomeannotation'];
             var outputId = temp[0]['genome1']['outputid'];
+
+            // for all genomes same value, because all use same genome fasta file
+            let tmpMultiFasta = Array(multiFasta.length).fill(multiFasta[0]);
+            setMultiFasta([...tmpMultiFasta]);
 
             for (let i = 0; i < genomes.length; i++) {
                 temp[i]['genome' + (i + 1)]['alignmentid'] = (i + 1);
@@ -879,6 +883,13 @@ function Main() {
                     setProjectName(result['projectName']);
                     setParameters(JSON.parse(result['parameters']));
                     setRnaGraph((result['rnaGraph'] === 'true'));
+                    
+                    // multiFasta String array to boolean array
+                    let tmpMultiF = result['multiFasta'].map((s) => {
+                        if (s === 'true') return true;
+                        return false;
+                    });
+                    setMultiFasta([...tmpMultiF]);
 
                     // assign uploaded files to genomes
                     const tmpGenome = [...JSON.parse(result['genomes'])];
@@ -889,16 +900,29 @@ function Main() {
                         tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = [];
 
                         for (let j = 0; j < allFiles.length; j++) {
-                            var str = allFiles[j].webkitRelativePath;
-                            var name = str.split("/")[0];
-                            str = str.replace(name + '/', '');
-
+                            
                             if (allFiles[j].name === tmpFasta) {
                                 tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = allFiles[j];
-
-                            } else if (str.split('/')[0] + '/' === tmpAnnotation) {
-                                tmpGenome[i]['genome' + (i + 1)]['genomeannotation'].push(allFiles[j]);
-                            }
+                            // annotation file
+                            } else {
+                                // multiFasta file -> annotation folder with all annotation files for this genome
+                                if(tmpMultiF[i]) {
+                                    // get entire path inclusive the parent folder and gff folder that contains the file
+                                    var str = allFiles[j].webkitRelativePath;
+                                    // get the parent folder name of all files
+                                    var name = str.split("/")[0];
+                                    // remove the parent folder name from the string -> get: gff_folder_name/file_name.gff
+                                    str = str.replace(name + '/', '');
+                        
+                                    // check if gff_folder_name is the same as tmpAnnotation(= folder name from contig file)
+                                    if (str.split('/')[0] + '/' === tmpAnnotation) {
+                                        tmpGenome[i]['genome' + (i + 1)]['genomeannotation'].push(allFiles[j]);
+                                    }
+                                // single annotation file    
+                                } else if(allFiles[j].name === tmpAnnotation) {
+                                    tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = [allFiles[j]];
+                                }
+                            } 
                         }
                     }
 

@@ -820,7 +820,7 @@ function Main() {
             showError('Config File has wrong format. Config file format (.config) needed.')
         } else {
             setConfHeader("Upload Folder");
-            setText("Select the folder that contains all needed files. The genome annotation files for each Genome/Condition have to be in separate directories.")
+            setText("Select the folder that contains all needed files."); //The genome annotation files for each Genome/Condition have to be in separate directories.")
             setConfFile(file);
         }
     }
@@ -1002,16 +1002,23 @@ function Main() {
                 var tmpFasta = "";
                 var tmpAnn = "";
 
+                // genomeFasta file
+                try { tmpFasta = genomes[i]['genome' + (i + 1)]['genomefasta'].name; }
+                catch { console.log('Wrong fasta file') }
+                tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = tmpFasta;
+
+                // genomeAnnotation file
                 try {
-                    tmpFasta = genomes[i]['genome' + (i + 1)]['genomefasta'].name;
-                    tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = tmpFasta;
-                } catch { console.log('Wrong fasta file') }
-                try {
-                    tmpAnn = genomes[i]['genome' + (i + 1)]['genomeannotation'][0].webkitRelativePath;
-                    var name = tmpAnn.split("/")
-                    tmpAnn = name[name.length - 2] + '/';
-                    tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = tmpAnn;
+                    // multiFasta -> gff file in folder, else single file
+                    if (multiFasta[i]) {
+                        tmpAnn = genomes[i]['genome' + (i + 1)]['genomeannotation'][0].webkitRelativePath;
+                        var name = tmpAnn.split("/")
+                        tmpAnn = name[name.length - 2] + '/';
+                    } else {
+                        tmpAnn = genomes[i]['genome' + (i + 1)]['genomeannotation'][0].name;
+                    }
                 } catch { console.log('Wrong annotation file') }
+                tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = tmpAnn;
             }
 
             // save file names from replicates
@@ -1030,22 +1037,21 @@ function Main() {
                     var tmpNF = "";
                     var tmpNR = "";
 
-                    try {
-                        tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'].name;
-                        tmpG[k]['replicate' + letter]['enrichedforward'] = tmpEF;
-                    } catch { console.log('Wrong enriched forward file') }
-                    try {
-                        tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'].name;
-                        tmpG[k]['replicate' + letter]['enrichedreverse'] = tmpER;
-                    } catch { console.log('Wrong enriched reverse file') }
-                    try {
-                        tmpNF = tmpG[k]['replicate' + letter]['normalforward'].name;
-                        tmpG[k]['replicate' + letter]['normalforward'] = tmpNF;
-                    } catch { console.log('Wrong normal forward file') }
-                    try {
-                        tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].name;
-                        tmpG[k]['replicate' + letter]['normalreverse'] = tmpNR;
-                    } catch { console.log('Wrong normal reverse file') }
+                    try { tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'].name; }
+                    catch { console.log('Wrong enriched forward file') }
+                    tmpG[k]['replicate' + letter]['enrichedforward'] = tmpEF;
+
+                    try { tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'].name; }
+                    catch { console.log('Wrong enriched reverse file') }
+                    tmpG[k]['replicate' + letter]['enrichedreverse'] = tmpER;
+
+                    try { tmpNF = tmpG[k]['replicate' + letter]['normalforward'].name; } 
+                    catch { console.log('Wrong normal forward file') }
+                    tmpG[k]['replicate' + letter]['normalforward'] = tmpNF;
+
+                    try { tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].name; } 
+                    catch { console.log('Wrong normal reverse file') }
+                    tmpG[k]['replicate' + letter]['normalreverse'] = tmpNR;
                 }
                 tmpRep[i]['genome' + (i + 1)] = tmpG;
             }
@@ -1058,6 +1064,9 @@ function Main() {
                 console.log('no alignment file')
             }
 
+            // multiFasta files?
+            let multiFastaString = String(multiFasta);
+
             // send input parameters to server
             const formData = new FormData();
             formData.append('projectname', JSON.stringify(projectName));
@@ -1067,6 +1076,7 @@ function Main() {
             formData.append('genomes', JSON.stringify(tmpGenome));
             formData.append('replicates', JSON.stringify(tmpRep));
             formData.append('alignmentFile', JSON.stringify(tmpAlignFile));
+            formData.append('multiFasta', JSON.stringify(multiFastaString));
             fetch('/api/saveConfig/', {
                 method: 'POST',
                 body: formData
@@ -1156,11 +1166,14 @@ function Main() {
                                 <option value="more sensitive">more sensitive</option>
                                 <option value="very sensitive">very sensitive</option>
                             </select>
-
-                            <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)}
-                                data-title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime." />
-                            <label className='element checkbox' htmlFor='check'
-                                data-title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime.">write rna-seq graph</label>
+                           
+                            <label className='grid-checkbox' htmlFor='check'
+                                data-title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime.">
+                                <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)}/>
+                                write rna-seq graph
+                            </label>
+                           
+                           
                         </div>
 
                         {(typeof parameters.parameterBox === 'undefined')

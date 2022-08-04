@@ -1,3 +1,4 @@
+import json
 from werkzeug.utils import secure_filename
 
 # save files in temporary directory and save file paths in json string
@@ -93,7 +94,7 @@ def save_replicate_file(directory, file, replicateObject, genomeCounter, replica
 
     return tmpRep
 
-def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory,  
+def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory, multiFasta, 
                         loadConfig='false', saveConfig='false', configFile=" "):
     '''create json string that is needed as input for  TSSpredator.jar'''
 
@@ -136,6 +137,7 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"minNormalHeight": "' + str(prediction['baseheight']['value']) + '" ,'
     jsonString += '"minNumRepMatches": "' + str(comparative['matchingreplicates']['value']) + '" ,'
     jsonString += '"minPlateauLength": "' + str(prediction['steplength']['value']) + '",'
+    jsonString += '"multiFasta": "' + multiFasta + '",'
     jsonString += '"mode": "' + studytype + '",'
     jsonString += '"normPercentile": "' + str(normalization['normalizationpercentile']['value']) + '",'
     jsonString += '"numReplicates": "' + str(replicateNum['num']) + '",'

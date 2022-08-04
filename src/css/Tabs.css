@@ -19,9 +19,7 @@
 .tab, .tab-rep {
   padding: 1.03%;
   justify-content: center;
-  min-width: 10.41%;
-  width: 10.41%;
-  max-width: 12%;
+  min-width: fit-content;
   background-color: #e0e0e0;
   cursor: pointer;
   box-sizing: content-box;
@@ -122,6 +120,9 @@
 }
 
 .multiFasta-checkbox {
-  margin-left: -9.8%;
   margin-top: 5rem;
+}
+
+input[type=checkbox] {
+  margin-right: 1%;
 }

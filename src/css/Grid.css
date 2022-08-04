@@ -86,10 +86,10 @@
     margin-left: 0.95%;
     min-width: fit-content;
 }
-input[type=checkbox] {
+.grid-checkbox {
+    min-width: 50%;
     margin-left: 10%;
-    margin-right: 1%;
-    margin-top: -0.3%;
+    text-align: left;
 }
 
 

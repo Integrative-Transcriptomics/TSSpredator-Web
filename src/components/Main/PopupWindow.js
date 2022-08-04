@@ -73,7 +73,10 @@ function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyTy
 
             // for upload container -> drop several files at the same time
             if (Array.isArray(event)) {
-                set([...state, ...event]);
+                let tmp = [...state, ...event];
+                tmp.sort();
+                //set([...state, ...event]);
+                set([...tmp]);
             } else {
                 set([...state, event]);
             }

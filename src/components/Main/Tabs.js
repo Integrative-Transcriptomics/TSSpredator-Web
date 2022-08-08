@@ -97,8 +97,10 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 
-                {genome ? <><TextFieldGroup fields={[{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid'] },
-                { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />                
+                {genome ? <>
+                  <TextFieldGroup fields={studyType === 'genome' 
+                  ? [{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid']}, { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid']}] 
+                  : [{ "name": "Output ID", "value": g['genome' + (i + 1)]['outputid']}]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />                
 
                   <br></br>
                   <label className={disabled ? 'multiFasta-checkbox disabled-text' : 'multiFasta-checkbox'} data-title="Check the box if the given genome file is a multi FASTA file.">

@@ -1,0 +1,86 @@
+{
+    "parameters": 
+        {"setup": 
+            {"typeofstudy":{"key": "typeofstudy", "name": "Type of Study", "value": "genome", "combo1": "TSS prediction in different condition(s)", "combo2": "Comparison of different strains/species", "group": "setup", "tooltip": "For a cross-strain analysis an alignment file has to be provided. When comparing different conditions the genomic sequence and genome annotation has to be set in the first genome tab only."}, 
+            "numberofgenomes":{"key": "numberofgenomes", "name": "Number of Genomes", "min": 1, "max": 100, "step": 1, "value": 4, "group": "setup", "tooltip": "Set the number of Conditions/Genomes."},
+            "numberofreplicates":{"key": "numberofreplicates", "name": "Number of Replicates", "min": 1, "max": 26, "step": 1, "value": 2, "group": "setup", "tooltip": "Set the number of Replicates."}},
+        "parameterBox": 
+            {"Prediction": 
+                {"stepheight":{"key": "stepheight", "name": "step height", "min": 0, "max": null, "step": 0.05, "veryspecific": 1, "morespecific": 0.5, "default": 0.3, "moresensitive": 0.2, "verysensitive": 0.1, "value": 0.3, "group": "Prediction", "tooltip": "Minimal number of read starts at a certain genomic position to be considered as a TSS candidate. A lower value results in a higher sensitivity."},
+                "stepfactor":{"key": "stepfactor", "name": "step factor", "min": 1, "max": null, "step": 0.1, "veryspecific": 2, "morespecific": 2, "default": 2, "moresensitive": 1.5, "verysensitive": 1, "value": 2, "group": "Prediction", "tooltip": "Minimal factor by which the TSS height has to exceed the local expression background. A lower value results in a higher sensitivity. Set this value to 1 to disable it."},
+                "enrichmentfactor":{"key": "enrichmentfactor", "name": "enrichment factor", "min": 0, "max": null, "step": 0.1, "veryspecific": 3, "morespecific": 2, "default": 2, "moresensitive": 1.5, "verysensitive": 1, "value": 2, "group": "Prediction", "tooltip": "Minimal enrichment factor for a TSS candidate. The threshold has to be exceeded in at least one strain/condition. If the threshold is not exceeded in another condition the TSS candidate is marked as detected but not as enriched in this strain/condition. A lower value results in a higher sensitivity. Set this value to 0 to disable it."},
+                "stepheightreduction":{"key": "stepheightreduction", "name": "step height reduction", "min": 0, "max": 0.3, "step": 0.05, "veryspecific": 0.5, "morespecific": 0.2, "default": 0.2, "moresensitive": 0.15, "verysensitive": 0.09, "value": 0.2, "group": "Prediction", "tooltip": "When comparing different strains/conditions and the step height threshold is reached in at least one strain/condition, the threshold is reduced for the other strains/conditions by the value set here. A higher value results in a higher sensitivity."},
+                "stepfactorreduction":{"key": "stepfactorreduction", "name": "step factor reduction", "min": 0, "max": 2, "step": 0.1, "veryspecific": 0.5, "morespecific": 0.5, "default": 0.5, "moresensitive": 0.5, "verysensitive": 0, "value": 0.5, "group": "Prediction", "tooltip": "When comparing different strains/conditions and the step factor threshold is reached in at least one strain/condition, the threshold is reduced for the other strains/conditions by the value set here. A higher value results in a higher sensitivity."},
+                "processingsitefactor":{"key": "processingsitefactor", "name": "processing site factor", "min": 0, "max": null, "step": 0.1, "veryspecific": 1, "morespecific": 1.2, "default": 1.5, "moresensitive": 2, "verysensitive": 3, "value": 1.5, "group": "Prediction", "tooltip": "Maximal factor by which the untreated library may be higher than the treated library and above which the TSS candidate is considered as a processing site and not annotated as detected. A higher value results in a higher sensitivity."},
+                "steplength":{"key": "steplength", "name": "step length", "min": 0, "max": null, "step": 1, "value": 0, "veryspecific": 0, "morespecific": 0, "default": 0, "moresensitive": 0, "verysensitive": 0, "group": "Prediction", "tooltip": "Minimal length of the TSS related expression region (bp). This value depends on the length of the reads that are stacking at the TSS position. In most cases this feature can be disabled by setting it to '0'. However, it can be useful if RNA-seq reads have been trimmed extensively before mapping."},
+                "baseheight":{"key": "baseheight", "name": "base height", "min": 0, "max": null, "step": 0.05, "value": 0, "veryspecific": 0, "morespecific": 0, "default": 0, "moresensitive": 0, "verysensitive": 0, "group": "Prediction", "tooltip": "Minimal number of reads in the non-enriched library that start at the TSS position. Set this value to 0 to disable it."}},
+            "Normalization": 
+                {"normalizationpercentile":{"key": "normalizationpercentile", "name": "normalization percentile", "min": 0, "max": 1, "step": 0.1, "value": 0.9, "veryspecific": 0.9, "morespecific": 0.9, "default": 0.9, "moresensitive": 0.9, "verysensitive": 0.9, "group": "Normalization", "tooltip": "Percentile that is used as a normalization factor. Set this value to 0 to disable normalization."},
+                "enrichmentnormalizationpercentile":{"key": "enrichmentnormalizationpercentile", "name": "enrichment normalization percentile", "min": 0, "max": 1, "step": 0.1, "value": 0.5, "veryspecific": 0.5, "morespecific": 0.5, "default": 0.5, "moresensitive": 0.5, "verysensitive": 0.5, "group": "Normalization", "tooltip": "Percentile that is used as a normalization factor. Set this value to 0 to disable normalization."}},
+            "Clustering": 
+                {"tssclusteringdistance":{"key": "tssclusteringdistance", "name": "TSS clustering distance", "min": 0, "max": 100, "step": 1, "value": 3, "veryspecific": 3, "morespecific": 3, "default": 3, "moresensitive": 3, "verysensitive": 3, "group": "Clustering", "tooltip": "Maximal distance (bp) between TSS candidates to be clustered together. Set this value to '0' to disable clustering."},
+                "clustermethod":{"key": "clustermethod", "name": "cluster method", "value": "HIGHEST", "combo1": "HIGHEST", "combo2": "FIRST", "group": "Clustering", "tooltip": "TSS candidates in close vicinity are clustered and only one of the candidates is kept. HIGHEST keeps the candidate with the highest expression. FIRST keeps the candidate that is located most upstream."}},
+            "Classification": 
+                {"utrlength":{"key": "utrlength", "name": "UTR length", "min": 0, "max": null, "step": 10, "value": 300, "veryspecific": 300, "morespecific": 300, "default": 300, "moresensitive": 300, "verysensitive": 300, "group": "Classification", "tooltip": "Maximal upstream distance (bp) of a TSS candidate from the start codon of a gene that is allowed to be assigned as a primary or secondary TSS for that gene."},
+                "antisenseutrlength":{"key": "antisenseutrlength", "name": "antisense UTR length", "min": 0, "max": null, "step": 10, "value": 100, "veryspecific": 100, "morespecific": 100, "default": 100, "moresensitive": 100, "verysensitive": 100, "group": "Classification", "tooltip": "Maximal upstream or downstream distance (bp) of a TSS candidate from the start or end of a gene to which the TSS candidate is in antisense orientation that is allowed to be assigned as an antisense TSS for that gene."}},
+            "Comparative": 
+                {"allowedcrossgenomeshift":{"key": "allowedcrossgenomeshift", "name": "allowed cross-genome shift", "min": 0, "max": 100, "step": 1, "value": 1, "veryspecific": 1, "morespecific": 1, "default": 1, "moresensitive": 1, "verysensitive": 1, "group": "Comparative", "tooltip": "Maximal positional difference (bp) for TSS candidates from different strains/conditions to be assigned to each other."},
+                "allowedcrossreplicateshift":{"key": "allowedcrossreplicateshift", "name": "allowed cross-replicate shift", "min": 0, "max": 100, "step": 1, "value": 1, "veryspecific": 1, "morespecific": 1, "default": 1, "moresensitive": 1, "verysensitive": 1, "group": "Comparative", "tooltip": "Maximal positional difference (bp) for TSS candidates from different replicates to be assigned to each other."},
+                "matchingreplicates":{"key": "matchingreplicates", "name": "matching replicates", "min": 1, "max": 1, "step": 1, "value": 1, "veryspecific": 1, "morespecific": 1, "default": 1, "moresensitive": 1, "verysensitive": 1, "group": "Comparative", "tooltip": "Minimal number of replicates in which a TSS candidate has to be detected. A lower value results in a higher sensitivity."}}}},
+    "genomes": [
+        {"genome1": 
+            {"name": "NC_003912", "placeholder": "Genome_1", "alignmentid": 1, "outputid": "locus_tag", 
+              "genomeannotation": "NC_003912_full.gff", "genomefasta": "NC_003912.fa" }}, 
+        {"genome2": 
+            {"name": "NC_002163", "placeholder": "Genome_2", "alignmentid": 2, "outputid": "locus_tag", 
+          "genomeannotation": "NC_002163_full.gff", "genomefasta": "NC_002163.fa" }},
+        {"genome3": 
+            {"name": "NC_008787", "placeholder": "Genome_3", "alignmentid": 3, "outputid": "locus_tag", 
+            "genomeannotation": "NC_008787_full.gff", "genomefasta": "NC_008787.fa" }}, 
+        {"genome4": 
+            {"name": "NC_009839", "placeholder": "Genome_4", "alignmentid": 4, "outputid": "locus_tag", 
+            "genomeannotation": "NC_009839_full.gff", "genomefasta": "NC_009839.fa" }}],
+
+    "replicates": [
+        {"genome1": 
+            [{"replicatea": {"name": "Replicate a", "enrichedforward": "RM1221_R1_enriched_NC_003912_plus.gr", 
+                                                    "enrichedreverse": "RM1221_R1_enriched_NC_003912_minus.gr", 
+                                                    "normalforward": "RM1221_R1_normal_NC_003912_plus.gr", 
+                                                    "normalreverse": "RM1221_R1_normal_NC_003912_minus.gr"}}, 
+             {"replicateb": {"name": "Replicate b", "enrichedforward": "RM1221_R2_enriched_NC_003912_plus.gr", 
+                                                    "enrichedreverse": "RM1221_R2_enriched_NC_003912_minus.gr", 
+                                                    "normalforward": "RM1221_R2_normal_NC_003912_plus.gr", 
+                                                    "normalreverse": "RM1221_R2_normal_NC_003912_minus.gr"}}]}, 
+        {"genome2": 
+            [{"replicatea": {"name": "Replicate a", "enrichedforward": "NCTC11168_R1_enriched_NC_002163_plus.gr", 
+                                                    "enrichedreverse": "NCTC11168_R1_enriched_NC_002163_minus.gr", 
+                                                    "normalforward": "NCTC11168_R1_normal_NC_002163_plus.gr", 
+                                                    "normalreverse": "NCTC11168_R1_normal_NC_002163_minus.gr"}}, 
+             {"replicateb": {"name": "Replicate b", "enrichedforward": "NCTC11168_R2_enriched_NC_002163_plus.gr", 
+                                                    "enrichedreverse": "NCTC11168_R2_enriched_NC_002163_minus.gr", 
+                                                    "normalforward": "NCTC11168_R2_normal_NC_002163_plus.gr", 
+                                                    "normalreverse": "NCTC11168_R2_normal_NC_002163_minus.gr"}}]},
+        {"genome3": 
+            [{"replicatea": {"name": "Replicate a", "enrichedforward": "81-176_R1_enriched_NC_008787_plus.gr", 
+                                                    "enrichedreverse": "81-176_R1_enriched_NC_008787_minus.gr", 
+                                                    "normalforward": "81-176_R1_normal_NC_008787_plus.gr", 
+                                                    "normalreverse": "81-176_R1_normal_NC_008787_minus.gr"}}, 
+            {"replicateb": {"name": "Replicate b", "enrichedforward": "81-176_R2_enriched_NC_008787_plus.gr", 
+                                                    "enrichedreverse": "81-176_R2_enriched_NC_008787_minus.gr", 
+                                                    "normalforward": "81-176_R2_normal_NC_008787_plus.gr", 
+                                                    "normalreverse": "81-176_R2_normal_NC_008787_minus.gr"}}]}, 
+        {"genome4": 
+            [{"replicatea": {"name": "Replicate a", "enrichedforward": "81116_R1_enriched_NC_009839_plus.gr", 
+                                                    "enrichedreverse": "81116_R1_enriched_NC_009839_minus.gr", 
+                                                    "normalforward": "81116_R1_normal_NC_009839_plus.gr", 
+                                                    "normalreverse": "81116_R1_normal_NC_009839_minus.gr"}}, 
+            {"replicateb": {"name": "Replicate b", "enrichedforward": "81116_R2_enriched_NC_009839_plus.gr", 
+                                                    "enrichedreverse": "81116_R2_enriched_NC_009839_minus.gr", 
+                                                    "normalforward": "81116_R2_normal_NC_009839_plus.gr", 
+                                                    "normalreverse": "81116_R2_normal_NC_009839_minus.gr"}}]}],
+    "alignmentFile": "alignment.xmfa",
+    "rnaGraph": "false",
+    "projectName": "Campylobacter jejuni",
+    "numReplicates": 2,
+    "multiFasta": ["false", "false", "false", "false"]
+}

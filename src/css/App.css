@@ -1,5 +1,5 @@
 :root {
-    --mainColor: #ffa000;
+    --mainColor: rgb(255, 160, 0);
     --complement: #4000ff;
 }
 * {
@@ -49,6 +49,8 @@ input:focus {
     font-weight: bold;
     color: rgb(0, 0, 0, 0.85);
     margin-bottom: 1.2%;
+    min-width: fit-content;
+    width: 28%;
 }
 .project-name:focus {
     border: none;
@@ -341,6 +343,57 @@ select:hover {
 .loading {
     margin-left: 65%;
 }
+
+/* drop down menue*/
+.dropdown {
+    position: relative;
+    display: inline-block;
+    min-width: 13%;
+    margin-left: auto;
+    margin-right: 5%;
+  }
+
+.dropbtn {
+    background-color: var(--mainColor);
+    font-size: 1rem;
+    padding: 1.5% 0;
+    text-align: center;
+    min-width: 100%;
+    color: white;
+    border: 1px solid white;
+    cursor: pointer;
+  }
+    
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 100%;
+    box-shadow: 0px 2px 4px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+  }
+  
+  .dropdown-content button {
+    color: rgb(0, 0, 0, 0.8);
+    background-color: white;
+    width: 100%;
+    font-size: 0.9rem;
+    padding-top: 1%;
+    padding-bottom: 1%;
+    display: block;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .dropdown-content button:hover {
+    background-color: rgb(255, 160, 0, 0.5);
+}
+  
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+  
 
 @media only screen and (max-width: 1450px) {
     .form-container, .error-popup-inner{

@@ -1,6 +1,7 @@
 from asyncio.subprocess import PIPE
 from distutils.archive_util import make_archive
-from flask import Flask, request, send_file
+from importlib.resources import files
+from flask import Flask, request, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 import parameter
 import json
@@ -202,7 +203,25 @@ def saveConfig():
 
     return send_file(configFilename, as_attachment=True)
 
-   
+
+@app.route('/api/exampleData/<organism>/<type>/<filename>/')
+def exampleData(organism, type,filename):
+    '''send config file (json) or zip directory to load example data'''
+
+    json_path = './exampleData/{}/{}_config.json'.format(organism, organism)
+    #files_path =  './exampleData/{}/{}_files.zip'.format(organism, organism) 
+    files_path =  './exampleData/{}/Archive'.format(organism)
+
+    if type == 'json':
+        with open(json_path) as json_file:
+            data = json.load(json_file)
+            return {'result': json.dumps(data)}
+                
+    elif type == 'files':
+        #return  send_file(files_path, mimetype='application/zip') 
+        return send_from_directory(files_path, filename)
+
+  
 
 if __name__ == "__main__":
     app.run(debug=True)

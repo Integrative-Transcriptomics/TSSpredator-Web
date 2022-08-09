@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ClipLoader from "react-spinners/ClipLoader";
+import JSZip from 'jszip';
 import _ from 'lodash';
 import ParameterGroup from './Main/ParameterGroup';
 import ParameterAllGroups from './Main/ParameterAllGroups';
@@ -50,10 +51,8 @@ function Main() {
     // show name of genom tab: set to true when genome names of alignment file are used
     const [showGName, setShowGName] = useState(false);
 
-    // loading spinner
-    let [loading, setLoading] = useState(false);
-
-    // cappable-seq: use the same control library for all replicates
+    // loading spinner [runButton, loadExampleData]
+    const [loading, setLoading] = useState([false,false]);
 
 
     /**
@@ -70,12 +69,16 @@ function Main() {
      */
     const handleSubmit = (event, check = true) => {
         event.preventDefault();
-        setLoading(!loading);
+        setLoading([!loading[0], loading[1]]);
         // if studytype condition: fill out alignment, output id and multiFasta
         fillGenomes();
 
-        var run = checkInput();
+        console.log(genomes)
+        console.log(replicates)
+        console.log(numRep)
 
+        var run = checkInput();
+        
         // run without annotation files
         if (!check) {
             run = true;
@@ -307,7 +310,7 @@ function Main() {
             .then(response => response.json())
             .then(data => {
 
-                setLoading(false);
+                setLoading([false, false]);
 
                 if (data.result === 'success') {
                     // open result in new tab
@@ -809,7 +812,7 @@ function Main() {
     const showError = (error) => {
         setError(error);
         setEPopup(!ePopup);
-        setLoading(false);
+        setLoading([false, false]);
     }
 
     /**
@@ -859,6 +862,7 @@ function Main() {
 
     /**
      * send all uploaded files for the config to the flask server
+     * get back the assignment between files and genomes/replicates, parameters
      */
     const sendConfig = (tmpArray) => {
 
@@ -883,130 +887,137 @@ function Main() {
                     setProjectName(result['projectName']);
                     setParameters(JSON.parse(result['parameters']));
                     setRnaGraph((result['rnaGraph'] === 'true'));
-                    
-                    // multiFasta String array to boolean array
-                    let tmpMultiF = result['multiFasta'].map((s) => {
-                        if (s === 'true') return true;
-                        return false;
-                    });
-                    setMultiFasta([...tmpMultiF]);
 
-                    // assign uploaded files to genomes
-                    const tmpGenome = [...JSON.parse(result['genomes'])];
-                    for (let i = 0; i < tmpGenome.length; i++) {
-
-                        var tmpFasta = tmpGenome[i]['genome' + (i + 1)]['genomefasta'];
-                        var tmpAnnotation = tmpGenome[i]['genome' + (i + 1)]['genomeannotation'];
-                        tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = [];
-
-                        for (let j = 0; j < allFiles.length; j++) {
-                            
-                            if (allFiles[j].name === tmpFasta) {
-                                tmpGenome[i]['genome' + (i + 1)]['genomefasta'] = allFiles[j];
-                            // annotation file
-                            } else {
-                                // multiFasta file -> annotation folder with all annotation files for this genome
-                                if(tmpMultiF[i]) {
-                                    // get entire path inclusive the parent folder and gff folder that contains the file
-                                    var str = allFiles[j].webkitRelativePath;
-                                    // get the parent folder name of all files
-                                    var name = str.split("/")[0];
-                                    // remove the parent folder name from the string -> get: gff_folder_name/file_name.gff
-                                    str = str.replace(name + '/', '');
-                        
-                                    // check if gff_folder_name is the same as tmpAnnotation(= folder name from contig file)
-                                    if (str.split('/')[0] + '/' === tmpAnnotation) {
-                                        tmpGenome[i]['genome' + (i + 1)]['genomeannotation'].push(allFiles[j]);
-                                    }
-                                // single annotation file    
-                                } else if(allFiles[j].name === tmpAnnotation) {
-                                    tmpGenome[i]['genome' + (i + 1)]['genomeannotation'] = [allFiles[j]];
-                                }
-                            } 
-                        }
-                    }
-
-                    // assign uploaded files to replicates
-                    const tmpRep = [...JSON.parse(result['replicates'])];
-
-                    for (let i = 0; i < tmpRep.length; i++) {
-
-                        var tmpG = tmpRep[i]['genome' + (i + 1)];
-
-                        for (let k = 0; k < tmpG.length; k++) {
-
-                            const letter = String.fromCharCode(97 + k);
-
-                            var tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'];
-                            var tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'];
-                            var tmpNF = tmpG[k]['replicate' + letter]['normalforward'];
-                            var tmpNR = tmpG[k]['replicate' + letter]['normalreverse'];
-
-                            for (let j = 0; j < allFiles.length; j++) {
-
-                                str = allFiles[j].webkitRelativePath;
-                                name = str.split("/")[0];
-                                str = str.replace(name + '/', '');
-
-                                if (str === tmpEF) {
-                                    tmpG[k]['replicate' + letter]['enrichedforward'] = allFiles[j];
-
-                                } else if (str === tmpER) {
-                                    tmpG[k]['replicate' + letter]['enrichedreverse'] = allFiles[j];
-
-                                } else if (str === tmpNF) {
-                                    tmpG[k]['replicate' + letter]['normalforward'] = allFiles[j];
-
-                                } else if (str === tmpNR) {
-                                    tmpG[k]['replicate' + letter]['normalreverse'] = allFiles[j];
-                                }
-                            }
-                        }
-                        tmpRep[i]['genome' + (i + 1)] = tmpG;
-                    }
-
-                    // update replicate template
-                    var newRepNum = parseInt(result['numReplicate']);
-                    if (newRepNum > numRep) {
-                        for (let i = numRep; i < newRepNum; i++) {
-                            const repLetter = String.fromCharCode(97 + i);
-                            const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
-                            // update replicate template
-                            replicateTemplate.push(newRep);
-                            setReplicateTemplate(replicateTemplate);
-                        }
-                    } else if (newRepNum < numRep) {
-                        const diff = numRep - newRepNum;
-                        for (let i = 0; i < diff; i++) {
-                            replicateTemplate.pop();
-                            setReplicateTemplate(replicateTemplate);
-                        }
-                    }
-
-                    setReplicates(tmpRep);
-                    setnumRep(newRepNum);
-                    setGenomes(tmpGenome);
-                    setShowGName(true);
-
-                    // if alignmentFile given assign it to useState
-                    if (result['alignmentFile'].length > 0) {
-                        for (let j = 0; j < allFiles.length; j++) {
-                            str = allFiles[j].webkitRelativePath;
-                            name = str.split("/")[0];
-                            str = str.replace(name + '/', '');
-
-                            if (str === result['alignmentFile']) {
-                                setAlignmentFile(allFiles[j]);
-                                break;
-                            }
-                        }
-                    }
+                    assignFiles(allFiles, result['multiFasta'], [...JSON.parse(result['genomes'])], [...JSON.parse(result['replicates'])], result['numReplicate'], result['alignmentFile']);
 
                 } else {
                     showError(data.data);
                 }
             })
             .catch(err => console.log(err));
+    }
+
+    /**
+     * assign given files to genomes/replicates
+     */
+    const assignFiles = (allFiles, new_multiFasta, new_genomes, new_replicates, new_replicateNum, new_alignmentFile) => {
+
+        // multiFasta String array to boolean array
+        let tmpMultiF = new_multiFasta.map((s) => {
+            if (s === 'true') return true;
+            return false;
+        });
+        setMultiFasta([...tmpMultiF]);
+
+        // assign uploaded files to genomes
+        for (let i = 0; i < new_genomes.length; i++) {
+
+            var tmpFasta = new_genomes[i]['genome' + (i + 1)]['genomefasta'];
+            var tmpAnnotation = new_genomes[i]['genome' + (i + 1)]['genomeannotation'];
+            new_genomes[i]['genome' + (i + 1)]['genomeannotation'] = [];
+
+            for (let j = 0; j < allFiles.length; j++) {
+                
+                if (allFiles[j].name === tmpFasta) {
+                    new_genomes[i]['genome' + (i + 1)]['genomefasta'] = allFiles[j];
+                // annotation file
+                } else {
+                    // multiFasta file -> annotation folder with all annotation files for this genome
+                    if (tmpMultiF[i]) {
+                        // get entire path inclusive the parent folder and gff folder that contains the file
+                        var str = allFiles[j].webkitRelativePath;
+                        // get the parent folder name of all files
+                        var name = str.split("/")[0];
+                        // remove the parent folder name from the string -> get: gff_folder_name/file_name.gff
+                        str = str.replace(name + '/', '');
+
+                        // check if gff_folder_name is the same as tmpAnnotation(= folder name from contig file)
+                        if (str.split('/')[0] + '/' === tmpAnnotation) {
+                            new_genomes[i]['genome' + (i + 1)]['genomeannotation'].push(allFiles[j]);
+                        }
+                        // single annotation file    
+                    } else if (allFiles[j].name === tmpAnnotation) {
+                        new_genomes[i]['genome' + (i + 1)]['genomeannotation'] = [allFiles[j]];
+                    }
+                }
+            }
+        }
+
+        // assign uploaded files to replicates
+        for (let i = 0; i < new_replicates.length; i++) {
+
+            var tmpG = new_replicates[i]['genome' + (i + 1)];
+
+            for (let k = 0; k < tmpG.length; k++) {
+
+                const letter = String.fromCharCode(97 + k);
+
+                var tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'];
+                var tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'];
+                var tmpNF = tmpG[k]['replicate' + letter]['normalforward'];
+                var tmpNR = tmpG[k]['replicate' + letter]['normalreverse'];
+
+                for (let j = 0; j < allFiles.length; j++) {
+
+                    let fileName = allFiles[j].name
+
+                    if (fileName === tmpEF) {
+                        tmpG[k]['replicate' + letter]['enrichedforward'] = allFiles[j];
+
+                    } else if (fileName === tmpER) {
+                        tmpG[k]['replicate' + letter]['enrichedreverse'] = allFiles[j];
+
+                    } else if (fileName === tmpNF) {
+                        tmpG[k]['replicate' + letter]['normalforward'] = allFiles[j];
+
+                    } else if (fileName === tmpNR) {
+                        tmpG[k]['replicate' + letter]['normalreverse'] = allFiles[j];
+                    }
+                }
+            }
+            new_replicates[i]['genome' + (i + 1)] = tmpG;
+        }
+
+        // update replicate template
+        updateReplicateTemplate(parseInt(new_replicateNum));
+
+        setReplicates([...new_replicates]);
+        setGenomes([...new_genomes]);
+        setShowGName(true);
+
+        // if alignmentFile given assign it to useState
+        if (new_alignmentFile.length > 0) {
+            for (let j = 0; j < allFiles.length; j++) {
+               
+                if ( allFiles[j].name === new_alignmentFile) {
+                    setAlignmentFile(allFiles[j]);
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * update replicate template
+     */
+    const updateReplicateTemplate = (newRepNum) => {
+
+        if (newRepNum > numRep) {
+            for (let i = numRep; i < newRepNum; i++) {
+                const repLetter = String.fromCharCode(97 + i);
+                const newRep = JSON.parse(repTemplate.replaceAll('0', repLetter));
+                // update replicate template
+                replicateTemplate.push(newRep);
+                setReplicateTemplate(replicateTemplate);
+            }
+        } else if (newRepNum < numRep) {
+            const diff = numRep - newRepNum;
+            for (let i = 0; i < diff; i++) {
+                replicateTemplate.pop();
+                setReplicateTemplate(replicateTemplate);
+            }
+        }
+        setnumRep(newRepNum);
     }
 
     /**
@@ -1069,11 +1080,11 @@ function Main() {
                     catch { console.log('Wrong enriched reverse file') }
                     tmpG[k]['replicate' + letter]['enrichedreverse'] = tmpER;
 
-                    try { tmpNF = tmpG[k]['replicate' + letter]['normalforward'].name; } 
+                    try { tmpNF = tmpG[k]['replicate' + letter]['normalforward'].name; }
                     catch { console.log('Wrong normal forward file') }
                     tmpG[k]['replicate' + letter]['normalforward'] = tmpNF;
 
-                    try { tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].name; } 
+                    try { tmpNR = tmpG[k]['replicate' + letter]['normalreverse'].name; }
                     catch { console.log('Wrong normal reverse file') }
                     tmpG[k]['replicate' + letter]['normalreverse'] = tmpNR;
                 }
@@ -1132,7 +1143,137 @@ function Main() {
                 })
                 .catch(err => console.log(err));
         }
+    }
 
+    /**
+     * load example data from server
+     */
+    const loadExampleData = (event) => {
+
+        const organism = event.target.name;
+        setLoading([true, true]);
+
+        // get correct configuration
+        fetch(`/api/exampleData/${organism}/json/-/`)
+            .then(res => res.json())
+            .then(data => {
+                let json_config = JSON.parse(data.result);
+                setParameters(json_config['parameters']);
+                setProjectName(json_config['projectName']);
+                setRnaGraph(json_config['rnaGraph'] === 'true');
+
+                // get genome files
+                const new_genomes = json_config['genomes'];
+                for(let i = 0; i < new_genomes.length; i++) {
+
+                        var tmpFasta = new_genomes[i]['genome' + (i + 1)]['genomefasta'];
+                        var tmpAnnotation = new_genomes[i]['genome' + (i + 1)]['genomeannotation'];
+                        
+                        Promise.all([
+                            fetch(`/api/exampleData/${organism}/files/${tmpFasta}/`).then(res => res.blob()),
+                            fetch(`/api/exampleData/${organism}/files/${tmpAnnotation}/`).then(res => res.blob())
+                        ]).then(allResponses => {
+                            if(json_config['parameters']['setup']['typeofstudy']['value'] === 'condition') {
+
+                                for (let j=0; j < new_genomes.length; j++) {
+                                    new_genomes[j]['genome' + (j + 1)]['genomefasta'] = new File([allResponses[0]], tmpFasta);
+                                    new_genomes[j]['genome' + (j + 1)]['genomeannotation'] = [new File([allResponses[1]], tmpAnnotation)];
+                                }
+                            } else {
+                                new_genomes[i]['genome' + (i + 1)]['genomefasta'] = new File([allResponses[0]], tmpFasta);
+                            new_genomes[i]['genome' + (i + 1)]['genomeannotation'] = [new File([allResponses[1]], tmpAnnotation)];
+                            }
+                        })
+                        if(json_config['parameters']['setup']['typeofstudy']['value'] === 'condition') break;
+                }
+
+                // get replicate files
+                const new_replicates = json_config['replicates'];
+
+                for (let i = 0; i < new_replicates.length; i++) {
+
+                    var tmpG = new_replicates[i]['genome' + (i + 1)];
+        
+                    for (let k = 0; k < tmpG.length; k++) {
+        
+                        const letter = String.fromCharCode(97 + k);
+        
+                        var tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'];
+                        var tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'];
+                        var tmpNF = tmpG[k]['replicate' + letter]['normalforward'];
+                        var tmpNR = tmpG[k]['replicate' + letter]['normalreverse'];
+
+                        Promise.all([
+                            fetch(`/api/exampleData/${organism}/files/${tmpEF}/`).then(res => res.blob()),
+                            fetch(`/api/exampleData/${organism}/files/${tmpER}/`).then(res => res.blob()),
+                            fetch(`/api/exampleData/${organism}/files/${tmpNF}/`).then(res => res.blob()),
+                            fetch(`/api/exampleData/${organism}/files/${tmpNR}/`).then(res => res.blob())
+                        ]).then(allResponses => {
+                            new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['enrichedforward'] = new File([allResponses[0]], tmpEF);
+                            new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['enrichedreverse'] = [new File([allResponses[1]], tmpER)];
+                            new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['normalforward'] = new File([allResponses[2]], tmpNF);
+                            new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['normalreverse'] = [new File([allResponses[3]], tmpNR)];
+
+                            if(i === new_replicates.length -1 && k === tmpG.length -1) {
+                                setLoading([false, false]);
+                            }
+                        })
+                    }
+                }
+
+                setGenomes([...new_genomes]);
+                setShowGName(true);
+                setReplicates([...new_replicates]);
+                updateReplicateTemplate(parseInt(json_config['numReplicates']));
+
+                // multiFasta String array to boolean array
+                let tmpMultiF = json_config['multiFasta'].map((s) => {
+                    if (s === 'true') return true;
+                    return false;
+                });
+                setMultiFasta([...tmpMultiF]);
+
+                 // if alignmentFile given assign it to useState
+                if (typeof json_config['alignmentFile'] !== 'undefined') {
+
+                    const fileName = json_config['alignmentFile'];
+
+                    fetch(`/api/exampleData/${organism}/files/${fileName}/`)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        new File([blob], fileName)
+                    })
+                }
+
+
+
+                // get files
+                /*fetch(`/api/exampleData/${organism}/files/`)
+                .then(res => res.blob())
+                .then(blob => {     
+                    
+                    JSZip.loadAsync(blob)
+                        .then(zip => {
+                            const allFiles = [];
+                            Object.keys(zip.files).forEach((filename) => {
+                                zip.files[filename].async('string').then((data) => {
+                                    allFiles.push(new File([data], filename.replace('Archive/', '')));
+                                })                             
+                            });                          
+                            
+                            if(typeof json_config['alignmentFile'] !== 'undefined') {
+                                assignFiles(allFiles, json_config['multiFasta'], json_config['genomes'], json_config['replicates'], json_config['numReplicates'], json_config['alignmentFile']);
+                            } else {
+                                assignFiles(allFiles, json_config['multiFasta'], json_config['genomes'], json_config['replicates'], json_config['numReplicates'], '');
+                            }
+
+                            setParameters(json_config['parameters']);
+                            setProjectName(json_config['projectName']);
+                            setRnaGraph(json_config['rnaGraph'] === 'true');
+                            setLoading(false, false);                                                       
+                    });
+                });*/
+            });
     }
 
     return (
@@ -1142,6 +1283,16 @@ function Main() {
 
             <header>
                 <h1>TSSpredator</h1>
+                <div className="dropdown">
+                    {loading[1] 
+                        ? <div className='loading'><ClipLoader color='white' loading={loading[0]} size={20} /></div>
+                        : <><button className="dropbtn">Load Example Data</button>
+                            <div className="dropdown-content">
+                                <button name='campylobacter' type='button' onClick={(e) => loadExampleData(e)}>Campylobacter jejuni</button>
+                                <button name='pseudomonas' type='button' onClick={(e) => loadExampleData(e)}>Pseudomonas aeruginosa</button>
+                            </div>
+                        </>}
+                </div>
             </header>
 
             <div className='form-container'>
@@ -1190,14 +1341,14 @@ function Main() {
                                 <option value="more sensitive">more sensitive</option>
                                 <option value="very sensitive">very sensitive</option>
                             </select>
-                           
+
                             <label className='grid-checkbox' htmlFor='check'
                                 data-title="If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime.">
-                                <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)}/>
+                                <input type="checkbox" name="rna-seq-graph" id='check' checked={rnaGraph} onChange={() => setRnaGraph(!rnaGraph)} />
                                 write rna-seq graph
                             </label>
-                           
-                           
+
+
                         </div>
 
                         {(typeof parameters.parameterBox === 'undefined')
@@ -1213,11 +1364,10 @@ function Main() {
                     <p>or</p>
                     <button className='button no-margin' type="button" onClick={() => saveConfigFile()}>Save</button>
                     <p>Configuration</p>
-                    {loading ? <div className='loading'><ClipLoader color='#ffa000' loading={loading} size={30} /></div>
+                    {loading[0] ? <div className='loading'><ClipLoader color='#ffa000' loading={loading[0]} size={30} /></div>
                         : <button className='button run' type="button" onClick={(e) => handleSubmit(e)}>Start TSS prediction</button>}
 
                 </div>
-
             </div>
         </div>
     )

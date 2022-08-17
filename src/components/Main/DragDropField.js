@@ -79,8 +79,8 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
                 currentFiles.map((n, i) => {
                     return (
                         <div draggable className={typeof n === 'undefined' ? ' ' : 'drag-box'} key={n + i} data-name={n} onDragStart={(e) => handleDragStart(e)} id={i}>
-                            {n}
-                        </div>
+                           {n}
+                        </div>                        
                     )
                 }) : <></>}
         </div>

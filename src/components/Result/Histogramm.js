@@ -14,16 +14,17 @@ import createPlotlyComponent from "react-plotly.js/factory";
 function Histogramm({ elements, xaxis, steps, cap, show }) {
 
   const Plot = createPlotlyComponent(Plotly);
-  const title = 'Histogram over all ' + xaxis + 's with a cap at ' + cap
+  const title = 'Overlaid Histogram over all ' + xaxis + 's with a cap at ' + cap;
 
   return (
     <div className={show ? '' : 'hidden'}>
       <Plot
         data={[
-          { type: 'histogram', x: elements, xbins: { size: steps }, marker: { color: 'black', line: { color: 'white', width: 1 } } },
+          { type: 'histogram', name: 'detected and enriched', x: elements['enriched'], xbins: { size: steps }, opacity: 1, marker: { color: 'black', line: { color: 'white', width: 1 }} },
+          { type: 'histogram', name: 'detected', x: elements['detected'], xbins: { size: steps }, opacity: 1, marker: { color: 'orange', line: { color: 'white', width: 1 }} },
         ]}
         useResizeHandler={true}
-        layout={{title: title, xaxis: { title: xaxis }, yaxis: { title: 'Count' } }}
+        layout={{title: title, xaxis: { title: xaxis }, yaxis: { title: 'Count' }, barmode: 'overlay' }}
         style={{width: '100%', height: '100%'}}
       />
     </div>

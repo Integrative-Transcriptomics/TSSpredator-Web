@@ -1206,9 +1206,9 @@ function Main() {
                             fetch(`/api/exampleData/${organism}/files/${tmpNR}/`).then(res => res.blob())
                         ]).then(allResponses => {
                             new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['enrichedforward'] = new File([allResponses[0]], tmpEF);
-                            new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['enrichedreverse'] = [new File([allResponses[1]], tmpER)];
+                            new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['enrichedreverse'] = new File([allResponses[1]], tmpER);
                             new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['normalforward'] = new File([allResponses[2]], tmpNF);
-                            new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['normalreverse'] = [new File([allResponses[3]], tmpNR)];
+                            new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['normalreverse'] = new File([allResponses[3]], tmpNR);
 
                             if(i === new_replicates.length -1 && k === tmpG.length -1) {
                                 setLoading([false, false]);
@@ -1236,12 +1236,8 @@ function Main() {
 
                     fetch(`/api/exampleData/${organism}/files/${fileName}/`)
                     .then(res => res.blob())
-                    .then(blob => {
-                        new File([blob], fileName)
-                    })
+                    .then(blob => { setAlignmentFile(new File([blob], fileName));})
                 }
-
-
 
                 // alternative for getting files, but reallyyyyyyyy slow
                 /*fetch(`/api/exampleData/${organism}/files/`)

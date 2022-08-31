@@ -130,9 +130,9 @@ def getParameters():
     jsonString+="\"Classification\": {" + convertToJson(defParameterClass()) + ","
     jsonString+="\"Comparative\": {" + convertToJson(defParameterComparative()) + "}}"
     
-
-    return jsonString
     #print(jsonString)
+    return jsonString
+    
 
 #getParameters()
 

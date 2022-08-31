@@ -4,7 +4,7 @@
 
 .grid-wrapper {
     display: grid; 
-    padding: 5px;  
+    padding: 1%;  
     grid-template-columns: 1fr 1fr 1fr;
     font-size: 80%;
 }
@@ -14,7 +14,7 @@
     grid-column: span 3;
     display: grid; 
     grid-template-columns: 1fr 1fr 1fr;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5%;
 }
 
 .Prediction-header, .Comparative-header {
@@ -30,18 +30,18 @@
 .Normalization-grid {
     grid-area: 5 / 1 / 8 / 2 ;
     border-right: 1px solid var(--gridColor);
-    padding-bottom: 1rem;
+    padding-bottom: 1.5%;
 }
 
 .Clustering-grid {
     grid-area: 5 / 2 / 8 / 3 ;
     border-right: 1px solid var(--gridColor);
-    padding-bottom: 1rem;
+    padding-bottom: 1.5%;
 }
 
 .Classification-grid {
     grid-area: 5 / 3 / 8 / 4 ;
-    padding-bottom: 1rem;
+    padding-bottom: 1.5%;
 }
 
 .Comparative-grid {
@@ -52,15 +52,18 @@
 }
 .parameter-grid {
     display: grid;
-    width: 100%;
-    grid-template-columns: 56% 44%;
+    min-width: fit-content;
+    grid-template-columns: 62% 38%;
     margin-left: 0.5rem;
+}
+.parameter-grid input[type=number] {
+    max-height: 2rem;
 }
 .parameter-select {
     display: grid;
-    width: 100%;
+    min-width: fit-content;
     display: grid;
-    grid-template-columns: 45.5% 54.5%;
+    grid-template-columns: 48% 52%;
     margin-left: 0.5rem;
 }
 .border-grid {
@@ -77,15 +80,16 @@
     color:rgb(255, 140, 0)
 }
 .param-preset {
-    margin-left: 1rem;
+    margin-left: 1.9%;
 }
 .preset-label {
-    margin-left: 0.5rem;
+    margin-left: 0.95%;
+    min-width: fit-content;
 }
-input[type=checkbox] {
-    margin-left: 5rem;
-    margin-right: 0.5rem;
-    margin-top: -0.25rem;
+.grid-checkbox {
+    min-width: 50%;
+    margin-left: 10%;
+    text-align: left;
 }
 
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
 import JSZip from 'jszip';
 import '../css/Result.css';
@@ -14,6 +15,9 @@ import LineChart from './Result/LineChart';
  */
 
 function Result() {
+    // filePath on server
+    let { filePath } = useParams();
+
     // save files
     const [blob, setBlob] = useState(new Blob());
     const [showDownload, setShowDownload] = useState(true);
@@ -33,12 +37,12 @@ function Result() {
     const [upsetClasses, setUpsetClasses] = useState([]);
 
     // histograms
-    const [stepHeight, setStepHeight] = useState([]);
+    const [stepHeight, setStepHeight] = useState({'detected': [], 'enriched': []});
     const [showStepHeight, setShowStepHeight] = useState(false);
-    const stepHeightCap = 300;
-    const [stepFactor, setStepFactor] = useState([]);
+    const stepHeightCap = 100;
+    const [stepFactor, setStepFactor] = useState({'detected': [], 'enriched': []});
     const [showStepFactor, setShowStepFactor] = useState(false);
-    const [enrichmentFactor, setEnrichmentFactor] = useState([]);
+    const [enrichmentFactor, setEnrichmentFactor] = useState({'detected': [], 'enriched': []});
     const [showEnrichFactor, setShowEnrichFactor] = useState(false);
 
     // line Chart
@@ -95,7 +99,7 @@ function Result() {
         }
 
         // get files from server
-        fetch("/result/")
+        fetch(`/api/result/${filePath}/`)
             .then(res => res.blob())
             .then(blob => {
 
@@ -144,44 +148,55 @@ function Result() {
         // get column indices
         const stepHeightIdx = columns.findIndex((col) => col['Header'] === 'stepHeight');
         const stepFactorIdx = columns.findIndex((col) => col['Header'] === 'stepFactor');
+        const detected = columns.findIndex((col) => col['Header'] === 'detected');
+        const enriched = columns.findIndex((col) => col['Header'] === 'enriched');
         const enrichFactorIdx = columns.findIndex((col) => col['Header'] === 'enrichmentFactor');
 
-        const stepH = [];
-        const stepF = [];
-        const enrichmentF = [];
+        const stepH = {"detected": [], "enriched": []};
+        const stepF = {"detected": [], "enriched": []};
+        const enrichmentF = {"detected": [], "enriched": []};
 
         // count frequncy of stepheight, step factor and enrichment Factor
         rows.forEach((row, i) => {
 
-            if (row[stepHeightIdx] !== 'NA') {
-                // cap at 'stepHeightCap' to make histogram readable
-                if (row[stepHeightIdx] > stepHeightCap) {
-                    stepH.push(stepHeightCap);
-                } else {
-                    stepH.push(row[stepHeightIdx]);
+            if (row[detected] === '1') {
+
+                let type = 'detected';
+
+                if(row[enriched] === '1') {
+                    type= 'enriched';
+                }
+
+                if (row[stepHeightIdx] !== 'NA') {
+                    // cap at 'stepHeightCap' to make histogram readable
+                    if (row[stepHeightIdx] > stepHeightCap) {
+                        (stepH[type]).push(stepHeightCap);
+                    } else {
+                        (stepH[type]).push(row[stepHeightIdx]);
+                    }
+                }
+
+                if (row[stepFactorIdx] !== 'NA') {
+                    if ((row[stepFactorIdx]).includes('>')) {
+                        (stepF[type]).push('100');
+                    } else {
+                        (stepF[type]).push(row[stepFactorIdx]);
+
+                    }
+                }
+
+                if (row[enrichFactorIdx] !== 'NA') {
+                    if ((row[enrichFactorIdx]).includes('>')) {
+                        (enrichmentF[type]).push('100');
+                    } else {
+                        (enrichmentF[type]).push(row[enrichFactorIdx]);
+                    }
                 }
             }
-
-            if (row[stepFactorIdx] !== 'NA') {
-                if ((row[stepFactorIdx]).includes('>')) {
-                    stepF.push(100);
-                } else {
-                    stepF.push(row[stepFactorIdx]);
-
-                }
-            }
-
-            if (row[enrichFactorIdx] !== 'NA') {
-                if ((row[enrichFactorIdx]).includes('>')) {
-                    enrichmentF.push(100);
-                } else {
-                    enrichmentF.push(row[enrichFactorIdx]);
-                }
-            }
+            setStepHeight(stepH);
+            setStepFactor(stepF);
+            setEnrichmentFactor(enrichmentF);
         });
-        setStepHeight(stepH);
-        setStepFactor(stepF);
-        setEnrichmentFactor(enrichmentF);
     }
 
     /** 
@@ -198,6 +213,7 @@ function Result() {
         const antisenseIdx = columns.findIndex((col) => col['Header'] === 'Antisense');
         const superPosIdx = columns.findIndex((col) => col['Header'] === 'SuperPos');
         const genomeIdx = columns.findIndex((col) => (col['Header'] === 'Genome' || col['Header'] === 'Condition'));
+        const enriched = columns.findIndex((col) => col['Header'] === 'enriched');
 
         // all genomes/conditions
         const allG = [];
@@ -217,52 +233,55 @@ function Result() {
 
         rows.forEach((row, i) => {
 
-            const tmpPos = row[superPosIdx];
-            const tmpGenome = row[genomeIdx];
-            var tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+            if (row[enriched] === '1') {
 
-            // add genome to all genomes
-            if (!allG.includes(tmpGenome) && updateGenomes) {
-                allG.push(tmpGenome);
-            }
+                const tmpPos = row[superPosIdx];
+                const tmpGenome = row[genomeIdx];
+                var tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
 
-            // upset plot --------------------
-            // new TSS found -> add classes from previous TSS
-            if (tmpPos !== currentPos || tmpGenome !== currentGenome) {
-                classes = addNewTSS(currentClass, classes, i);
-                // reset value
-                currentClass = {};
-            }
-            // reset values
-            currentPos = tmpPos;
-            currentGenome = tmpGenome;
+                // add genome to all genomes
+                if (!allG.includes(tmpGenome) && updateGenomes) {
+                    allG.push(tmpGenome);
+                }
 
-            // add class from current row 
-            if (tmpClass in currentClass) {
-                currentClass[tmpClass] += 1;
-            } else {
-                currentClass[tmpClass] = 1;
-            }
+                // upset plot --------------------
+                // new TSS found -> add classes from previous TSS
+                if (tmpPos !== currentPos || tmpGenome !== currentGenome) {
+                    classes = addNewTSS(currentClass, classes, i);
+                    // reset value
+                    currentClass = {};
+                }
+                // reset values
+                currentPos = tmpPos;
+                currentGenome = tmpGenome;
 
-            // ---------------------
-            // line chart
-            if (tmpClass === 'primary') {
-                primary = addTSSPosition(primary, binSize, tmpPos);
-            } else if (tmpClass === 'secondary') {
-                secondary = addTSSPosition(secondary, binSize, tmpPos);
-            } else if (tmpClass === 'internal') {
-                internal = addTSSPosition(internal, binSize, tmpPos);
-            } else if (tmpClass === 'antisense') {
-                antisense = addTSSPosition(antisense, binSize, tmpPos);
-            } else {
-                orphan = addTSSPosition(orphan, binSize, tmpPos);
+                // add class from current row 
+                if (tmpClass in currentClass) {
+                    currentClass[tmpClass] += 1;
+                } else {
+                    currentClass[tmpClass] = 1;
+                }
+
+                // ---------------------
+                // line chart
+                if (tmpClass === 'primary') {
+                    primary = addTSSPosition(primary, binSize, tmpPos);
+                } else if (tmpClass === 'secondary') {
+                    secondary = addTSSPosition(secondary, binSize, tmpPos);
+                } else if (tmpClass === 'internal') {
+                    internal = addTSSPosition(internal, binSize, tmpPos);
+                } else if (tmpClass === 'antisense') {
+                    antisense = addTSSPosition(antisense, binSize, tmpPos);
+                } else {
+                    orphan = addTSSPosition(orphan, binSize, tmpPos);
+                }
+                // -----------------------
             }
-            // -----------------------
         });
         // add last tss (upset plot)
         classes = addNewTSS(currentClass, classes);
 
-        if(updateGenomes) {
+        if (updateGenomes) {
             setAllGenomes(allG);
         }
         setUpsetClasses(classes);
@@ -349,7 +368,7 @@ function Result() {
     }
 
     /**
-     * 
+     * update plots for selected genome/condition
      */
     const updateDataForPlots = (event) => {
 
@@ -404,30 +423,30 @@ function Result() {
 
                 <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>{showUpSet ? '-' : '+'} TSS classes overview</h3>
-                    {stepHeight.length > 0 ? <UpSet classes={upsetClasses} showUpSet={showUpSet} />
+                    {stepHeight['enriched'].length > 0 ? <UpSet classes={upsetClasses} showUpSet={showUpSet} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
                 <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}>{showStepHeight ? '-' : '+'} Step Height overview</h3>
-                    {stepHeight.length > 0 ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={5} cap={stepHeightCap} show={showStepHeight} />
+                    {stepHeight['enriched'].length > 0  ? <Histogramm elements={stepHeight} xaxis='Step Height' steps={2} cap={stepHeightCap} show={showStepHeight} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
                 <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}>{showStepFactor ? '-' : '+'} Step Factor overview</h3>
-                    {stepFactor.length > 0 ? <Histogramm elements={stepFactor} xaxis='Step Factor' steps={2} cap='100' show={showStepFactor} />
+                    {stepFactor['enriched'].length > 0  ? <Histogramm elements={stepFactor} xaxis='Step Factor' steps={2} cap='100' show={showStepFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
                 <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}>{showEnrichFactor ? '-' : '+'} Enrichment Factor overview</h3>
-                    {enrichmentFactor.length > 0 ? <Histogramm elements={enrichmentFactor} xaxis='Enrichment Factor' steps={2} cap='100' show={showEnrichFactor} />
+                    {enrichmentFactor['enriched'].length > 0  ? <Histogramm elements={enrichmentFactor} xaxis='Enrichment Factor' steps={2} cap='100' show={showEnrichFactor} />
                         : <ClipLoader color='#ffa000' size={30} />}
                 </div>
 
                 <div className='result-margin-left'>
                     <h3 className='header click-param' onClick={() => setShowLineChart(!showLineChart)}>{showLineChart ? '-' : '+'} TSS distribution per position in bp</h3>
-                    {enrichmentFactor.length > 0 ?
+                    {enrichmentFactor['enriched'].length > 0  ?
                         <LineChart primary={linePrimary} secondary={lineSecondary} internal={lineInternal} antisense={lineAntisense} orphan={lineOrphan}
                             binSize={binSize} show={showLineChart} />
                         : <ClipLoader color='#ffa000' size={30} />}

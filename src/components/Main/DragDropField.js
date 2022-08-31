@@ -10,6 +10,7 @@ import React from 'react';
  * @param handleFiles: saves all uploaded files
  * @param index: for all containers for replicate files -> index = which replicate, starting by 0
  * @param disabled: should field be disabled
+ * @param tooltip: tooltip text for this field
  */
 
 function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, handleFiles, index, disabled, tooltip }) {
@@ -79,8 +80,8 @@ function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, ha
                 currentFiles.map((n, i) => {
                     return (
                         <div draggable className={typeof n === 'undefined' ? ' ' : 'drag-box'} key={n + i} data-name={n} onDragStart={(e) => handleDragStart(e)} id={i}>
-                            {n}
-                        </div>
+                           {n}
+                        </div>                        
                     )
                 }) : <></>}
         </div>

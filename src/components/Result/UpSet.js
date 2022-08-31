@@ -3,10 +3,8 @@ import { extractCombinations, UpSetJS } from '@upsetjs/react';
 
 /** creates an Upset plot for the tss classes
  * 
- * @param rows: all the rows from the master table, except the header row
- * @param columns: the column labels
+ * @param classes: all classes and their frequency
  * @param showUpSet: boolean for showing/hiding the plot
- * @returns 
  */
 function UpSet({ classes, showUpSet }) {
 

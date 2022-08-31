@@ -1,3 +1,4 @@
+import json
 from werkzeug.utils import secure_filename
 
 # save files in temporary directory and save file paths in json string
@@ -58,7 +59,6 @@ def save_genome_file(directory, file, genomeObject, idx, node):
         if(len(file) > 0):
             # go over list for genome Z, with all annotation files for genome Z
             for x in file:
-                  
                 # save file x in tempDirectory
                 filename = directory + '/' + secure_filename(x.filename)
                 x.save(filename)
@@ -70,7 +70,7 @@ def save_genome_file(directory, file, genomeObject, idx, node):
         # save file in temporary directory
         filename = directory + '/' + secure_filename(file.filename)
         file.save(filename)
-            
+                    
         # save filename in genome object
         tmpGenome[idx]['genome'+str(idx+1)][node] = filename
 
@@ -91,8 +91,8 @@ def save_replicate_file(directory, file, replicateObject, genomeCounter, replica
 
     return tmpRep
 
-def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory,  
-                        loadConfig='false', saveConfig='false', configFile=" "):
+def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory, 
+                        loadConfig='false', saveConfig='false', configFile=" ", multiFasta=''):
     '''create json string that is needed as input for  TSSpredator.jar'''
 
     jsonString = '{"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "loadAlignment": "false", "configFile": "' + configFile + '",'
@@ -134,6 +134,7 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"minNormalHeight": "' + str(prediction['baseheight']['value']) + '" ,'
     jsonString += '"minNumRepMatches": "' + str(comparative['matchingreplicates']['value']) + '" ,'
     jsonString += '"minPlateauLength": "' + str(prediction['steplength']['value']) + '",'
+    jsonString += '"multiFasta": "' + multiFasta + '",'
     jsonString += '"mode": "' + studytype + '",'
     jsonString += '"normPercentile": "' + str(normalization['normalizationpercentile']['value']) + '",'
     jsonString += '"numReplicates": "' + str(replicateNum['num']) + '",'
@@ -161,7 +162,6 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
     jsonString += '"idList": "' + idList + '",'
 
     # add replicate files
-   
     for x in range(len(replicates)):
         currentGenome = replicates[x]['genome'+str(x+1)]
 
@@ -204,6 +204,9 @@ def handle_config_file(parameters, config, genomes, replicates):
     parameters = handle_config_param(parameters, config, 'normPercentile','parameterBox', 'Normalization', 'normalizationpercentile')
     parameters = handle_config_param(parameters, config, 'texNormPercentile','parameterBox', 'Normalization', 'enrichmentnormalizationpercentile')
         
+    # save multiFasta string as list
+    multiFasta = config['multiFasta'].split(',')
+
     # update genomes
     genomes = handle_config_genomes(config, genomes, parameters)
 
@@ -213,7 +216,7 @@ def handle_config_file(parameters, config, genomes, replicates):
     # alignment file
     alignmentFile = get_value(config, 'xmfa')    
 
-    return [parameters, genomes, replicates, alignmentFile]
+    return [parameters, genomes, replicates, alignmentFile, multiFasta]
 
 
 def handle_config_param(parameters, config, configVariable, parameterNode1, parameterNode2, parameterNode3=""):
@@ -273,6 +276,10 @@ def handle_config_genomes(config, genomes, parameters):
 
     studyType = (parameters['setup']['typeofstudy']['value']).capitalize()
     genomeNum = int(parameters['setup']['numberofgenomes']['value'])
+
+    if (genomeNum < len(genomes)):
+        difference = len(genomes) - genomeNum
+        genomes = genomes[:-difference or None]
 
     for x in range(genomeNum):
         currentGenomeName = 'genome' + str(x+1)

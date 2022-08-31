@@ -7,8 +7,10 @@ import UploadFilesGroup from './UploadFilesGroup';
  * @param files: object -> file labels
  * @param id: genome/replicate index
  * @param studyType: 'condtion' or 'genome'
+ * @param genomes: genome/replicate object
  * @param handleTabs: saves input in text fields of genome tab
  * @param saveIndividualFile: saves a selected file
+* @param show: show or hide upload files individually
  * @param saveAnnotationFile: saves annotation files
  * @param multiFasta: true <-> genome file for this genome is multiFasta, else false
  */

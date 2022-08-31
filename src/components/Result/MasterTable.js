@@ -5,7 +5,7 @@ import { useTable } from 'react-table';
  * create mastertable with infinite scroll for faster rendering 
  * @param tableColumns: column headers
  * @param tableData: all table rows
- * @param: true <-> show table, else hidden
+ * @param showTable: true <-> show table, else hidden
  */
 function MasterTable({ tableColumns, tableData, showTable }) {
 

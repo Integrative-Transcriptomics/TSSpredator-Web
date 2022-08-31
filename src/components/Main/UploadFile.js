@@ -4,9 +4,11 @@ import React from 'react';
 /** individual button for uploading a file 
  * 
  * @param file: object -> field name 
- * @param id: id des Genom/Replicate Tabs
- * @param studyType: 'condtion' oder 'genome'
+ * @param id: id of the Genom/Replicate Tab
+ * @param studyType: 'condtion' or 'genome'
+ * @param genomes: genome/replicate object
  * @param saveIndividualFile: saves selected file
+ * @param show: true <-> show upload files individually, false <-> hide this upload option
  * @param saveAnnotationFile: saves annotation files
  * @param multiFasta: true <-> genome file for this genome is multiFasta, else false
  */

@@ -9,7 +9,6 @@ import createPlotlyComponent from "react-plotly.js/factory";
  * @param steps: bin width
  * @param cap: the cap for the data
  * @param show: boolean for showing/hiding the histogram
- * @returns 
  */
 function Histogramm({ elements, xaxis, steps, cap, show }) {
 

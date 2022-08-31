@@ -9,6 +9,7 @@ import ReplicateColumn from './ReplicateColumn';
  * @param saveAllFiles: function to save files in the corresponding usestate in App.js
  * @param gIdx: current genome tab
  * @param disabled: studytype condition
+ * @param studyType: current studyType
  * @param multiFASTA: true <-> genome file for this genome is a multiFasta file (need annotation folder), else false (need annotation file)
  */
 function PopupWindow({ closePopup, numRep, saveAllFiles, gIdx, disabled, studyType, multiFasta }) {

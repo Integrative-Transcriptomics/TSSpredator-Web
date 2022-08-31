@@ -10,6 +10,7 @@ import React from 'react';
  * @param handleFiles: saves all uploaded files
  * @param index: for all containers for replicate files -> index = which replicate, starting by 0
  * @param disabled: should field be disabled
+ * @param tooltip: tooltip text for this field
  */
 
 function DragDropField({ label, state, currentFiles, handleAdd, handleRemove, handleFiles, index, disabled, tooltip }) {

@@ -73,10 +73,6 @@ function Main() {
         // if studytype condition: fill out alignment, output id and multiFasta
         fillGenomes();
 
-        console.log(genomes)
-        console.log(replicates)
-        console.log(numRep)
-
         var run = checkInput();
         
         // run without annotation files
@@ -1162,7 +1158,7 @@ function Main() {
                 setProjectName(json_config['projectName']);
                 setRnaGraph(json_config['rnaGraph'] === 'true');
 
-                // get genome files
+                // get genome files individually
                 const new_genomes = json_config['genomes'];
                 for(let i = 0; i < new_genomes.length; i++) {
 
@@ -1187,7 +1183,7 @@ function Main() {
                         if(json_config['parameters']['setup']['typeofstudy']['value'] === 'condition') break;
                 }
 
-                // get replicate files
+                // get replicate files individually
                 const new_replicates = json_config['replicates'];
 
                 for (let i = 0; i < new_replicates.length; i++) {
@@ -1247,7 +1243,7 @@ function Main() {
 
 
 
-                // get files
+                // alternative for getting files, but reallyyyyyyyy slow
                 /*fetch(`/api/exampleData/${organism}/files/`)
                 .then(res => res.blob())
                 .then(blob => {     

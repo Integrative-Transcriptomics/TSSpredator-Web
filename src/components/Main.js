@@ -1164,20 +1164,23 @@ function Main() {
 
                         var tmpFasta = new_genomes[i]['genome' + (i + 1)]['genomefasta'];
                         var tmpAnnotation = new_genomes[i]['genome' + (i + 1)]['genomeannotation'];
-                        
+                                           
                         Promise.all([
                             fetch(`/api/exampleData/${organism}/files/${tmpFasta}/`).then(res => res.blob()),
                             fetch(`/api/exampleData/${organism}/files/${tmpAnnotation}/`).then(res => res.blob())
                         ]).then(allResponses => {
-                            if(json_config['parameters']['setup']['typeofstudy']['value'] === 'condition') {
 
+                            var tmpFasta = new_genomes[i]['genome' + (i + 1)]['genomefasta'];
+                            var tmpAnnotation = new_genomes[i]['genome' + (i + 1)]['genomeannotation'];
+
+                            if(json_config['parameters']['setup']['typeofstudy']['value'] === 'condition') {
                                 for (let j=0; j < new_genomes.length; j++) {
                                     new_genomes[j]['genome' + (j + 1)]['genomefasta'] = new File([allResponses[0]], tmpFasta);
                                     new_genomes[j]['genome' + (j + 1)]['genomeannotation'] = [new File([allResponses[1]], tmpAnnotation)];
                                 }
                             } else {
                                 new_genomes[i]['genome' + (i + 1)]['genomefasta'] = new File([allResponses[0]], tmpFasta);
-                            new_genomes[i]['genome' + (i + 1)]['genomeannotation'] = [new File([allResponses[1]], tmpAnnotation)];
+                                new_genomes[i]['genome' + (i + 1)]['genomeannotation'] = [new File([allResponses[1]], tmpAnnotation)];
                             }
                         })
                         if(json_config['parameters']['setup']['typeofstudy']['value'] === 'condition') break;
@@ -1205,6 +1208,13 @@ function Main() {
                             fetch(`/api/exampleData/${organism}/files/${tmpNF}/`).then(res => res.blob()),
                             fetch(`/api/exampleData/${organism}/files/${tmpNR}/`).then(res => res.blob())
                         ]).then(allResponses => {
+                            var tmpG = new_replicates[i]['genome' + (i + 1)];
+                            const letter = String.fromCharCode(97 + k);
+                            var tmpEF = tmpG[k]['replicate' + letter]['enrichedforward'];
+                            var tmpER = tmpG[k]['replicate' + letter]['enrichedreverse'];
+                            var tmpNF = tmpG[k]['replicate' + letter]['normalforward'];
+                            var tmpNR = tmpG[k]['replicate' + letter]['normalreverse'];
+
                             new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['enrichedforward'] = new File([allResponses[0]], tmpEF);
                             new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['enrichedreverse'] = new File([allResponses[1]], tmpER);
                             new_replicates[i]['genome' + (i + 1)][k]['replicate' + letter]['normalforward'] = new File([allResponses[2]], tmpNF);

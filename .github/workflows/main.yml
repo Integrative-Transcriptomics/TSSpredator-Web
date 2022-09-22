@@ -38,6 +38,6 @@ jobs:
         known_hosts: ${{ secrets.KNOWN_HOSTS }}
     # in this step you might need to adapt the --exclude options for your application. For a dry run use the -n option.
     - name: Deploy with rsync
-      run: rsync -azv -O --no-perms --exclude='node_modules' --exclude='.*' --exclude='src' --exclude='.gitignore' --exclude='README.md' --exclude='.git' --exclude='.github' --exclude='package.json' --exclude='package-lock-json' . ${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_TARGET }}
+      run: rsync -azv -O --no-perms --exclude='node_modules' --exclude='.*' --exclude='src' --exclude='public' --exclude='.gitignore' --exclude='README.md' --exclude='.git' --exclude='.github' --exclude='package.json' --exclude='package-lock-json' . ${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_TARGET }}
     - name: Restart service
       run: ssh ${{ secrets.SSH_HOST }} ${{ secrets.UPDATE_COMMAND }}

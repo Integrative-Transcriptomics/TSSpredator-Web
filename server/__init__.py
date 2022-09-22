@@ -3,16 +3,26 @@ from distutils.archive_util import make_archive
 from importlib.resources import files
 from flask import Flask, request, send_file, send_from_directory
 from werkzeug.utils import secure_filename
-import parameter
+
 import json
 import tempfile
 import subprocess
 import os
 import tempfile
 
-import server_handle_files as sf
+import server_tsspredator.parameter as parameter
+import server_tsspredator.server_handle_files as sf
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../build', static_url_path='/')
+
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
+
+
+@app.route('/result/<filePath>/')
+def index_results(filePath):
+    return app.send_static_file('index.html')
 
 @app.route('/api/parameters/')
 def parameters():

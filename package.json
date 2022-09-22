@@ -23,7 +23,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "server": "cd server && flask run --no-debugger",
+    "server": "cd server_tsspredator && flask run --no-debugger",
     "tsspredator": "run-p server start",
     "start": "react-scripts start",
     "build": "react-scripts build",

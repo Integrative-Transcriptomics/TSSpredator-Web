@@ -382,11 +382,7 @@ function Main() {
           // open result in new tab
           //window.open('/result', '_blank', 'noopener,noreferrer');
           let filePath = data.filePath;
-          window.open(
-            `${window.location.hostname}/result/${filePath}`,
-            "_blank",
-            "noopener,noreferrer"
-          );
+          window.open(`result/${filePath}`, "_blank", "noopener,noreferrer");
         } else {
           var error = data.result;
           error = error.split(":")[0] + ":" + error.split(":")[1];

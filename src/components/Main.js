@@ -374,14 +374,14 @@ function Main() {
       method: "POST",
       body: formData,
     })
-      // .then((response) => response.json())
+      .then((response) => response.json())
       .then((data) => {
         setLoading([false, false]);
 
         if (data.result === "success") {
           // open result in new tab
           //window.open('/result', '_blank', 'noopener,noreferrer');
-          // let filePath = data.filePath;
+          let filePath = data.filePath;
           window.open(`result/${filePath}`, "_blank", "noopener,noreferrer");
         } else {
           var error = data.result;

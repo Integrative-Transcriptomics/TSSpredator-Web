@@ -39,6 +39,8 @@ def getFiles(filePath):
 def getInput():
     '''get the input from the form and execute TSS prediction'''
 
+    return {'result': 'success', 'filePath': "hi"}
+
     # get genome fasta files
     genomeFasta = request.files.to_dict(flat=False)['genomefasta']  
 

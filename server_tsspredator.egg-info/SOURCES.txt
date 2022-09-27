@@ -1,0 +1,11 @@
+README.md
+setup.py
+server_tsspredator/TSSpredator.jar
+server_tsspredator/__init__.py
+server_tsspredator/parameter.py
+server_tsspredator/server_handle_files.py
+server_tsspredator.egg-info/PKG-INFO
+server_tsspredator.egg-info/SOURCES.txt
+server_tsspredator.egg-info/dependency_links.txt
+server_tsspredator.egg-info/requires.txt
+server_tsspredator.egg-info/top_level.txt

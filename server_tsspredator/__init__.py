@@ -35,86 +35,89 @@ def getFiles(filePath):
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
     return  send_file(completePath, mimetype='application/zip') 
 
+@app.route('/api/input-test/', methods=['POST', 'GET'])
+def getInput():
+    return {'result': 'success', 'filePath': "filePath"}
+
+
+
 @app.route('/api/input/', methods=['POST', 'GET'])
 def getInput():
     '''get the input from the form and execute TSS prediction'''
-    print("Input gotten. Start TSS prediction")
 
-    return {'result': 'success', 'filePath': "hi"}
+    # get genome fasta files
+    genomeFasta = request.files.to_dict(flat=False)['genomefasta']  
 
-#     # get genome fasta files
-#     genomeFasta = request.files.to_dict(flat=False)['genomefasta']  
-
-#    # multiple genomannotation files per genome possible
-#     genomeAnnotation = []
-#     try:
-#         for x in range(len(genomeFasta)):
-#             genomeAnnotation.append(request.files.to_dict(flat=False)['genomeannotation'+str(x+1)])
-#     except:
-#         print("No genome Annotation file.")    
+   # multiple genomannotation files per genome possible
+    genomeAnnotation = []
+    try:
+        for x in range(len(genomeFasta)):
+            genomeAnnotation.append(request.files.to_dict(flat=False)['genomeannotation'+str(x+1)])
+    except:
+        print("No genome Annotation file.")    
   
-#     # get all replicate files
-#     enrichedForward  = request.files.to_dict(flat=False)['enrichedforward']
-#     enrichedReverse = request.files.to_dict(flat=False)['enrichedreverse']
-#     normalForward = request.files.to_dict(flat=False)['normalforward']
-#     normalReverse = request.files.to_dict(flat=False)['normalreverse']    
+    # get all replicate files
+    enrichedForward  = request.files.to_dict(flat=False)['enrichedforward']
+    enrichedReverse = request.files.to_dict(flat=False)['enrichedreverse']
+    normalForward = request.files.to_dict(flat=False)['normalforward']
+    normalReverse = request.files.to_dict(flat=False)['normalreverse']    
 
-#     # get parameters
-#     projectName = request.form['projectname']
-#     parameters = json.loads(request.form['parameters'])
-#     rnaGraph = request.form['rnagraph']
-#     genomes = json.loads(request.form['genomes'])
-#     replicates = json.loads(request.form['replicates'])
-#     replicateNum = json.loads(request.form['replicateNum'])
+    # get parameters
+    projectName = request.form['projectname']
+    parameters = json.loads(request.form['parameters'])
+    rnaGraph = request.form['rnagraph']
+    genomes = json.loads(request.form['genomes'])
+    replicates = json.loads(request.form['replicates'])
+    replicateNum = json.loads(request.form['replicateNum'])
 
-#     # create temporary directory, save files and save filename in genome/replicate object
-#     with tempfile.TemporaryDirectory() as tmpdir: 
+    # create temporary directory, save files and save filename in genome/replicate object
+    with tempfile.TemporaryDirectory() as tmpdir: 
 
-#         newTmpDir = tmpdir.replace('\\', '/')
+        newTmpDir = tmpdir.replace('\\', '/')
 
-#         with tempfile.TemporaryDirectory() as annotationDir:
+        with tempfile.TemporaryDirectory() as annotationDir:
 
-#             newAnnotationDir = annotationDir.replace('\\', '/')
+            newAnnotationDir = annotationDir.replace('\\', '/')
  
-#             genomes, replicates = sf.save_files(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
+            genomes, replicates = sf.save_files(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
             
-#             # if alignment file is given (studyType = align)
-#             alignmentFilename = ''
-#             try:
-#                 alignmentFile = request.files['alignmentfile']
-#                 # save alignment file
-#                 alignmentFilename = newTmpDir + '/' + secure_filename(alignmentFile.filename)
-#                 alignmentFile.save(alignmentFilename)   
-#             except:
-#                 print('No alignment file')
+            # if alignment file is given (studyType = align)
+            alignmentFilename = ''
+            try:
+                alignmentFile = request.files['alignmentfile']
+                # save alignment file
+                alignmentFilename = newTmpDir + '/' + secure_filename(alignmentFile.filename)
+                alignmentFile.save(alignmentFilename)   
+            except:
+                print('No alignment file')
            
-#             # save files from tss prediciton in this directory
-#             with tempfile.TemporaryDirectory() as resultDir:
+            # save files from tss prediciton in this directory
+            with tempfile.TemporaryDirectory() as resultDir:
 
-#                 newResultDir = resultDir.replace('\\', '/')
+                newResultDir = resultDir.replace('\\', '/')
 
-#                 # create json string for jar
-#                 jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
+                # create json string for jar
+                jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
 
-#                 # call jar file for TSS prediction
-#                 # timeout after 10 minutes
-#                 timeout_s = 600 
-#                 try:
-#                     p = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stderr=PIPE, timeout=timeout_s)
+                # call jar file for TSS prediction
+                # timeout after 10 minutes
+                timeout_s = 600 
+                try:
+                    p = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stderr=PIPE, timeout=timeout_s)
                 
-#                     # zip files
-#                     tmpdirResult = tempfile.mkdtemp()
-#                     newTmpDirResult = tmpdirResult.replace('\\', '/')
-#                     make_archive(newTmpDirResult+'/result', 'zip', newResultDir)                   
+                    # zip files
+                    tmpdirResult = tempfile.mkdtemp()
+                    newTmpDirResult = tmpdirResult.replace('\\', '/')
+                    make_archive(newTmpDirResult+'/result', 'zip', newResultDir)                   
                     
-#                     # return tmp directory name to zip-directory or error
-#                     if(len(p.stderr) == 0):
-#                         filePath = newTmpDirResult.split('/')[-1]
-#                         return {'result': 'success', 'filePath': filePath}
-#                     else: 
-#                         return {'result': (p.stderr).decode()} 
-#                 except subprocess.TimeoutExpired:
-#                     return {'result': 'Timeout'}                     
+                    # return tmp directory name to zip-directory or error
+                    if(len(p.stderr) == 0):
+                        filePath = newTmpDirResult.split('/')[-1]
+                        return {'result': 'success', 'filePath': filePath}
+                    else: 
+                        return {'result': (p.stderr).decode()} 
+                except subprocess.TimeoutExpired:
+                    return {'result': 'Timeout'}                     
         
  
 @app.route('/api/alignment/', methods=['POST', 'GET'])

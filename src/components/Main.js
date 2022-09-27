@@ -106,6 +106,9 @@ function Main() {
     event.preventDefault();
 
     sendTestResults();
+    if (false) {
+      sendData();
+    }
     // event.preventDefault();
     // setLoading([!loading[0], loading[1]]);
     // // if studytype condition: fill out alignment, output id and multiFasta

@@ -101,30 +101,30 @@ function Main() {
    * RUN Button event
    */
   const handleSubmit = (event, check = true) => {
-    setLoading([!loading[0], loading[1]]);
-
-    event.preventDefault();
-
-    sendTestResults();
-    if (false) {
-      sendData();
-    }
-    // event.preventDefault();
     // setLoading([!loading[0], loading[1]]);
-    // // if studytype condition: fill out alignment, output id and multiFasta
-    // fillGenomes();
 
-    // var run = checkInput();
+    // event.preventDefault();
 
-    // // run without annotation files
-    // if (!check) {
-    //   run = true;
-    //   // close popup from warning that no annotation files are given
-    //   setEPopup(!ePopup);
-    // }
-    // if (run) {
+    // sendTestResults();
+    // if (false) {
     //   sendData();
     // }
+    event.preventDefault();
+    setLoading([!loading[0], loading[1]]);
+    // if studytype condition: fill out alignment, output id and multiFasta
+    fillGenomes();
+
+    var run = checkInput();
+
+    // run without annotation files
+    if (!check) {
+      run = true;
+      // close popup from warning that no annotation files are given
+      setEPopup(!ePopup);
+    }
+    if (run) {
+      sendData();
+    }
   };
 
   /**

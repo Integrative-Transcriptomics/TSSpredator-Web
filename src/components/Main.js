@@ -101,27 +101,30 @@ function Main() {
    * RUN Button event
    */
   const handleSubmit = (event, check = true) => {
-    setLoading([!loading[0], loading[1]]);
-
-    event.preventDefault();
-
-    sendTestResults();
-    // event.preventDefault();
     // setLoading([!loading[0], loading[1]]);
-    // // if studytype condition: fill out alignment, output id and multiFasta
-    // fillGenomes();
 
-    // var run = checkInput();
+    // event.preventDefault();
 
-    // // run without annotation files
-    // if (!check) {
-    //   run = true;
-    //   // close popup from warning that no annotation files are given
-    //   setEPopup(!ePopup);
-    // }
-    // if (run) {
+    // sendTestResults();
+    // if (false) {
     //   sendData();
     // }
+    event.preventDefault();
+    setLoading([!loading[0], loading[1]]);
+    // if studytype condition: fill out alignment, output id and multiFasta
+    fillGenomes();
+
+    var run = checkInput();
+
+    // run without annotation files
+    if (!check) {
+      run = true;
+      // close popup from warning that no annotation files are given
+      setEPopup(!ePopup);
+    }
+    if (run) {
+      sendData();
+    }
   };
 
   /**
@@ -397,28 +400,28 @@ function Main() {
       .catch((err) => console.log(err));
   }
 
-  function sendTestResults() {
-    fetch("/api/input-test/", {
-      method: "POST",
-      body: JSON.stringify({ test: "test" }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setLoading([false, false]);
+  // function sendTestResults() {
+  //   fetch("/api/input-test/", {
+  //     method: "POST",
+  //     body: JSON.stringify({ test: "test" }),
+  //   })
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       setLoading([false, false]);
 
-        if (data.result === "success") {
-          // open result in new tab
-          //window.open('/result', '_blank', 'noopener,noreferrer');
-          let filePath = data.filePath;
-          window.open(`result/${filePath}`, "_blank", "noopener,noreferrer");
-        } else {
-          var error = data.result;
-          error = error.split(":")[0] + ":" + error.split(":")[1];
-          showError(error);
-        }
-      })
-      .catch((err) => console.log(err));
-  }
+  //       if (data.result === "success") {
+  //         // open result in new tab
+  //         //window.open('/result', '_blank', 'noopener,noreferrer');
+  //         let filePath = data.filePath;
+  //         window.open(`result/${filePath}`, "_blank", "noopener,noreferrer");
+  //       } else {
+  //         var error = data.result;
+  //         error = error.split(":")[0] + ":" + error.split(":")[1];
+  //         showError(error);
+  //       }
+  //     })
+  //     .catch((err) => console.log(err));
+  // }
 
   /**
    * save uploaded alignment file

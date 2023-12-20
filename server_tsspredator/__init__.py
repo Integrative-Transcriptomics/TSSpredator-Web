@@ -36,7 +36,7 @@ def getFiles(filePath):
     return  send_file(completePath, mimetype='application/zip') 
 
 @app.route('/api/input-test/', methods=['POST', 'GET'])
-def getInput():
+def getInputTest():
     return {'result': 'success', 'filePath': "filePath"}
 
 

@@ -1,51 +1,85 @@
 import json
 from werkzeug.utils import secure_filename
+import os
 
-# save files in temporary directory and save file paths in json string
+TRANSLATE_DICT = {
+    "Classification_antisenseutrlength": "maxASutrLength",
+    "Classification_utrlength": "maxUTRlength",
+    "Clustering_clustermethod": "TSSinClusterSelectionMethod",
+    "Clustering_tssclusteringdistance": "maxTSSinClusterDistance",
+    "Comparative_allowedcrossgenomeshift": "allowedCompareShift",
+    "Comparative_allowedcrossreplicateshift": "allowedRepCompareShift",
+    "Comparative_matchingreplicates": "minNumRepMatches",
+    "Normalization_enrichmentnormalizationpercentile": "texNormPercentile",
+    "Normalization_normalizationpercentile": "normPercentile",
+    "Prediction_baseheight": "minNormalHeight",
+    "Prediction_enrichmentfactor": "min5primeToNormalFactor",
+    "Prediction_processingsitefactor": "maxNormalTo5primeFactor",
+    "Prediction_stepfactor": "minCliffFactor",
+    "Prediction_stepfactorreduction": "minCliffFactorDiscount",
+    "Prediction_stepheight": "minCliffHeight",
+    "Prediction_stepheightreduction": "minCliffHeightDiscount",
+    "Prediction_steplength": "minPlateauLength"
+}
+# # save files in temporary directory and save file paths in json string
 def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum):
     '''save files in temporary directory and save file paths in json string, so that the .jar can read the files'''
 
-    # genomefasta files
-    for x in range(len(genomeFasta)):
-        genomes = save_genome_file(newTmpDir, genomeFasta[x], genomes, x, 'genomefasta')
-
-    # genomeannotation files 
-    if(len(genomeAnnotation) <= 0):
-        for x in range(len(genomes)):
-            genomes = save_genome_file(annotationDir, "", genomes, x, 'genomeannotation')
-    else:
-        for x in range(len(genomeAnnotation)):
-            genomes = save_genome_file(annotationDir, genomeAnnotation[x], genomes, x, 'genomeannotation')
-
-        
-    # enriched forward/reverse and normal forward/reverse files
-    genomeCounter = 0
-    replicateCounter = 0
-    for x in range(len(enrichedForward)):
-        # enrichedForward file
-        fileEF = enrichedForward[x]
-        replicates = save_replicate_file(newTmpDir, fileEF, replicates, genomeCounter, replicateCounter, 'enrichedforward')
-
-        # enrichedReverse file
-        fileER = enrichedReverse[x]
-        replicates = save_replicate_file(newTmpDir, fileER, replicates, genomeCounter, replicateCounter, 'enrichedreverse')
-
-        # normalForward file
-        fileNF = normalForward[x]
-        replicates = save_replicate_file(newTmpDir, fileNF, replicates, genomeCounter, replicateCounter, 'normalforward')
-
-        # normalReverse file
-        fileNR = normalReverse[x]
-        replicates = save_replicate_file(newTmpDir, fileNR, replicates, genomeCounter, replicateCounter, 'normalreverse')
-
-        # last replicate in the genome updated -> look at next genome and begin replicates at 0
-        if(replicateCounter == replicateNum['num'] - 1):
-            replicateCounter = 0
-            genomeCounter += 1
+    def save_file(file_list, dir_path, check_list=False):
+        """ Helper function to save files from a list into a directory """
+        paths = []
+        # print(file_list)
+        if isinstance(file_list, list):
+            if check_list and len(file_list) == 0:
+                return ""
+            for file in file_list:
+                if file:
+                    filename = secure_filename(file.filename)
+                    file_path = os.path.join(dir_path, filename)
+                    file.save(file_path)
+                    paths.append(file_path)
+            # If a multifa file is given, return the first file path, since TSSpredator.jar scans the directory automatically
+            return paths[0] 
         else:
-            replicateCounter += 1
+            filename = secure_filename(file_list.filename)
+            file_path = os.path.join(dir_path, filename)
+            file_list.save(file_path)
+            return file_path
+    # group files by genome
+    # get number of replicates
+    numberReplicates = replicateNum['num']
+    # zip wiggle files
+    wiggleFiles = list(zip(enrichedForward, enrichedReverse, normalForward, normalReverse))
+    nameWiggleFiles = ['enrichedforward', 'enrichedreverse', 'normalforward', 'normalreverse']
 
-    return [genomes, replicates]
+    # create batches of replicate length 
+    wiggleFiles = [wiggleFiles[i:i+numberReplicates] for i in range(0, len(wiggleFiles), numberReplicates)]
+
+    genomeZipped = zip(genomeFasta, genomeAnnotation, wiggleFiles)
+    genomes_new = []
+    replicates_new = []
+    # save files in temporary directory
+    for x, (fastaFile, gffFiles, wiggleFiles) in enumerate(genomeZipped):
+      
+        tempGenome = {}
+        tempReplicate = []
+        tempId = "genome" + str(x+1)
+        tempGenome[tempId] = genomes[x][tempId]
+        
+        tempGenome[tempId]['genomefasta'] = save_file(fastaFile, newTmpDir)
+        tempGenome[tempId]['genomeannotation'] = save_file(gffFiles, annotationDir, check_list=True)
+        for id_replicate, replicate in enumerate(wiggleFiles):
+            tempOneReplicate = replicates[x][tempId][id_replicate]
+            repID =  chr(97 + id_replicate)
+            tempOneReplicate['replicate%s'% repID] = {}
+            for file, fileType in zip(replicate, nameWiggleFiles):
+                tempOneReplicate['replicate%s'% repID][fileType] = save_file(file, newTmpDir)
+            tempReplicate.append(tempOneReplicate)
+        genomes_new.append(tempGenome)
+        replicates_new.append({tempId:tempReplicate})
+
+
+    return [genomes_new, replicates_new]
 
 def save_genome_file(directory, file, genomeObject, idx, node):
     '''save file paths of genome files'''
@@ -91,91 +125,65 @@ def save_replicate_file(directory, file, replicateObject, genomeCounter, replica
 
     return tmpRep
 
-def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory, 
-                        loadConfig='false', saveConfig='false', configFile=" ", multiFasta=''):
-    '''create json string that is needed as input for  TSSpredator.jar'''
 
-    jsonString = '{"loadConfig": "' + loadConfig + '", "saveConfig": "' + saveConfig + '", "loadAlignment": "false", "configFile": "' + configFile + '",'
-    
-    # parameter handling
+def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory, loadConfig='false', saveConfig='false', configFile=" ", multiFasta=''):
+    '''create json string that is needed as input for TSSpredator.jar'''
+
+    json_data = {
+        "loadConfig": loadConfig,
+        "saveConfig": saveConfig,
+        "loadAlignment": "false",
+        "numReplicates": str(replicateNum['num']),
+        "numberOfDatasets": str(len(genomes)),
+        "configFile": configFile,
+        "multiFasta": multiFasta,
+        "outputDirectory": outputDirectory + '/',
+        "projectName": projectName,
+        "superGraphCompatibility": "igb",
+        "maxGapLengthInGene": "500",
+        "writeNocornacFiles": "0"
+    }
+
     setupBox = parameters['setup']
     parameterBox = parameters['parameterBox']
-    prediction = parameterBox['Prediction']
-    normalization = parameterBox['Normalization']
-    clustering = parameterBox['Clustering']
-    classification = parameterBox['Classification']
-    comparative = parameterBox['Comparative']
+    studytype = 'cond' if setupBox['typeofstudy']['value'] == 'condition' else 'align'
+    json_data["mode"] = studytype
 
-    studytype = "align"
-    if(setupBox['typeofstudy']['value'] == 'condition'):
-        studytype = 'cond'
-        jsonString += '"printReplicateStats": "1",'
+
+    if studytype == 'cond':
+        json_data["printReplicateStats"] = "1"
     else:
-        jsonString += '"xmfa": "' + alignmentFilepath + '",'
+        json_data["xmfa"] = alignmentFilepath
 
-    writeGraph = "0"
-    if(rnaGraph == 'true'):
-        writeGraph = "1"
-        
-    # add parameters
-    jsonString += '"TSSinClusterSelectionMethod": "' + str(clustering['clustermethod']['value']) + '",'
-    jsonString += '"allowedCompareShift": "' + str(comparative['allowedcrossgenomeshift']['value']) + '",'
-    jsonString += '"allowedRepCompareShift": "' + str(comparative['allowedcrossreplicateshift']['value']) + '",'
-    jsonString += '"maxASutrLength": "' + str(classification['antisenseutrlength']['value']) + '",'
-    jsonString += '"maxGapLengthInGene": "500" ,' 
-    jsonString += '"maxNormalTo5primeFactor": "' + str(prediction['processingsitefactor']['value']) + '",'
-    jsonString += '"maxTSSinClusterDistance": "' + str(clustering['tssclusteringdistance']['value']) + '",'
-    jsonString += '"maxUTRlength": "' + str(classification['utrlength']['value']) + '" ,'
-    jsonString += '"min5primeToNormalFactor": "' + str(prediction['enrichmentfactor']['value']) + '" ,'
-    jsonString += '"minCliffFactor": "' + str(prediction['stepfactor']['value']) + '" ,'
-    jsonString += '"minCliffFactorDiscount": "' + str(prediction['stepfactorreduction']['value']) + '" ,'
-    jsonString += '"minCliffHeight": "' + str(prediction['stepheight']['value']) + '" ,'
-    jsonString += '"minCliffHeightDiscount": "' + str(prediction['stepheightreduction']['value']) + '" ,'
-    jsonString += '"minNormalHeight": "' + str(prediction['baseheight']['value']) + '" ,'
-    jsonString += '"minNumRepMatches": "' + str(comparative['matchingreplicates']['value']) + '" ,'
-    jsonString += '"minPlateauLength": "' + str(prediction['steplength']['value']) + '",'
-    jsonString += '"multiFasta": "' + multiFasta + '",'
-    jsonString += '"mode": "' + studytype + '",'
-    jsonString += '"normPercentile": "' + str(normalization['normalizationpercentile']['value']) + '",'
-    jsonString += '"numReplicates": "' + str(replicateNum['num']) + '",'
-    jsonString += '"numberOfDatasets": "' + str(len(genomes)) + '",'
-    jsonString += '"outputDirectory": "' + outputDirectory + '/",'
-    jsonString += '"projectName": ' + projectName + ','    
-    jsonString += '"superGraphCompatibility": "igb",'
-    jsonString += '"texNormPercentile": "' + str(normalization['enrichmentnormalizationpercentile']['value']) + '",'
-    jsonString += '"writeGraphs": "' + writeGraph + '",'
-    jsonString += '"writeNocornacFiles": "0" ,'      
-    
-    # add genome fasta, genome annotation files, alignment id, output id and genome names
-    idList = ''
-    for x in range(len(genomes)):
-        
-        jsonString += '"annotation_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomeannotation'] + '",'
-        jsonString += '"genome_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['genomefasta'] + '",'
-        jsonString += '"outputPrefix_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['name'] + '",'
-        jsonString += '"outputID_' + str(x+1) + '": "' + genomes[x]['genome'+str(x+1)]['outputid'] + '",'
-        
-        idList += str(genomes[x]['genome'+str(x+1)]['alignmentid']) + ','
+    json_data["writeGraphs"] = "1" if rnaGraph == 'true' else "0"
 
-    # add idList to string
-    idList = idList[:-1]
-    jsonString += '"idList": "' + idList + '",'
+    # Add parameters
+    for category, items in parameterBox.items():
+        for key, value in items.items():
+            json_key = f"{category}_{key}"
+            json_data[TRANSLATE_DICT[json_key]] = str(value['value'])
 
-    # add replicate files
-    for x in range(len(replicates)):
-        currentGenome = replicates[x]['genome'+str(x+1)]
+    # Add genome information
+    for x, genomeValue in enumerate(genomes, start=1):
+        genome = genomeValue[f'genome{x}']
+        json_keys = ["annotation", "genome", "outputPrefix", "outputID"]
+        data_keys =  ['genomeannotation', 'genomefasta', 'name', 'outputid']
+        for (js_key, data_key) in zip(json_keys, data_keys):
+            json_data[f"{js_key}_{x}"] = genome[data_key]
+    # print(genomes[0].values())
+    json_data["idList"] = ','.join(str(genome[f'genome{x}']['alignmentid']) for x, genome in enumerate(genomes, start=1))
 
-        for y in range(len(currentGenome)):
+    # Add replicate files
+    for x, currentGenome in enumerate(replicates, start=1):
+        for y, replicate in enumerate(currentGenome[f'genome{x}'], start=0):
             repLetter = chr(97 + y)
-            jsonString += '"fivePrimePlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedforward'] + '",'
-            jsonString += '"fivePrimeMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['enrichedreverse'] + '",'
-            jsonString += '"normalPlus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalforward'] + '",'
-            jsonString += '"normalMinus_' + str(x+1) + repLetter + '": "' + currentGenome[y]['replicate'+repLetter]['normalreverse'] + '",'
-            
-    jsonString = jsonString[:-1]
-    jsonString += '}'
+            json_keys = ["fivePrimePlus", "fivePrimeMinus", "normalPlus", "normalMinus"]
+            data_keys = ['enrichedforward', 'enrichedreverse', 'normalforward', 'normalreverse']
+            for js_key, data_key in zip(json_keys, data_keys):
+                json_key = f"{js_key}_{x}{repLetter}"
+                json_data[json_key] = replicate[f'replicate{repLetter}'][data_key]
 
-    return jsonString
+    return json.dumps(json_data, indent=4)
 
 
 def handle_config_file(parameters, config, genomes, replicates):

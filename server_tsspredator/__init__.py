@@ -80,7 +80,12 @@ def getInput():
             newAnnotationDir = annotationDir.replace('\\', '/')
  
             genomes, replicates = sf.save_files(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
-            
+            # test = sf.save_files2(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
+            # print("HERE")
+            # print(genomes)
+            # # print(genomes_2)
+            # print(replicates)
+            # print(replicates_2)
             # if alignment file is given (studyType = align)
             alignmentFilename = ''
             try:
@@ -213,6 +218,7 @@ def saveConfig():
 
     # write JSON string 
     jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", 'false', 'true', configFilename, multiFasta)
+   
 
     # call jar file for to write config file
     subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString])
@@ -225,7 +231,6 @@ def exampleData(organism, type,filename):
     '''send config file (json) or zip directory to load example data'''
 
     json_path = './exampleData/{}/{}_config.json'.format(organism, organism)
-    #files_path =  './exampleData/{}/{}_files.zip'.format(organism, organism) 
     files_path =  './exampleData/{}/Archive'.format(organism)
 
     if type == 'json':

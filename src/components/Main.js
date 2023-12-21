@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import ClipLoader from "react-spinners/ClipLoader";
-import _ from "lodash";
 import ParameterGroup from "./Main/ParameterGroup";
 import ParameterAllGroups from "./Main/ParameterAllGroups";
 import Tabs from "./Main/Tabs";
@@ -13,6 +12,9 @@ import LoadConfig from "./Main/LoadConfig";
 
 /**
  * creates the main window and saves all inputs
+ */
+/**
+ * Represents the Main component.
  */
 function Main() {
   const [projectName, setProjectName] = useState("");
@@ -388,7 +390,6 @@ function Main() {
 
         if (data.result === "success") {
           // open result in new tab
-          //window.open('/result', '_blank', 'noopener,noreferrer');
           let filePath = data.filePath;
           window.open(`result/${filePath}`, "_blank", "noopener,noreferrer");
         } else {
@@ -400,35 +401,12 @@ function Main() {
       .catch((err) => console.log(err));
   }
 
-  // function sendTestResults() {
-  //   fetch("/api/input-test/", {
-  //     method: "POST",
-  //     body: JSON.stringify({ test: "test" }),
-  //   })
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       setLoading([false, false]);
-
-  //       if (data.result === "success") {
-  //         // open result in new tab
-  //         //window.open('/result', '_blank', 'noopener,noreferrer');
-  //         let filePath = data.filePath;
-  //         window.open(`result/${filePath}`, "_blank", "noopener,noreferrer");
-  //       } else {
-  //         var error = data.result;
-  //         error = error.split(":")[0] + ":" + error.split(":")[1];
-  //         showError(error);
-  //       }
-  //     })
-  //     .catch((err) => console.log(err));
-  // }
 
   /**
    * save uploaded alignment file
    */
   const saveAlignmentFile = (e) => {
     setAlignmentFile(e.target.files[0]);
-
     // ask if file was created by mauve and than fill in genome names and ids
     seteHeader("INFO");
     showError(
@@ -1156,7 +1134,7 @@ function Main() {
 
     if (checkInput()) {
       // save filenames from genomes
-      const tmpGenome = _.cloneDeep(genomes);
+      const tmpGenome = [...genomes];
 
       for (let i = 0; i < genomes.length; i++) {
         var tmpFasta = "";
@@ -1187,7 +1165,7 @@ function Main() {
       }
 
       // save file names from replicates
-      const tmpRep = _.cloneDeep(replicates);
+      const tmpRep = [...replicates];
 
       for (let i = 0; i < tmpRep.length; i++) {
         var tmpG = tmpRep[i]["genome" + (i + 1)];
@@ -1280,151 +1258,111 @@ function Main() {
   };
 
   /**
-   * load example data from server
+   * Loads example data based on the selected organism.
+   * @param {Event} event - The event object triggered by the user action.
+   * @returns {Promise<void>} - A promise that resolves when the example data is loaded.
    */
-  const loadExampleData = (event) => {
+  const loadExampleData = async (event) => {
     const organism = event.target.name;
     setLoading([true, true]);
-
-    // get correct configuration
-    fetch(`/api/exampleData/${organism}/json/-/`)
-      .then((res) => res.json())
-      .then((data) => {
-        let json_config = JSON.parse(data.result);
-        setParameters(json_config["parameters"]);
-        setProjectName(json_config["projectName"]);
-        setRnaGraph(json_config["rnaGraph"] === "true");
-
-        // get genome files individually
-        const new_genomes = json_config["genomes"];
-        for (let i = 0; i < new_genomes.length; i++) {
-          var tmpFasta = new_genomes[i]["genome" + (i + 1)]["genomefasta"];
-          var tmpAnnotation = new_genomes[i]["genome" + (i + 1)]["genomeannotation"];
-
-          Promise.all([
-            fetch(`/api/exampleData/${organism}/files/${tmpFasta}/`).then((res) => res.blob()),
-            fetch(`/api/exampleData/${organism}/files/${tmpAnnotation}/`).then((res) => res.blob()),
-          ]).then((allResponses) => {
-            var tmpFasta = new_genomes[i]["genome" + (i + 1)]["genomefasta"];
-            var tmpAnnotation = new_genomes[i]["genome" + (i + 1)]["genomeannotation"];
-
-            if (json_config["parameters"]["setup"]["typeofstudy"]["value"] === "condition") {
-              for (let j = 0; j < new_genomes.length; j++) {
-                new_genomes[j]["genome" + (j + 1)]["genomefasta"] = new File(
-                  [allResponses[0]],
-                  tmpFasta
-                );
-                new_genomes[j]["genome" + (j + 1)]["genomeannotation"] = [
-                  new File([allResponses[1]], tmpAnnotation),
-                ];
-              }
-            } else {
-              new_genomes[i]["genome" + (i + 1)]["genomefasta"] = new File(
-                [allResponses[0]],
-                tmpFasta
-              );
-              new_genomes[i]["genome" + (i + 1)]["genomeannotation"] = [
-                new File([allResponses[1]], tmpAnnotation),
-              ];
-            }
-          });
-          if (json_config["parameters"]["setup"]["typeofstudy"]["value"] === "condition") break;
-        }
-
-        // get replicate files individually
-        const new_replicates = json_config["replicates"];
-
-        for (let i = 0; i < new_replicates.length; i++) {
-          var tmpG = new_replicates[i]["genome" + (i + 1)];
-
-          for (let k = 0; k < tmpG.length; k++) {
-            const letter = String.fromCharCode(97 + k);
-
-            var tmpEF = tmpG[k]["replicate" + letter]["enrichedforward"];
-            var tmpER = tmpG[k]["replicate" + letter]["enrichedreverse"];
-            var tmpNF = tmpG[k]["replicate" + letter]["normalforward"];
-            var tmpNR = tmpG[k]["replicate" + letter]["normalreverse"];
-
-            Promise.all([
-              fetch(`/api/exampleData/${organism}/files/${tmpEF}/`).then((res) => res.blob()),
-              fetch(`/api/exampleData/${organism}/files/${tmpER}/`).then((res) => res.blob()),
-              fetch(`/api/exampleData/${organism}/files/${tmpNF}/`).then((res) => res.blob()),
-              fetch(`/api/exampleData/${organism}/files/${tmpNR}/`).then((res) => res.blob()),
-            ]).then((allResponses) => {
-              var tmpG = new_replicates[i]["genome" + (i + 1)];
-              const letter = String.fromCharCode(97 + k);
-              var tmpEF = tmpG[k]["replicate" + letter]["enrichedforward"];
-              var tmpER = tmpG[k]["replicate" + letter]["enrichedreverse"];
-              var tmpNF = tmpG[k]["replicate" + letter]["normalforward"];
-              var tmpNR = tmpG[k]["replicate" + letter]["normalreverse"];
-
-              new_replicates[i]["genome" + (i + 1)][k]["replicate" + letter]["enrichedforward"] =
-                new File([allResponses[0]], tmpEF);
-              new_replicates[i]["genome" + (i + 1)][k]["replicate" + letter]["enrichedreverse"] =
-                new File([allResponses[1]], tmpER);
-              new_replicates[i]["genome" + (i + 1)][k]["replicate" + letter]["normalforward"] =
-                new File([allResponses[2]], tmpNF);
-              new_replicates[i]["genome" + (i + 1)][k]["replicate" + letter]["normalreverse"] =
-                new File([allResponses[3]], tmpNR);
-
-              if (i === new_replicates.length - 1 && k === tmpG.length - 1) {
-                setLoading([false, false]);
-              }
-            });
-          }
-        }
-
-        setGenomes([...new_genomes]);
-        setShowGName(true);
-        setReplicates([...new_replicates]);
-        updateReplicateTemplate(parseInt(json_config["numReplicates"]));
-
-        // multiFasta String array to boolean array
-        let tmpMultiF = json_config["multiFasta"].map((s) => {
-          if (s === "true") return true;
-          return false;
-        });
-        setMultiFasta([...tmpMultiF]);
-
-        // if alignmentFile given assign it to useState
-        if (typeof json_config["alignmentFile"] !== "undefined") {
-          const fileName = json_config["alignmentFile"];
-
-          fetch(`/api/exampleData/${organism}/files/${fileName}/`)
-            .then((res) => res.blob())
-            .then((blob) => {
-              setAlignmentFile(new File([blob], fileName));
-            });
-        }
-
-        // alternative for getting files, but reallyyyyyyyy slow
-        /*fetch(`/api/exampleData/${organism}/files/`)
-                .then(res => res.blob())
-                .then(blob => {     
-                    
-                    JSZip.loadAsync(blob)
-                        .then(zip => {
-                            const allFiles = [];
-                            Object.keys(zip.files).forEach((filename) => {
-                                zip.files[filename].async('string').then((data) => {
-                                    allFiles.push(new File([data], filename.replace('Archive/', '')));
-                                })                             
-                            });                          
-                            
-                            if(typeof json_config['alignmentFile'] !== 'undefined') {
-                                assignFiles(allFiles, json_config['multiFasta'], json_config['genomes'], json_config['replicates'], json_config['numReplicates'], json_config['alignmentFile']);
-                            } else {
-                                assignFiles(allFiles, json_config['multiFasta'], json_config['genomes'], json_config['replicates'], json_config['numReplicates'], '');
-                            }
-
-                            setParameters(json_config['parameters']);
-                            setProjectName(json_config['projectName']);
-                            setRnaGraph(json_config['rnaGraph'] === 'true');
-                            setLoading(false, false);                                                       
-                    });
-                });*/
-      });
+  
+    try {
+      const configResponse = await fetch(`/api/exampleData/${organism}/json/-/`);
+      const configData = await configResponse.json();
+      const jsonConfig = JSON.parse(configData.result);
+  
+      setParameters(jsonConfig["parameters"]);
+      setProjectName(jsonConfig["projectName"]);
+      setRnaGraph(jsonConfig["rnaGraph"] === "true");
+  
+      // Parallelize fetching of genome and replicate files
+      const genomePromises = jsonConfig["genomes"].map((genome, i) => fetchGenomeFiles(organism, genome, i, jsonConfig));
+      const genomes = await Promise.all(genomePromises);
+      const replicatePromises = jsonConfig["replicates"].map((replicate, i) => fetchReplicateFiles(organism, replicate, i));
+      const replicates = await Promise.all(replicatePromises);
+  
+      setGenomes(genomes);
+      setShowGName(true);
+      setReplicates(replicates);
+      updateReplicateTemplate(parseInt(jsonConfig["numReplicates"]));
+  
+      // Convert multiFasta strings to boolean
+      const multiFasta = jsonConfig["multiFasta"].map(s => s === "true");
+      setMultiFasta(multiFasta);
+  
+      // Fetch alignment file if provided
+      if (jsonConfig["alignmentFile"]) {
+        await fetchAlignmentFile(organism, jsonConfig["alignmentFile"]);
+      }
+    } catch (error) {
+      console.error('Error loading example data:', error);
+    } finally {
+      setLoading([false, false]);
+    }
   };
+  
+  /**
+   * Fetches genome files for a given organism and genome.
+   * 
+   * @param {string} organism - The name of the organism.
+   * @param {object} genome - The genome object.
+   * @param {number} index - The index of the genome.
+   * @param {object} jsonConfig - The JSON configuration object.
+   * @returns {Promise<object>} - A promise that resolves to the updated genome object.
+   */
+  async function fetchGenomeFiles(organism, genome, index, jsonConfig) {
+    // Deep copy genome object
+    let genomeNew = Object.assign({},genome);
+    // Get type of study from config
+    const typeOfStudy = jsonConfig["parameters"]["setup"]["typeofstudy"]["value"];
+
+    let genomeID = typeOfStudy === "condition" ? "genome1" :  "genome" + (index+1) 
+    
+    console.log('Fetching genome files for', genome);
+    console.log('Genome index:', index);
+    let genomefileName = genome[genomeID]["genomefasta"];
+    let annotationfileName = genome[genomeID]["genomeannotation"];
+
+    // Fetching logic for genome files...
+    const responseGenome = await fetch(`/api/exampleData/${organism}/files/${genomefileName}/`)
+    const responseAnnotation = await fetch(`/api/exampleData/${organism}/files/${annotationfileName}/`)
+    const blobGenome = await responseGenome.blob();
+    const blobAnnotation = await responseAnnotation.blob();
+    const genomeFiles = new File([blobGenome], genomefileName);
+    const annotationFiles = new File([blobAnnotation], annotationfileName);
+    genomeNew[genomeID]["genomefasta"] = genomeFiles;
+    genomeNew[genomeID]["genomeannotation"] = [annotationFiles];
+    return genomeNew;
+  }
+  
+  async function fetchReplicateFiles(organism, replicate, index) {
+    const typesOfFiles = ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"];
+    // Deep copy replicate object
+    let replicateNew = Object.assign({}, replicate);
+    // Get key of object
+    const genomeID = Object.keys(replicate)[0];
+    for (let replicate of replicateNew[genomeID]) {
+      for (let  value of Object.values(replicate)) {
+        for (let typeOfFile of typesOfFiles) {
+          let fileName = value[typeOfFile];
+          // Fetching logic for replicate files...
+          const response = await fetch(`/api/exampleData/${organism}/files/${fileName}/`);
+          const blob = await response.blob();
+          const file = new File([blob], fileName);
+          value[typeOfFile] = file;
+        }
+      }
+    }
+    return replicateNew;
+  }
+    
+  
+  async function fetchAlignmentFile(organism, fileName) {
+    const response = await fetch(`/api/exampleData/${organism}/files/${fileName}/`);
+    const blob = await response.blob();
+    setAlignmentFile(new File([blob], fileName));
+  }
+  
 
   return (
     <div>

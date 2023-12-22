@@ -1,5 +1,6 @@
 import json
 from werkzeug.utils import secure_filename
+import copy
 import os
 
 TRANSLATE_DICT = {
@@ -189,29 +190,8 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
 def handle_config_file(parameters, config, genomes, replicates):
     '''update parameter, genomes, replicate values regarding the given config file'''
 
-    # update parameters
-    parameters = handle_config_param(parameters, config, 'mode','setup', 'typeofstudy')
-    parameters = handle_config_param(parameters, config, 'numberOfDatasets','setup', 'numberofgenomes')
-    parameters = handle_config_param(parameters, config, 'numReplicates','setup', 'numberofreplicates')
-    parameters = handle_config_param(parameters, config, 'minCliffHeight','parameterBox', 'Prediction', 'stepheight')
-    parameters = handle_config_param(parameters, config, 'minCliffHeightDiscount','parameterBox', 'Prediction', 'stepheightreduction')
-    parameters = handle_config_param(parameters, config, 'TSSinClusterSelectionMethod','parameterBox', 'Clustering', 'clustermethod')
-    parameters = handle_config_param(parameters, config, 'allowedCompareShift','parameterBox', 'Comparative', 'allowedcrossgenomeshift')
-    parameters = handle_config_param(parameters, config, 'allowedRepCompareShift','parameterBox', 'Comparative', 'allowedcrossreplicateshift')
-    parameters = handle_config_param(parameters, config, 'allowedRepCompareShift','parameterBox', 'Comparative', 'allowedcrossreplicateshift')
-    parameters = handle_config_param(parameters, config, 'maxASutrLength','parameterBox', 'Classification', 'antisenseutrlength')
-    parameters = handle_config_param(parameters, config, 'maxNormalTo5primeFactor','parameterBox', 'Prediction', 'processingsitefactor')
-    parameters = handle_config_param(parameters, config, 'maxTSSinClusterDistance','parameterBox', 'Clustering', 'tssclusteringdistance')
-    parameters = handle_config_param(parameters, config, 'maxUTRlength','parameterBox', 'Classification', 'utrlength')
-    parameters = handle_config_param(parameters, config, 'min5primeToNormalFactor','parameterBox', 'Prediction', 'enrichmentfactor')
-    parameters = handle_config_param(parameters, config, 'minCliffFactor','parameterBox', 'Prediction', 'stepfactor')
-    parameters = handle_config_param(parameters, config, 'minCliffFactorDiscount','parameterBox', 'Prediction', 'stepfactorreduction')
-    parameters = handle_config_param(parameters, config, 'minNormalHeight','parameterBox', 'Prediction', 'baseheight')
-    parameters = handle_config_param(parameters, config, 'minNumRepMatches','parameterBox', 'Comparative', 'matchingreplicates')
-    parameters = handle_config_param(parameters, config, 'minPlateauLength','parameterBox', 'Prediction', 'steplength')
-    parameters = handle_config_param(parameters, config, 'normPercentile','parameterBox', 'Normalization', 'normalizationpercentile')
-    parameters = handle_config_param(parameters, config, 'texNormPercentile','parameterBox', 'Normalization', 'enrichmentnormalizationpercentile')
-        
+    parameters = create_parameters(parameters, config)
+                
     # save multiFasta string as list
     multiFasta = config['multiFasta'].split(',')
 
@@ -226,141 +206,197 @@ def handle_config_file(parameters, config, genomes, replicates):
 
     return [parameters, genomes, replicates, alignmentFile, multiFasta]
 
+def create_parameters(parameters, config):
+    '''create parameters from config file'''
+    newParameters = copy.deepcopy(parameters)
+    DICT_OVERVIEW = {
+        "setup": {
+            "typeofstudy": "mode",
+            "numberofgenomes": "numberOfDatasets",
+            "numberofreplicates": "numReplicates"
+        },
+        "parameterBox": {
+            "Prediction": {
+                "stepheight": "minCliffHeight",
+                "stepheightreduction": "minCliffHeightDiscount",
+                "processingsitefactor": "maxNormalTo5primeFactor",
+                "enrichmentfactor": "min5primeToNormalFactor",
+                "stepfactor": "minCliffFactor",
+                "stepfactorreduction": "minCliffFactorDiscount",
+                "baseheight": "minNormalHeight",
+                "steplength": "minPlateauLength"
+            },
+            "Clustering": {
+                "clustermethod": "TSSinClusterSelectionMethod",
+                "tssclusteringdistance": "maxTSSinClusterDistance"
+            },
+            "Comparative": {
+                "allowedcrossgenomeshift": "allowedCompareShift",
+                "allowedcrossreplicateshift": "allowedRepCompareShift",
+                "matchingreplicates": "minNumRepMatches"
+            },
+            "Normalization": {
+                "normalizationpercentile": "normPercentile",
+                "enrichmentnormalizationpercentile": "texNormPercentile"
+            },
+            "Classification": {
+                "antisenseutrlength": "maxASutrLength",
+                "utrlength": "maxUTRlength"
+            }
+        }
+    }
 
-def handle_config_param(parameters, config, configVariable, parameterNode1, parameterNode2, parameterNode3=""):
-    '''update parameters from config file'''
-    
-    # setup box
-    if len(parameterNode3) == 0:
-        try:
-            temp = config[configVariable]
-
-            if configVariable == 'mode':
-                if temp == 'cond':
-                    parameters[parameterNode1][parameterNode2]['value'] = 'condition' 
+    for category, items in DICT_OVERVIEW.items():
+        # Category iterates over setup and parameterBox
+        for key, value in items.items():
+            print(category, key, value)
+            if category == "setup":
+                tempValue = config.get(value)
+                if value == 'mode':
+                    if tempValue == 'cond':
+                        parameters[category][key]['value'] = 'condition'
+                    else:
+                        parameters[category][key]['value'] = 'genome'
+                        parameters['setup']['numberofgenomes']['name'] = 'Number of Genomes'
+                        parameters['parameterBox']['Comparative']['allowedcrossgenomeshift']['name'] = 'allowed cross-genome shift'
                 else:
-                    parameters[parameterNode1][parameterNode2]['value'] = 'genome'
-                    parameters['setup']['numberofgenomes']['name'] = 'Number of Genomes'
-                    parameters['parameterBox']['Comparative']['allowedcrossgenomeshift']['name'] = 'allowed cross-genome shift'
+                    parameters[category][key]['value'] = int(tempValue)
             else:
-                parameters[parameterNode1][parameterNode2]['value'] = int(temp)
-        except:
-            print('No such value')
-    # parameter box
-    else:
-        try:
-            temp = config[configVariable]
-
-            if configVariable == 'TSSinClusterSelectionMethod':
-                parameters[parameterNode1][parameterNode2][parameterNode3]['value'] = temp
-
-            # convert to float
-            else:
-                parameters[parameterNode1][parameterNode2][parameterNode3]['value'] = float(temp)
-  
-        except:
-            print('No such value')
-    
+                # ParameterBox
+                for keyParameterBox, valueParameterBox in value.items():
+                    tempValue = config.get(valueParameterBox)
+                    # parameters = handle_config_param(parameters, config, valueParameterBox, category, key, keyParameterBox)
+                    parameters[category][key][keyParameterBox]['value'] = tempValue if valueParameterBox == "TSSinClusterSelectionMethod" else float(config.get(valueParameterBox))
+                    
     return parameters
 
 
+
+
+def extract_config_files(config, file_prefixes):
+    """Extract and organize file data from config based on a list of prefixes."""
+    return {prefix.replace("_", ""): {k: v for k, v in config.items() if k.startswith(prefix)} for prefix in file_prefixes}
+
+def create_genome_entry(index, file_data, parameters, default_placeholder):
+    """
+    Create a genome entry for the given index using the provided file data and parameters.
+
+    Args:
+        index (int): The index of the genome entry.
+        file_data (dict): The data of the file.
+        parameters (dict): The parameters for creating the genome entry.
+        default_placeholder (str): The default placeholder value.
+
+    Returns:
+        dict: The genome entry.
+    """
+    genome_name = get_value(file_data['outputPrefix'], f'outputPrefix_{index}', default_placeholder)
+    return {
+        f"genome{index}": {
+            "name": genome_name,
+            "placeholder": default_placeholder,
+            "alignmentid": get_value(file_data['idList'], index),
+            "outputid": get_value(file_data['outputID'], f'outputID_{index}'),
+            "genomefasta": get_value(file_data['genome'], f'genome_{index}'),
+            "genomeannotation": get_value(file_data['annotation'], f'annotation_{index}')
+        }
+    }
+
 def handle_config_genomes(config, genomes, parameters):
-    '''update genomes from config file'''
+    """
+    Handles the configuration of genomes by extracting file data, creating genome entries,
+    and updating the genomes list.
 
-    # annotation files
-    annotationFiles = dict(filter(lambda item: 'annotation_' in item[0], config.items()))
-    # genome files
-    genomeFiles = dict(filter(lambda item: 'genome_' in item[0], config.items()))
-    # output ids
-    outputIDs = dict(filter(lambda item: 'outputID_' in item[0], config.items()))
-    
-    # genome names
-    genomeNames = dict(filter(lambda item: 'outputPrefix_' in item[0], config.items()))
-    # alingment IDs
-    alignmentIDs = dict(filter(lambda item: 'idList' in item[0], config.items()))
+    Args:
+        config (dict): The configuration data.
+        genomes (list): The list of genomes.
+        parameters (dict): The parameters data.
 
-    if len(alignmentIDs) > 0:
-        alignmentIDs = alignmentIDs['idList'].split(',')
+    Returns:
+        list: The updated list of genomes.
+    """
+    file_prefixes = ['annotation_', 'genome_', 'outputID_', 'outputPrefix_', 'idList']
+    file_data = extract_config_files(config, file_prefixes)
+    if file_data['idList']:
+        file_data['idList'] = file_data['idList']['idList'].split(',')
 
-    studyType = (parameters['setup']['typeofstudy']['value']).capitalize()
-    genomeNum = int(parameters['setup']['numberofgenomes']['value'])
+    study_type = parameters['setup']['typeofstudy']['value'].capitalize()
+    genome_num = int(parameters['setup']['numberofgenomes']['value'])
 
-    if (genomeNum < len(genomes)):
-        difference = len(genomes) - genomeNum
-        genomes = genomes[:-difference or None]
+    genomes = genomes[:genome_num]
 
-    for x in range(genomeNum):
-        currentGenomeName = 'genome' + str(x+1)
-        genomePlaceholder = studyType + '_' + str(x+1)
+    for x in range(genome_num):
+        genome_placeholder = f'{study_type}_{x+1}'
+        tmp_genome = create_genome_entry(x + 1, file_data, parameters, genome_placeholder)
 
-        genomeName = get_value(genomeNames, 'outputPrefix_'+str(x+1), genomePlaceholder)
-        alignmentID = get_value(alignmentIDs, x)
-        outputID = get_value(outputIDs, 'outputID_'+str(x+1))
-        genomeFile =  get_value(genomeFiles, 'genome_'+str(x+1))
-        annotationFile = get_value(annotationFiles, 'annotation_'+str(x+1))
-       
-        tmpGenome = {currentGenomeName: { "name": genomeName, "placeholder": genomePlaceholder, "alignmentid": alignmentID, "outputid": outputID, 
-                                        "genomefasta": genomeFile, "genomeannotation": annotationFile}}
-        if(x >= len(genomes)):
-            genomes.append(tmpGenome)
-        else: 
-            genomes[x] = tmpGenome
-    
+        if x >= len(genomes):
+            genomes.append(tmp_genome)
+        else:
+            genomes[x] = tmp_genome
+
     return genomes
 
+
+def get_replicate_files(config, genome_index, replicate_letter):
+    """Retrieve file paths for a given genome index and replicate letter."""
+    file_types = ['fivePrimePlus', 'fivePrimeMinus', 'normalPlus', 'normalMinus']
+    return {f_type: config.get(f"{f_type}_{genome_index}{replicate_letter}", "") for f_type in file_types}
+
+def create_replicate_entry(replicate_letter, files):
+    """Create a dictionary entry for a single replicate.
+
+    Args:
+        replicate_letter (str): The letter representing the replicate.
+        files (dict): A dictionary containing file paths for different types of files.
+
+    Returns:
+        dict: A dictionary entry for the replicate, with file paths organized by type.
+    """
+    return {
+        f"replicate{replicate_letter}": {
+            "name": f"Replicate {replicate_letter}",
+            "enrichedforward": files['fivePrimePlus'],
+            "enrichedreverse": files['fivePrimeMinus'],
+            "normalforward": files['normalPlus'],
+            "normalreverse": files['normalMinus']
+        }
+    }
+
 def handle_config_replicates(config, replicates, parameters):
-    '''update replicates from config file'''
+    """
+    Handle the configuration and replicates data to generate a list of replicates for each genome.
 
-    # enriched forward file
-    enrichedForwardFiles = dict(filter(lambda item: 'fivePrimePlus_' in item[0], config.items()))
-    # enriched reverse files
-    enrichedReverseFiles = dict(filter(lambda item: 'fivePrimeMinus_' in item[0], config.items()))
-    # normal forward files
-    normalForwardFiles = dict(filter(lambda item: 'normalPlus_' in item[0], config.items()))
-    # normal reverse files
-    normalReverseFiles = dict(filter(lambda item: 'normalMinus_' in item[0], config.items()))
+    Args:
+        config (dict): The configuration data.
+        replicates (list): The list of replicates for each genome.
+        parameters (dict): The parameters data.
 
-    genomeNum = int(parameters['setup']['numberofgenomes']['value'])
-    replicateNum = int(parameters['setup']['numberofreplicates']['value'])
+    Returns:
+        list: The updated list of replicates for each genome.
+    """
+    genome_num = int(parameters['setup']['numberofgenomes']['value'])
+    replicate_num = int(parameters['setup']['numberofreplicates']['value'])
 
-    for x in range(genomeNum):
-        currentGenomeName = 'genome' + str(x+1)
-        tmpReplicate = []
+    for x in range(genome_num):
+        current_genome_name = f'genome{x+1}'
+        tmp_replicates = [
+            create_replicate_entry(chr(97 + z), get_replicate_files(config, x+1, chr(97 + z)))
+            for z in range(replicate_num)
+        ]
 
-        for z in range(replicateNum): 
+        if x < len(replicates):
+            replicates[x] = {current_genome_name: tmp_replicates}
+        else:
+            replicates.append({current_genome_name: tmp_replicates})
 
-            letter = chr(97 + z)
-            currentReplicateName = 'replicate'+letter
-            replicateName = 'Replicate ' + letter
-        
-            enrichedForward = get_value(enrichedForwardFiles, 'fivePrimePlus_'+str(x+1)+letter)
-            enrichedReverse = get_value(enrichedReverseFiles, 'fivePrimeMinus_'+str(x+1)+letter)
-            normalForward = get_value(normalForwardFiles, 'normalPlus_'+str(x+1)+letter)
-            normalReverse = get_value(normalReverseFiles, 'normalMinus_'+str(x+1)+letter)
+    return replicates  
 
-            tmpReplicate.append({currentReplicateName: {"name": replicateName, "enrichedforward": enrichedForward, 
-                                "enrichedreverse": enrichedReverse, "normalforward": normalForward, "normalreverse": normalReverse}})
-           
-
-        tmpGenome = {currentGenomeName: tmpReplicate}
-
-        if(x >= len(replicates)):
-            replicates.append(tmpGenome)
-        else: 
-            replicates[x] = tmpGenome
-    
-    return replicates
-           
-
-def get_value(object, node, default=""):
-    '''get the value from the given node from a given object '''
-    value = default
+def get_value(obj, node, default=""):
+    '''get value from dictionary'''
     try:
-        value = object[node]
+        return obj.get(node, default)
     except:
-        print(node + ' value not given.')
-    
-    return value
+        print(f'No such value for {obj}')
 
 
 

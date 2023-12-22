@@ -80,20 +80,13 @@ def getInput():
             newAnnotationDir = annotationDir.replace('\\', '/')
  
             genomes, replicates = sf.save_files(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
-            # test = sf.save_files2(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
-            # print("HERE")
-            # print(genomes)
-            # # print(genomes_2)
-            # print(replicates)
-            # print(replicates_2)
-            # if alignment file is given (studyType = align)
-            alignmentFilename = ''
-            try:
-                alignmentFile = request.files['alignmentfile']
+            alignmentFile = request.files.get('alignmentfile')
+            if alignmentFile:
                 # save alignment file
-                alignmentFilename = newTmpDir + '/' + secure_filename(alignmentFile.filename)
-                alignmentFile.save(alignmentFilename)   
-            except:
+                alignmentFilename = f"{newTmpDir}/{secure_filename(alignmentFile.filename)}"
+                alignmentFile.save(alignmentFilename)
+            else:
+                alignmentFilename = ''
                 print('No alignment file')
            
             # save files from tss prediciton in this directory
@@ -239,7 +232,6 @@ def exampleData(organism, type,filename):
             return {'result': json.dumps(data)}
                 
     elif type == 'files':
-        #return  send_file(files_path, mimetype='application/zip') 
         return send_from_directory(files_path, filename)
 
   

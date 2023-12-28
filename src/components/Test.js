@@ -9,7 +9,6 @@ function Test() {
         try {
             const response = await fetch(`/api/checkStatus/${id}`);
             const data = await response.json();
-            console.log(data);
             setData(data); // Update the state with fetched data
         }
         catch (error) {
@@ -28,7 +27,13 @@ function Test() {
     }, [id]); // Dependency array: Fetch status when `id` changes
 
     return <div>
-        {data["status"] === "Completed" ? <div> <a href={`/result/${data["result"]["fileout"]}`}>Download</a> </div> : null}
+        {data["status"] === "Completed" && 
+            <div> 
+                <a href={`/result/${data["result"]["fileout"]}`}>Download</a> 
+                <p>{data["result"]["out"]}</p>
+                <p>{data["result"]["err"]}</p>
+            </div> 
+        }
         {id}: {data["status"]} 
         </div>;
 }

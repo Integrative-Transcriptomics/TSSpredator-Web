@@ -1,5 +1,5 @@
 from asyncio.subprocess import PIPE
-from distutils.archive_util import make_archive
+from shutil import make_archive, rmtree
 from flask import Flask, request, send_file, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 
@@ -7,7 +7,7 @@ import json
 import tempfile
 import subprocess
 import os
-import shutil
+# import shutil
 import tempfile
 
 import server_tsspredator.parameter as parameter
@@ -80,11 +80,11 @@ def helperAsyncPredator(jsonString, newResultDir, workingDir, annotationDir):
 
 def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum): 
      # create temporary directory, save files and save filename in genome/replicate object
-    tmpdir = tempfile.mkdtemp()
+    tmpdir = tempfile.mkdtemp(prefix='tmpPredInputFolder')
 
     newTmpDir = tmpdir.replace('\\', '/')
 
-    annotationDir = tempfile.mkdtemp()
+    annotationDir = tempfile.mkdtemp(prefix='tmpPredAnnotation')
 
     newAnnotationDir = annotationDir.replace('\\', '/')
 
@@ -98,7 +98,7 @@ def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward
         print('No alignment file')
     
     # save files from tss prediciton in this directory
-    resultDir = tempfile.mkdtemp()
+    resultDir = tempfile.mkdtemp(prefix='tmpPredResultFolder')
 
     newResultDir = resultDir.replace('\\', '/')
     # create json string for jar
@@ -115,11 +115,9 @@ def index():
 @app.route('/api/checkStatus/<task_id>', methods=['POST', 'GET'])
 def task_status(task_id):
     task = job_data.get(task_id, None)
-    print(job_data)
-    print(task)
-    print(task_id)
+
     if task is None:
-        return {'message': 'Job not found'}, 404
+        return {'status': 'Job not found'}, 404
     
     # Check if the subprocess is still running
     if task['process'].poll() is None:
@@ -131,18 +129,18 @@ def task_status(task_id):
             task['err'] = err
             task['status'] = 'Completed'
          # If no error, proceed to zip files
+        # if task['err'] == '':
         newResultDir = task['folders']['newResultDir']
-        tmpdirResult = tempfile.mkdtemp()
-        newTmpDirResult = tmpdirResult.replace('\\', '/')
-        make_archive(newTmpDirResult+'/result', 'zip', newResultDir)
-        
-        filePath = newTmpDirResult.split('/')[-1]
+        tmpdirResult = tempfile.mkdtemp(prefix='tmpPredZippedResult')
+        make_archive(os.path.join(tmpdirResult,'result'), 'zip', newResultDir)
+        filePath = os.path.basename(tmpdirResult)
         for key in task["folders"]:
             fd = task["folders"][key]
-            if os.path.exists(fd):
-                shutil.rmtree(fd)
-       
-        return {'job_id': task_id, 'status': task['status'], 'result': {"fileout": filePath, "out": task['out'], "err": task['err']}}
+            if os.path.exists(fd) and key != "newResultDir":
+                rmtree(fd)
+                # pass
+        returnValue = {'job_id': task_id, 'status': task['status'], 'result': {"fileout": filePath, "out": task['out'], "err": task['err']}}
+        return returnValue
      # # Check if there was an error in stderr or if returncode isn't 0 (success)
         # if result.returncode != 0 or result.stderr:
         #     return {'result': "Error", "details": result.stderr}

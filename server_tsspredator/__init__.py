@@ -1,23 +1,173 @@
 from asyncio.subprocess import PIPE
 from distutils.archive_util import make_archive
-from importlib.resources import files
-from flask import Flask, request, send_file, send_from_directory
+from flask import Flask, request, send_file, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 
 import json
 import tempfile
 import subprocess
 import os
+import shutil
 import tempfile
 
 import server_tsspredator.parameter as parameter
 import server_tsspredator.server_handle_files as sf
+# from celery import Celery, Task, shared_task
+
+
+job_data = {}
+
+# def celery_init_app(app: Flask) -> Celery:
+#     class FlaskTask(Task):
+#         def __call__(self, *args: object, **kwargs: object) -> object:
+#             with app.app_context():
+#                 return self.run(*args, **kwargs)
+
+#     celery_app = Celery(app.name, task_cls=FlaskTask)
+#     celery_app.config_from_object(app.config["CELERY"])
+#     celery_app.set_default()
+#     app.extensions["celery"] = celery_app
+    # return celery_app
 
 app = Flask(__name__, static_folder='../build', static_url_path='/')
+app.config.from_mapping(
+    # CELERY=dict(
+    #     broker_url="redis://localhost",
+    #     result_backend="redis://localhost",
+    # ),
+)
+# celery_app = celery_init_app(app)
+
+# @shared_task(ignore_result=False)
+# def add_together(a: int, b: int) -> int:
+#     return a + b
+import uuid
+
+def generate_unique_id():
+    return str(uuid.uuid4())
+# @shared_task(ignore_result=False, track_started=True)
+def helperAsyncPredator(jsonString, newResultDir, workingDir, annotationDir):
+    '''call jar file for TSS prediction and zip files'''
+    try:
+        # Execute JAR file with subprocess.run (this is blocking)
+        serverLocation = os.getcwd()
+        # join server Location to find TSSpredator
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
+        unique_id = generate_unique_id()
+        result = subprocess.Popen(['java', '-jar',tsspredatorLocation, jsonString], 
+                                stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE, 
+                                text=True,  # Ensures stdout and stderr are strings
+                                # timeout=timeout_s
+                                # cwd=workingDir
+                                )
+        job_data[unique_id] = {
+        'process': result,
+        'status': 'running', 
+        "folders": 
+            {
+                "workingDir": workingDir,
+                "annotationDir": annotationDir,
+                "newResultDir": newResultDir
+            }
+    }
+
+       
+        return {'id': unique_id}
+
+    except subprocess.TimeoutExpired:
+        return {'result': 'Timeout'}
+
+def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum): 
+     # create temporary directory, save files and save filename in genome/replicate object
+    tmpdir = tempfile.mkdtemp()
+
+    newTmpDir = tmpdir.replace('\\', '/')
+
+    annotationDir = tempfile.mkdtemp()
+
+    newAnnotationDir = annotationDir.replace('\\', '/')
+
+    genomes, replicates = sf.save_files(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
+    if alignmentFile:
+        # save alignment file
+        alignmentFilename = f"{newTmpDir}/{secure_filename(alignmentFile.filename)}"
+        alignmentFile.save(alignmentFilename)
+    else:
+        alignmentFilename = ''
+        print('No alignment file')
+    
+    # save files from tss prediciton in this directory
+    resultDir = tempfile.mkdtemp()
+
+    newResultDir = resultDir.replace('\\', '/')
+    # create json string for jar
+    jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
+    result = helperAsyncPredator(jsonString, resultDir, tmpdir, annotationDir)
+    print(result)
+    return {'id': result["id"]}
+
 
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
+
+@app.route('/api/checkStatus/<task_id>', methods=['POST', 'GET'])
+def task_status(task_id):
+    task = job_data.get(task_id, None)
+    print(job_data)
+    print(task)
+    print(task_id)
+    if task is None:
+        return {'message': 'Job not found'}, 404
+    
+    # Check if the subprocess is still running
+    if task['process'].poll() is None:
+        return {'job_id': task_id, 'status': 'Running'}
+    else:
+        if "result" not in task:  # If the result hasn't been retrieved yet
+            out, err = task['process'].communicate()
+            task['out'] = out 
+            task['err'] = err
+            task['status'] = 'Completed'
+         # If no error, proceed to zip files
+        newResultDir = task['folders']['newResultDir']
+        tmpdirResult = tempfile.mkdtemp()
+        newTmpDirResult = tmpdirResult.replace('\\', '/')
+        make_archive(newTmpDirResult+'/result', 'zip', newResultDir)
+        
+        filePath = newTmpDirResult.split('/')[-1]
+        for key in task["folders"]:
+            fd = task["folders"][key]
+            if os.path.exists(fd):
+                shutil.rmtree(fd)
+       
+        return {'job_id': task_id, 'status': task['status'], 'result': {"fileout": filePath, "out": task['out'], "err": task['err']}}
+     # # Check if there was an error in stderr or if returncode isn't 0 (success)
+        # if result.returncode != 0 or result.stderr:
+        #     return {'result': "Error", "details": result.stderr}
+
+       
+    # if task.state == 'PENDING':
+    #     # job did not start yet
+    #     response = {
+    #         'state': task.state,
+    #         'status': 'Pending...'
+    #     }
+    # elif task.state != 'FAILURE':
+    #     response = {
+    #         'state': task.state,
+    #         'status': task.info.get('status', '')
+    #     }
+    #     if 'result' in task.info:
+    #         response['result'] = task.info['result']
+    # else:
+    #     # something went wrong in the background job
+    #     response = {
+    #         'state': task.state,
+    #         'status': str(task.info),  # this is the exception raised
+    #     }
+    # return response
 
 
 @app.route('/result/<filePath>/')
@@ -40,6 +190,38 @@ def getInputTest():
     return {'result': 'success', 'filePath': "filePath"}
 
 
+@app.route('/api/testAsync/', methods=['POST', 'GET'])
+def getInputAsync():
+    '''get the input from the form and execute TSS prediction'''
+
+    # get genome fasta files
+    genomeFasta = request.files.to_dict(flat=False)['genomefasta']  
+
+   # multiple genomannotation files per genome possible
+    genomeAnnotation = []
+    try:
+        for x in range(len(genomeFasta)):
+            genomeAnnotation.append(request.files.to_dict(flat=False)['genomeannotation'+str(x+1)])
+    except:
+        print("No genome Annotation file.")    
+  
+    # get all replicate files
+    enrichedForward  = request.files.to_dict(flat=False)['enrichedforward']
+    enrichedReverse = request.files.to_dict(flat=False)['enrichedreverse']
+    normalForward = request.files.to_dict(flat=False)['normalforward']
+    normalReverse = request.files.to_dict(flat=False)['normalreverse']    
+
+    # get parameters
+    projectName = request.form['projectname']
+    parameters = json.loads(request.form['parameters'])
+    rnaGraph = request.form['rnagraph']
+    genomes = json.loads(request.form['genomes'])
+    replicates = json.loads(request.form['replicates'])
+    replicateNum = json.loads(request.form['replicateNum'])
+    alignmentFile = request.files.get('alignmentfile')
+    result = asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum)
+    print(result)
+    return jsonify({'result': 'success', "id": result['id']})
 
 @app.route('/api/input/', methods=['POST', 'GET'])
 def getInput():
@@ -218,7 +400,6 @@ def saveConfig():
 
     return send_file(configFilename, as_attachment=True)
 
-
 @app.route('/api/exampleData/<organism>/<type>/<filename>/')
 def exampleData(organism, type,filename):
     '''send config file (json) or zip directory to load example data'''
@@ -236,5 +417,5 @@ def exampleData(organism, type,filename):
 
   
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# if __name__ == "__main__":
+#     app.run(debug=True)

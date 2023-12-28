@@ -2,6 +2,43 @@ import json
 from werkzeug.utils import secure_filename
 import copy
 import os
+# Overview Constants
+DICT_OVERVIEW = {
+        "setup": {
+            "typeofstudy": "mode",
+            "numberofgenomes": "numberOfDatasets",
+            "numberofreplicates": "numReplicates"
+        },
+        "parameterBox": {
+            "Prediction": {
+                "stepheight": "minCliffHeight",
+                "stepheightreduction": "minCliffHeightDiscount",
+                "processingsitefactor": "maxNormalTo5primeFactor",
+                "enrichmentfactor": "min5primeToNormalFactor",
+                "stepfactor": "minCliffFactor",
+                "stepfactorreduction": "minCliffFactorDiscount",
+                "baseheight": "minNormalHeight",
+                "steplength": "minPlateauLength"
+            },
+            "Clustering": {
+                "clustermethod": "TSSinClusterSelectionMethod",
+                "tssclusteringdistance": "maxTSSinClusterDistance"
+            },
+            "Comparative": {
+                "allowedcrossgenomeshift": "allowedCompareShift",
+                "allowedcrossreplicateshift": "allowedRepCompareShift",
+                "matchingreplicates": "minNumRepMatches"
+            },
+            "Normalization": {
+                "normalizationpercentile": "normPercentile",
+                "enrichmentnormalizationpercentile": "texNormPercentile"
+            },
+            "Classification": {
+                "antisenseutrlength": "maxASutrLength",
+                "utrlength": "maxUTRlength"
+            }
+        }
+    }
 
 TRANSLATE_DICT = {
     "Classification_antisenseutrlength": "maxASutrLength",
@@ -22,6 +59,7 @@ TRANSLATE_DICT = {
     "Prediction_stepheightreduction": "minCliffHeightDiscount",
     "Prediction_steplength": "minPlateauLength"
 }
+
 # # save files in temporary directory and save file paths in json string
 def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum):
     '''save files in temporary directory and save file paths in json string, so that the .jar can read the files'''
@@ -81,51 +119,6 @@ def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genom
 
 
     return [genomes_new, replicates_new]
-
-def save_genome_file(directory, file, genomeObject, idx, node):
-    '''save file paths of genome files'''
-
-    tmpGenome = genomeObject
-
-    # save annotation files for each genome in individual directory
-    if(node == 'genomeannotation'):
-       
-        filename = ''
-        if(len(file) > 0):
-            # go over list for genome Z, with all annotation files for genome Z
-            for x in file:
-                # save file x in tempDirectory
-                filename = directory + '/' + secure_filename(x.filename)
-                x.save(filename)
-            
-        # save filename of the last file -> jar: scans directory of the annotation file if multiFasta is given
-        tmpGenome[idx]['genome'+str(idx+1)][node] = filename            
-
-    else:
-        # save file in temporary directory
-        filename = directory + '/' + secure_filename(file.filename)
-        file.save(filename)
-                    
-        # save filename in genome object
-        tmpGenome[idx]['genome'+str(idx+1)][node] = filename
-
-    return tmpGenome
-   
-
-def save_replicate_file(directory, file, replicateObject, genomeCounter, replicateCounter, node):
-    '''save file paths of replicate files'''
-
-    tmpRep = replicateObject
-
-    filename = directory + '/' + secure_filename(file.filename)
-    file.save(filename)
-
-    # save filename in replicate object
-    repLetter = chr(97 + replicateCounter)
-    tmpRep[genomeCounter]['genome'+str(genomeCounter+1)][replicateCounter]['replicate'+repLetter][node] = filename
-
-    return tmpRep
-
 
 def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory, loadConfig='false', saveConfig='false', configFile=" ", multiFasta=''):
     '''create json string that is needed as input for TSSpredator.jar'''
@@ -206,46 +199,10 @@ def handle_config_file(parameters, config, genomes, replicates):
 
     return [parameters, genomes, replicates, alignmentFile, multiFasta]
 
-def create_parameters(parameters, config):
+def create_parameters(newParameters, config):
     '''create parameters from config file'''
-    newParameters = copy.deepcopy(parameters)
-    DICT_OVERVIEW = {
-        "setup": {
-            "typeofstudy": "mode",
-            "numberofgenomes": "numberOfDatasets",
-            "numberofreplicates": "numReplicates"
-        },
-        "parameterBox": {
-            "Prediction": {
-                "stepheight": "minCliffHeight",
-                "stepheightreduction": "minCliffHeightDiscount",
-                "processingsitefactor": "maxNormalTo5primeFactor",
-                "enrichmentfactor": "min5primeToNormalFactor",
-                "stepfactor": "minCliffFactor",
-                "stepfactorreduction": "minCliffFactorDiscount",
-                "baseheight": "minNormalHeight",
-                "steplength": "minPlateauLength"
-            },
-            "Clustering": {
-                "clustermethod": "TSSinClusterSelectionMethod",
-                "tssclusteringdistance": "maxTSSinClusterDistance"
-            },
-            "Comparative": {
-                "allowedcrossgenomeshift": "allowedCompareShift",
-                "allowedcrossreplicateshift": "allowedRepCompareShift",
-                "matchingreplicates": "minNumRepMatches"
-            },
-            "Normalization": {
-                "normalizationpercentile": "normPercentile",
-                "enrichmentnormalizationpercentile": "texNormPercentile"
-            },
-            "Classification": {
-                "antisenseutrlength": "maxASutrLength",
-                "utrlength": "maxUTRlength"
-            }
-        }
-    }
-
+    newParameters = copy.deepcopy(newParameters)
+    
     for category, items in DICT_OVERVIEW.items():
         # Category iterates over setup and parameterBox
         for key, value in items.items():
@@ -254,21 +211,21 @@ def create_parameters(parameters, config):
                 tempValue = config.get(value)
                 if value == 'mode':
                     if tempValue == 'cond':
-                        parameters[category][key]['value'] = 'condition'
+                        newParameters[category][key]['value'] = 'condition'
                     else:
-                        parameters[category][key]['value'] = 'genome'
-                        parameters['setup']['numberofgenomes']['name'] = 'Number of Genomes'
-                        parameters['parameterBox']['Comparative']['allowedcrossgenomeshift']['name'] = 'allowed cross-genome shift'
+                        newParameters[category][key]['value'] = 'genome'
+                        newParameters['setup']['numberofgenomes']['name'] = 'Number of Genomes'
+                        newParameters['parameterBox']['Comparative']['allowedcrossgenomeshift']['name'] = 'allowed cross-genome shift'
                 else:
-                    parameters[category][key]['value'] = int(tempValue)
+                    newParameters[category][key]['value'] = int(tempValue)
             else:
                 # ParameterBox
                 for keyParameterBox, valueParameterBox in value.items():
                     tempValue = config.get(valueParameterBox)
                     # parameters = handle_config_param(parameters, config, valueParameterBox, category, key, keyParameterBox)
-                    parameters[category][key][keyParameterBox]['value'] = tempValue if valueParameterBox == "TSSinClusterSelectionMethod" else float(config.get(valueParameterBox))
+                    newParameters[category][key][keyParameterBox]['value'] = tempValue if valueParameterBox == "TSSinClusterSelectionMethod" else float(config.get(valueParameterBox))
                     
-    return parameters
+    return newParameters
 
 
 

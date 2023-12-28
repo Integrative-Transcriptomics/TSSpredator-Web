@@ -12,31 +12,32 @@ import tempfile
 
 import server_tsspredator.parameter as parameter
 import server_tsspredator.server_handle_files as sf
-# from celery import Celery, Task, shared_task
+from celery import Celery, Task, shared_task
+from celery.result import AsyncResult
 
 
-job_data = {}
+# job_data = {}
 
-# def celery_init_app(app: Flask) -> Celery:
-#     class FlaskTask(Task):
-#         def __call__(self, *args: object, **kwargs: object) -> object:
-#             with app.app_context():
-#                 return self.run(*args, **kwargs)
+def celery_init_app(app: Flask) -> Celery:
+    class FlaskTask(Task):
+        def __call__(self, *args: object, **kwargs: object) -> object:
+            with app.app_context():
+                return self.run(*args, **kwargs)
 
-#     celery_app = Celery(app.name, task_cls=FlaskTask)
-#     celery_app.config_from_object(app.config["CELERY"])
-#     celery_app.set_default()
-#     app.extensions["celery"] = celery_app
-    # return celery_app
+    celery_app = Celery(app.name, task_cls=FlaskTask)
+    celery_app.config_from_object(app.config["CELERY"])
+    celery_app.set_default()
+    app.extensions["celery"] = celery_app
+    return celery_app
 
 app = Flask(__name__, static_folder='../build', static_url_path='/')
 app.config.from_mapping(
-    # CELERY=dict(
-    #     broker_url="redis://localhost",
-    #     result_backend="redis://localhost",
-    # ),
+    CELERY=dict(
+        broker_url="redis://localhost",
+        result_backend="redis://localhost",
+    ),
 )
-# celery_app = celery_init_app(app)
+celery_app = celery_init_app(app)
 
 # @shared_task(ignore_result=False)
 # def add_together(a: int, b: int) -> int:
@@ -45,38 +46,26 @@ import uuid
 
 def generate_unique_id():
     return str(uuid.uuid4())
-# @shared_task(ignore_result=False, track_started=True)
-def helperAsyncPredator(jsonString, newResultDir, workingDir, annotationDir):
+
+@shared_task(ignore_result=False, track_started=True)
+def helperAsyncPredator(jsonString, newResultDir):
     '''call jar file for TSS prediction and zip files'''
-    try:
-        # Execute JAR file with subprocess.run (this is blocking)
-        serverLocation = os.getcwd()
-        # join server Location to find TSSpredator
-        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
-        unique_id = generate_unique_id()
-        result = subprocess.Popen(['java', '-jar',tsspredatorLocation, jsonString], 
-                                stdout=subprocess.PIPE, 
-                                stderr=subprocess.PIPE, 
-                                text=True,  # Ensures stdout and stderr are strings
-                                # timeout=timeout_s
-                                # cwd=workingDir
-                                )
-        job_data[unique_id] = {
-        'process': result,
-        'status': 'running', 
-        "folders": 
-            {
-                "workingDir": workingDir,
-                "annotationDir": annotationDir,
-                "newResultDir": newResultDir
-            }
-    }
 
-       
-        return {'id': unique_id}
-
-    except subprocess.TimeoutExpired:
-        return {'result': 'Timeout'}
+    # Execute JAR file with subprocess.run (this is blocking)
+    serverLocation = os.getcwd()
+    # join server Location to find TSSpredator
+    tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
+    # unique_id = generate_unique_id()
+    result = subprocess.run(['java', '-jar',tsspredatorLocation, jsonString], 
+                            stdout=subprocess.PIPE, 
+                            stderr=subprocess.PIPE, 
+                            text=True,  # Ensures stdout and stderr are strings
+                           )
+    tmpdirResult = tempfile.mkdtemp(prefix='tmpPredZippedResult')
+    make_archive(os.path.join(tmpdirResult,'result'), 'zip', newResultDir)
+    filePath = os.path.basename(tmpdirResult)
+  
+    return filePath
 
 def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum): 
      # create temporary directory, save files and save filename in genome/replicate object
@@ -103,9 +92,9 @@ def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward
     newResultDir = resultDir.replace('\\', '/')
     # create json string for jar
     jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
-    result = helperAsyncPredator(jsonString, resultDir, tmpdir, annotationDir)
+    result = helperAsyncPredator.delay(jsonString, resultDir)
     print(result)
-    return {'id': result["id"]}
+    return {'id': str(result.id)}
 
 
 @app.route('/')
@@ -114,58 +103,30 @@ def index():
 
 @app.route('/api/checkStatus/<task_id>', methods=['POST', 'GET'])
 def task_status(task_id):
-    task = job_data.get(task_id, None)
+    # task = job_data.get(task_id, None)
+    task = AsyncResult(task_id)
+    print()
+    print(task.result)
+    print(task.info)
 
-    if task is None:
-        return {'status': 'Job not found'}, 404
-    
-    # Check if the subprocess is still running
-    if task['process'].poll() is None:
-        return {'job_id': task_id, 'status': 'Running'}
+    if task.state == 'PENDING':
+        # job did not start yet
+        response = {
+            'state': task.state,
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+        }
+        if task.result:
+            response['result'] = task.result
     else:
-        if "result" not in task:  # If the result hasn't been retrieved yet
-            out, err = task['process'].communicate()
-            task['out'] = out 
-            task['err'] = err
-            task['status'] = 'Completed'
-         # If no error, proceed to zip files
-        # if task['err'] == '':
-        newResultDir = task['folders']['newResultDir']
-        tmpdirResult = tempfile.mkdtemp(prefix='tmpPredZippedResult')
-        make_archive(os.path.join(tmpdirResult,'result'), 'zip', newResultDir)
-        filePath = os.path.basename(tmpdirResult)
-        for key in task["folders"]:
-            fd = task["folders"][key]
-            if os.path.exists(fd) and key != "newResultDir":
-                rmtree(fd)
-                # pass
-        returnValue = {'job_id': task_id, 'status': task['status'], 'result': {"fileout": filePath, "out": task['out'], "err": task['err']}}
-        return returnValue
-     # # Check if there was an error in stderr or if returncode isn't 0 (success)
-        # if result.returncode != 0 or result.stderr:
-        #     return {'result': "Error", "details": result.stderr}
-
-       
-    # if task.state == 'PENDING':
-    #     # job did not start yet
-    #     response = {
-    #         'state': task.state,
-    #         'status': 'Pending...'
-    #     }
-    # elif task.state != 'FAILURE':
-    #     response = {
-    #         'state': task.state,
-    #         'status': task.info.get('status', '')
-    #     }
-    #     if 'result' in task.info:
-    #         response['result'] = task.info['result']
-    # else:
-    #     # something went wrong in the background job
-    #     response = {
-    #         'state': task.state,
-    #         'status': str(task.info),  # this is the exception raised
-    #     }
-    # return response
+        # something went wrong in the background job
+        response = {
+            'state': task.state,
+            'status': str(task.info),  # this is the exception raised
+        }
+    return jsonify(response)
 
 
 @app.route('/result/<filePath>/')

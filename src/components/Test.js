@@ -4,26 +4,30 @@ import { useParams } from "react-router-dom";
 function Test() {
     const { id } = useParams(); // Grab the ID from URL parameters
     const [data, setData] = useState({ state: "Connecting API" }); // Initial state
+    const [update, setUpdate] = useState(true);
 
-    async function fetchStatus() {
-        try {
-            const response = await fetch(`/api/checkStatus/${id}`);
-            const data = await response.json();
-            setData(data); // Update the state with fetched data
-
-        }
-        catch (error) {
-            console.error(error);
-            setData({ state: "Failed to fetch data." }); // Set error state
-        }
-    }
-
+   
     // Use Effect hook to fetch data on component mount and id change
     useEffect(() => {
+        const fetchData = async () => {
+        const response = await fetch(`/api/checkStatus/${id}`);
+          const json = await response.json();
+          setData(json);
+            if (json["state"] === "SUCCESS") {
+                setUpdate(false);
+            }
+        };
+    
+        if (update) {
+            fetchData(); // Fetch data initially
+            const intervalId = setInterval(() => {
+                fetchData(); // Fetch data every 2 minutes
+              }, 30000);
+          
+              return () => clearInterval(intervalId);
+        }
         
-        fetchStatus();
-        
-    }, [id]); // Dependency array: Fetch status when `id` changes
+      }, [id, update]); // Dependency array: Fetch status when `id` changes
 
     return <div>
         {data["state"] === "SUCCESS" && 

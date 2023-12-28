@@ -65,7 +65,7 @@ def helperAsyncPredator(jsonString, newResultDir):
     make_archive(os.path.join(tmpdirResult,'result'), 'zip', newResultDir)
     filePath = os.path.basename(tmpdirResult)
   
-    return filePath
+    return {"filePath":filePath, "err": result.stderr, "stdout": result.stdout}
 
 def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum): 
      # create temporary directory, save files and save filename in genome/replicate object
@@ -105,9 +105,6 @@ def index():
 def task_status(task_id):
     # task = job_data.get(task_id, None)
     task = AsyncResult(task_id)
-    print()
-    print(task.result)
-    print(task.info)
 
     if task.state == 'PENDING':
         # job did not start yet

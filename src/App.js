@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Main from './components/Main';
 import Result from './components/Result';
-import Test from './components/Test';
+import StatusSite from './components/StatusSite';
 
 function App() {
   
@@ -12,7 +12,7 @@ function App() {
 
         <Route path="/" element={<Main/>} />
         <Route path="/result/:filePath" element={<Result />} />
-        <Route path="/status/:id" element={<Test />} />
+        <Route path="/status/:id" element={<StatusSite />} />
 
       </Routes>
     </BrowserRouter>

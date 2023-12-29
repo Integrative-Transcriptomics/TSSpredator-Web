@@ -1,5 +1,5 @@
 {
-  "name": "react-app",
+  "name": "tsspredatorweb",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -27,8 +27,9 @@
   },
   "scripts": {
     "server-redis": "redis-server",
+    "server-celery": "cd server_tsspredator && celery -A server_tsspredator.celery_app worker --loglevel=info",
     "server": "cd server_tsspredator && flask run --no-debugger",
-    "tsspredator": "run-p server start",
+    "tsspredator": "run-p server server-redis server-celery start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

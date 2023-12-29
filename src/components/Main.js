@@ -108,7 +108,7 @@ function Main() {
       setEPopup(!ePopup);
     }
     if (run) {
-      sendData2();
+      sendDataAsync();
     }
   };
 
@@ -254,10 +254,13 @@ function Main() {
     return true;
   };
 
+
   /**
-   * post input data to flask
+   * Sends data to the server using a POST request.
+   * @function sendDataAsync
+   * @returns {void}
    */
-  function sendData() {
+  function sendDataAsync() {
     const formData = new FormData();
 
     genomes.map((genome, i) => {
@@ -291,62 +294,7 @@ function Main() {
 
     formData.append("alignmentfile", alignmentFile);
 
-    fetch("/api/input/", {
-      method: "POST",
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setLoading([false, false]);
-
-        if (data.result === "success") {
-          // open result in new tab
-          let filePath = data.filePath;
-          window.open(`result/${filePath}`, "_blank", "noopener,noreferrer");
-        } else {
-          var error = data.result;
-          error = error.split(":")[0] + ":" + error.split(":")[1];
-          showError(error);
-        }
-      })
-      .catch((err) => console.log(err));
-  }
-
-  function sendData2() {
-    const formData = new FormData();
-
-    genomes.map((genome, i) => {
-      const { genomefasta, genomeannotation } = genome[`genome${i + 1}`];
-  
-      formData.append("genomefasta", genomefasta);
-  
-      genomeannotation.map((annotation, k) => {
-        formData.append(`genomeannotation${i + 1}`, annotation);
-      });
-  
-      const rep = replicates[i][`genome${i + 1}`];
-  
-      rep.map((replicate, j) => {
-        const letter = String.fromCharCode(97 + j);
-        const { enrichedforward, enrichedreverse, normalforward, normalreverse } = replicate[`replicate${letter}`];
-  
-        formData.append("enrichedforward", enrichedforward);
-        formData.append("enrichedreverse", enrichedreverse);
-        formData.append("normalforward", normalforward);
-        formData.append("normalreverse", normalreverse);
-      });
-    });
-
-    formData.append("projectname", JSON.stringify(projectName));
-    formData.append("parameters", JSON.stringify(parameters));
-    formData.append("rnagraph", JSON.stringify(rnaGraph));
-    formData.append("genomes", JSON.stringify(genomes));
-    formData.append("replicates", JSON.stringify(replicates));
-    formData.append("replicateNum", JSON.stringify({ num: numRep }));
-
-    formData.append("alignmentfile", alignmentFile);
-
-    fetch("/api/testAsync/", {
+    fetch("/api/runAsync/", {
       method: "POST",
       body: formData,
     })

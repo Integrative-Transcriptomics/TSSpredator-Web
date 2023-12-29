@@ -51,9 +51,12 @@ def generate_unique_id():
     return str(uuid.uuid4())
 
 @shared_task(ignore_result=False, track_started=True, bind=True, name='helperAsyncPredator')
-def helperAsyncPredator(self, jsonString, newResultDir, inputDir, annotationDir):
+def helperAsyncPredator(self, *args ):
     '''call jar file for TSS prediction and zip files'''
+    [jsonString, resultDir, inputDir, annotationDir, projectName] = args
     try:
+        # Give it a new state 
+        self.update_state(state='RUNNING', meta={'projectName': projectName})
         # Execute JAR file with subprocess.run (this is blocking)
         serverLocation = os.getcwd()
         # join server Location to find TSSpredator
@@ -68,16 +71,17 @@ def helperAsyncPredator(self, jsonString, newResultDir, inputDir, annotationDir)
         if len(result.stderr) > 0:
             raise subprocess.CalledProcessError(result.returncode, result.args, stderr=result.stderr, output=result.stdout)
         tmpdirResult = tempfile.mkdtemp(prefix='tmpPredZippedResult')
-        make_archive(os.path.join(tmpdirResult,'result'), 'zip', newResultDir)
+        make_archive(os.path.join(tmpdirResult,'result'), 'zip', resultDir)
         filePath = os.path.basename(tmpdirResult)
-        return {"filePath":filePath, "stderr": result.stderr, "stdout": result.stdout, "inputDir": inputDir, "annotationDir": annotationDir, "tempResultsDir": newResultDir}
+        return {"filePath":filePath, "stderr": result.stderr, "stdout": result.stdout, "inputDir": inputDir, "annotationDir": annotationDir, "tempResultsDir": resultDir, "projectName": projectName}
     except Exception as e:
         self.update_state(state="INTERNAL_ERROR", 
                           meta={ 'stderr': e.stderr, 
                                 'stdout': e.stdout, 
                                 'inputDir': inputDir, 
                                 'annotationDir': annotationDir, 
-                                'tempResultsDir': newResultDir
+                                'tempResultsDir': resultDir, 
+                                'projectName': projectName
                                 })
         raise Ignore()
     
@@ -106,7 +110,11 @@ def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward
     newResultDir = resultDir.replace('\\', '/')
     # create json string for jar
     jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
-    result = helperAsyncPredator.delay(jsonString, resultDir, newTmpDir, newAnnotationDir)
+    result = helperAsyncPredator.apply_async(
+        args=[jsonString, resultDir, newTmpDir, newAnnotationDir, projectName],
+        expires=1200,
+        # kwargs=[{"headers":{'projectName': projectName}}]  # Adding customName as an extra header
+    )    
     return {'id': str(result.id)}
 
 
@@ -117,14 +125,17 @@ def index():
 @app.route('/api/checkStatus/<task_id>', methods=['POST', 'GET'])
 def task_status(task_id):
     task = helperAsyncPredator.AsyncResult(task_id)
-    if task.state in ['PENDING', 'STARTED']:
+   
+    if task.state in ['PENDING', 'STARTED', "RUNNING"]:
         # job did not start yet
         response = {
             'state': task.state,
+            "projectName": task.result['projectName']
         }
     elif task.state == 'SUCCESS':
         response = {
             'state': task.state,
+            "projectName": task.result['projectName'],
         }
         if task.result:
             response['result'] = task.result
@@ -135,8 +146,10 @@ def task_status(task_id):
             'state': task.state,
             'result': {
                 "stderr": task.info['stderr'], 
-                "stdout": task.info['stdout'] 
-                        }
+                "stdout": task.info['stdout']
+                },
+            "projectName": task.info['projectName']
+                        
         }
         if task.state == 'INTERNAL_ERROR':
             remove_tmp_dirs([task.info[key] for key in ['inputDir', 'annotationDir', 'tempResultsDir'] if key in task.info])            

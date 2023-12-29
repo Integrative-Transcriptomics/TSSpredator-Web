@@ -2,16 +2,19 @@
     --mainColor: #ffa000;
     --complement: #4000ff;
 }
+
 * {
     box-sizing: border-box;
     margin: 0;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: 100%;
 }
+
 .row {
     display: flex;
     flex-direction: row;
 }
+
 header {
     background-color: var(--mainColor);
     color: white;
@@ -30,13 +33,16 @@ input {
     box-sizing: border-box;
     outline: none;
 }
+
 input[type=number] {
     width: 4.5rem;
     text-align: center;
 }
+
 .text-field {
     border: 1.5px solid rgb(220, 220, 220)
 }
+
 input:focus {
     border: 1.5px solid var(--complement);
 }
@@ -52,15 +58,18 @@ input:focus {
     min-width: fit-content;
     width: 28%;
 }
+
 .project-name:focus {
     border: none;
     border-bottom: 0.15rem solid var(--complement);
     background-color: rgb(245, 245, 255);
 }
+
 ::placeholder {
     color: rgb(0, 0, 0, 0.4);
     opacity: 1;
 }
+
 /* Microsoft Edge */
 ::-ms-input-placeholder {
     color: rgb(0, 0, 0, 0.4);
@@ -69,7 +78,7 @@ input:focus {
 .form-container {
     padding: 1% 0;
     margin: auto;
-    width: 50.55%;   
+    width: 50.55%;
     display: flex;
     flex-direction: column;
     row-gap: 2rem;
@@ -86,16 +95,19 @@ input:focus {
     margin: 0.5rem 0;
     width: fit-content;
 }
+
 .element-text {
     padding: 0;
     display: flex;
     align-items: center;
 }
+
 .element-row {
     display: flex;
     flex-direction: row;
     margin: 0.5rem 0;
 }
+
 .margin-left {
     margin-left: 2.5%;
 }
@@ -105,6 +117,13 @@ input:focus {
     font-weight: bold;
     color: var(--mainColor);
     margin-bottom: 1.2%;
+}
+
+.status {
+
+    margin-bottom: 0;
+    margin-right: 0.5em;
+
 }
 
 .button {
@@ -119,17 +138,20 @@ input:focus {
     text-transform: uppercase;
     margin-top: -1%;
     margin-right: 1.1%;
-    border: 1px solid transparent;  
+    border: 1px solid transparent;
     min-width: fit-content;
 }
+
 .button:hover {
     box-shadow: 0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
-    background-color:var(--complement);
+    background-color: var(--complement);
     color: white;
 }
+
 .all-files {
-    margin:  2% 0;
+    margin: 2% 0;
 }
+
 .file-name {
     font-size: 0.8rem;
     color: rgba(0, 0, 0, 1);
@@ -141,20 +163,24 @@ input:focus {
     word-wrap: break-word;
     word-break: break-word;
 }
+
 .file-box {
     width: 100%;
     display: grid;
     grid-template-columns: 23% 77%;
 }
+
 .file-box-align {
     width: 99%;
     display: grid;
     grid-template-columns: 16% 69%;
     column-gap: 5%;
 }
+
 .hidden {
     display: none;
 }
+
 .vis-hidden {
     visibility: hidden;
 }
@@ -162,26 +188,32 @@ input:focus {
 .show {
     display: flex;
 }
+
 .text-field-box {
     width: 100%;
     display: grid;
     grid-template-columns: 16% 84%;
     align-items: center;
 }
+
 .click {
     cursor: pointer;
     color: rgba(0, 0, 0, 0.5);
 }
+
 .click:hover {
     color: black;
 }
+
 .file-column {
     display: flex;
     flex-direction: column;
 }
+
 .file-row {
     margin: 0.8rem 0;
 }
+
 select {
     cursor: pointer;
     color: rgb(0, 0, 0, 0.8);
@@ -191,13 +223,14 @@ select {
     border-radius: 0.25rem;
     box-shadow: 0 0.1rem 0.3rem rgb(0, 0, 0, 0.5);
     text-transform: uppercase;
-    border: 1px solid transparent;  
+    border: 1px solid transparent;
     width: fit-content;
     margin-bottom: 1%;
 }
+
 select:hover {
     box-shadow: 0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
-    border:1px solid var(--complement);
+    border: 1px solid var(--complement);
     cursor: pointer;
     background-color: rgb(240, 240, 240);
 }
@@ -211,12 +244,30 @@ select:hover {
     margin-right: 0;
     padding-top: 0.8%;
 }
+
+a.open-results {
+    background-color: var(--mainColor);
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    align-items: center;
+    /* REMOVE UNDERLINE */
+    text-decoration: none;
+    /* CENTER TEXT VERTICALLY */
+    display: flex;
+
+
+
+
+}
+
 .footer {
     margin-top: 2%;
     display: flex;
     flex-direction: row;
     column-gap: 1.5%;
 }
+
 .no-margin {
     margin-right: 0;
 }
@@ -225,11 +276,13 @@ select:hover {
     background-color: #e0e0e0;
     cursor: default;
 }
+
 .disabled:hover {
     background-color: #e0e0e0;
     box-shadow: 0 0.1rem 0.3rem rgb(0, 0, 0, 0.5);
     color: rgb(0, 0, 0, 0.8);
 }
+
 .disabled-field {
     background-color: #e0e0e0;
     color: black;
@@ -250,9 +303,9 @@ select:hover {
     justify-content: center;
     align-items: center;
     z-index: 100;
-  }
-  
-  .error-popup-inner {
+}
+
+.error-popup-inner {
     width: 35%;
     height: 35%;
     background: white;
@@ -261,8 +314,9 @@ select:hover {
     display: flex;
     flex-direction: column;
     column-gap: 0;
-  }
-  .error-popup-header {
+}
+
+.error-popup-header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.3);
     height: 15%;
     display: flex;
@@ -272,30 +326,33 @@ select:hover {
     z-index: 100;
     padding: 0;
     margin: 0;
-  }
-  .error-field {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      min-width: fit-content;
-      height: 65%;
-  }
-  .error-button {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      height: 20%;
-      border-top: 1px solid rgba(0, 0, 0, 0.3);
-  }
+}
 
-  /* tooltips */
+.error-field {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-width: fit-content;
+    height: 65%;
+}
+
+.error-button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 20%;
+    border-top: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+/* tooltips */
 [data-title]:hover:after {
     opacity: 1;
     transition: all 0.1s ease 0.8s;
     visibility: visible;
 }
+
 [data-title]:after {
     content: attr(data-title);
     font-size: 0.8rem;
@@ -311,6 +368,7 @@ select:hover {
     z-index: 99;
     visibility: hidden;
 }
+
 [data-title] {
     position: relative;
 }
@@ -320,6 +378,7 @@ select:hover {
     transition: all 0.1s ease 0.8s;
     visibility: visible;
 }
+
 [data-tabs-title]:after {
     content: attr(data-tabs-title);
     width: 20rem;
@@ -336,6 +395,7 @@ select:hover {
     z-index: 99;
     visibility: hidden;
 }
+
 [data-tabs-title] {
     position: relative;
 }
@@ -351,7 +411,7 @@ select:hover {
     min-width: 13%;
     margin-left: auto;
     margin-right: 5%;
-  }
+}
 
 .dropbtn {
     background-color: var(--mainColor);
@@ -362,18 +422,18 @@ select:hover {
     color: white;
     border: 1px solid white;
     cursor: pointer;
-  }
-    
-  .dropdown-content {
+}
+
+.dropdown-content {
     display: none;
     position: absolute;
     background-color: white;
     min-width: 100%;
-    box-shadow: 0px 2px 4px 0px rgba(0,0,0,0.2);
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.2);
     z-index: 1;
-  }
-  
-  .dropdown-content button {
+}
+
+.dropdown-content button {
     color: rgb(0, 0, 0, 0.8);
     background-color: white;
     width: 100%;
@@ -384,36 +444,37 @@ select:hover {
     text-align: left;
     border: none;
     cursor: pointer;
-  }
-  
-  .dropdown-content button:hover {
+}
+
+.dropdown-content button:hover {
     background-color: rgb(255, 160, 0, 0.5);
 }
-  
-  .dropdown:hover .dropdown-content {
+
+.dropdown:hover .dropdown-content {
     display: block;
-  }
-  
+}
+
 
 @media only screen and (max-width: 1450px) {
-    .form-container, .error-popup-inner{
+
+    .form-container,
+    .error-popup-inner {
         width: 70%;
     }
+
     .dropdown {
         min-width: 20%;
-      }
-  }
-  @media only screen and (max-width: 1100px) {
-    .form-container, .error-popup-inner {
+    }
+}
+
+@media only screen and (max-width: 1100px) {
+
+    .form-container,
+    .error-popup-inner {
         width: 95%;
     }
+
     .dropdown {
         min-width: 30%;
-      }
-  }
-
-
-
-
-
-
+    }
+}

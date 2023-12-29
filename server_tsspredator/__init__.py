@@ -48,7 +48,7 @@ def generate_unique_id():
     return str(uuid.uuid4())
 
 @shared_task(ignore_result=False, track_started=True)
-def helperAsyncPredator(jsonString, newResultDir):
+def helperAsyncPredator(jsonString, newResultDir, inputDir, annotationDir):
     '''call jar file for TSS prediction and zip files'''
 
     # Execute JAR file with subprocess.run (this is blocking)
@@ -65,7 +65,7 @@ def helperAsyncPredator(jsonString, newResultDir):
     make_archive(os.path.join(tmpdirResult,'result'), 'zip', newResultDir)
     filePath = os.path.basename(tmpdirResult)
   
-    return {"filePath":filePath, "err": result.stderr, "stdout": result.stdout}
+    return {"filePath":filePath, "err": result.stderr, "stdout": result.stdout, "inputDir": inputDir, "annotationDir": annotationDir, "tempResultsDir": newResultDir}
 
 def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum): 
      # create temporary directory, save files and save filename in genome/replicate object
@@ -92,7 +92,7 @@ def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward
     newResultDir = resultDir.replace('\\', '/')
     # create json string for jar
     jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
-    result = helperAsyncPredator.delay(jsonString, resultDir)
+    result = helperAsyncPredator.delay(jsonString, resultDir, newTmpDir, newAnnotationDir)
     print(result)
     return {'id': str(result.id)}
 
@@ -103,28 +103,36 @@ def index():
 
 @app.route('/api/checkStatus/<task_id>', methods=['POST', 'GET'])
 def task_status(task_id):
-    # task = job_data.get(task_id, None)
-    task = AsyncResult(task_id)
+    task = helperAsyncPredator.AsyncResult(task_id)
 
-    if task.state == 'PENDING':
+    if task.state in ['PENDING', 'STARTED']:
         # job did not start yet
         response = {
             'state': task.state,
         }
-    elif task.state != 'FAILURE':
+    elif task.state == 'SUCCESS':
         response = {
             'state': task.state,
         }
         if task.result:
             response['result'] = task.result
+            remove_tmp_dirs(task)
     else:
         # something went wrong in the background job
         response = {
             'state': task.state,
             'status': str(task.info),  # this is the exception raised
         }
+        if task.state == 'FAILURE':
+            remove_tmp_dirs(task)
+            
+            
     return jsonify(response)
 
+def remove_tmp_dirs(task) -> None   :
+    for key in ['inputDir', 'annotationDir', 'tempResultsDir']:
+        if os.path.exists(task.result[key]):
+            rmtree(task.result[key])
 
 @app.route('/result/<filePath>/')
 def index_results(filePath):

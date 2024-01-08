@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
+import { GoslingComponent } from "gosling.js";
 import JSZip from "jszip";
 import "../css/Result.css";
 import "../css/App.css";
@@ -96,24 +97,40 @@ function Result() {
       }
     };
 
-    // get files from server
+    // Fetch files from server and handle MasterTable
     fetch(`/api/result/${filePath}/`)
-      .then((res) => res.blob())
+      .then((res) => {
+        console.log("res", res);
+
+        if (res.status === 404) {
+          console.log("404");
+          return 404
+        }
+        else {
+          return res.blob();
+        }
+      }
+
+      )
       .then((blob) => {
+        if (blob === 404) {
+          console.log("404");
+          setBlob(404);
+          return
+        }
+        console.log("blob", blob);
         setBlob(blob);
 
-        JSZip.loadAsync(blob).then((zip) => {
-          try {
-            zip
-              .file("MasterTable.tsv")
-              .async("string")
-              .then((data) => {
-                handleMasterTable(data);
-              });
-          } catch {
-            console.log("No Master Table file");
-          }
-        });
+        JSZip.loadAsync(blob)
+          .then((zip) => {
+            return zip.file("MasterTable.tsv").async("string");
+          })
+          .then((data) => {
+            handleMasterTable(data);
+          })
+          .catch((error) => {
+            console.log("Error loading MasterTable file:", error);
+          });
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -387,131 +404,161 @@ function Result() {
       }
     }
   };
-
+  let spec = {
+    "title": "Basic Marks: bar",
+    "subtitle": "Tutorial Examples",
+    "tracks": [
+      {
+        "layout": "linear",
+        "width": 800,
+        "height": 180,
+        "data": {
+          "url": "https://resgen.io/api/v1/tileset_info/?d=UvVPeLHuRDiYA3qwFlm7xQ",
+          "type": "multivec",
+          "row": "sample",
+          "column": "position",
+          "value": "peak",
+          "categories": ["sample 1"],
+          "binSize": 5
+        },
+        "mark": "bar",
+        "x": { "field": "start", "type": "genomic", "axis": "bottom" },
+        "xe": { "field": "end", "type": "genomic" },
+        "y": { "field": "peak", "type": "quantitative", "axis": "right" },
+        "size": { "value": 5 }
+      }
+    ]
+  }
   return (
     <>
       <header>
         <h1>TSSpredator</h1>
       </header>
 
-      <div className='result-container'>
-        <div>
-          <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>
-            {showDownload ? "-" : "+"} Download result of TSS prediction
-          </h3>
-          <div
-            className={showDownload ? "download-link" : " hidden"}
-            onClick={() => downloadFiles()}
-          >
-            TSSpredator-prediction.zip
+      { // if file not found
+        // TODO: improve 404 page
+        blob === 404 ? <h2>404: File not found</h2> :
+          <div className='result-container'>
+            <GoslingComponent spec={spec} />
+
+            <div>
+              <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>
+                {showDownload ? "-" : "+"} Download result of TSS prediction
+              </h3>
+              <div
+                className={showDownload ? "download-link" : " hidden"}
+                onClick={() => downloadFiles()}
+              >
+                TSSpredator-prediction.zip
+              </div>
+            </div>
+
+            <div className='result-select'>
+              <h3 className='select-header'>Show Plots for</h3>
+              <select onChange={(e) => updateDataForPlots(e)} value={currentData}>
+                <option value='all'>all Conditions/Genomes combined</option>
+                {allGenomes.map((col, i) => {
+                  return (
+                    <option value={col} key={i}>
+                      {col}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div className='result-margin-left'>
+              <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
+                {showUpSet ? "-" : "+"} TSS classes overview
+              </h3>
+              {stepHeight["enriched"].length > 0 ? (
+                <UpSet classes={upsetClasses} showUpSet={showUpSet} />
+              ) : (
+                <ClipLoader color='#ffa000' size={30} />
+              )}
+            </div>
+
+            <div className='result-margin-left'>
+              <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}>
+                {showStepHeight ? "-" : "+"} Step Height overview
+              </h3>
+              {stepHeight["enriched"].length > 0 ? (
+                <Histogramm
+                  elements={stepHeight}
+                  xaxis='Step Height'
+                  steps={2}
+                  cap={stepHeightCap}
+                  show={showStepHeight}
+                />
+              ) : (
+                <ClipLoader color='#ffa000' size={30} />
+              )}
+            </div>
+
+            <div className='result-margin-left'>
+              <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}>
+                {showStepFactor ? "-" : "+"} Step Factor overview
+              </h3>
+              {stepFactor["enriched"].length > 0 ? (
+                <Histogramm
+                  elements={stepFactor}
+                  xaxis='Step Factor'
+                  steps={2}
+                  cap='100'
+                  show={showStepFactor}
+                />
+              ) : (
+                <ClipLoader color='#ffa000' size={30} />
+              )}
+            </div>
+            <div className='result-margin-left'>
+              <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}>
+                {showEnrichFactor ? "-" : "+"} Enrichment Factor overview
+              </h3>
+              {enrichmentFactor["enriched"].length > 0 ? (
+                <Histogramm
+                  elements={enrichmentFactor}
+                  xaxis='Enrichment Factor'
+                  steps={2}
+                  cap='100'
+                  show={showEnrichFactor}
+                />
+              ) : (
+                <ClipLoader color='#ffa000' size={30} />
+              )}
+            </div>
+
+            <div className='result-margin-left'>
+              <h3 className='header click-param' onClick={() => setShowLineChart(!showLineChart)}>
+                {showLineChart ? "-" : "+"} TSS distribution per position in bp
+              </h3>
+              {enrichmentFactor["enriched"].length > 0 ? (
+                <LineChart
+                  primary={linePrimary}
+                  secondary={lineSecondary}
+                  internal={lineInternal}
+                  antisense={lineAntisense}
+                  orphan={lineOrphan}
+                  binSize={binSize}
+                  show={showLineChart}
+                />
+              ) : (
+                <ClipLoader color='#ffa000' size={30} />
+              )}
+            </div>
+
+            <div>
+              <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>
+                {showTable ? "-" : "+"} Master Table
+              </h3>
+              {tableColumns.length > 0 ? (
+                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} />
+              ) : (
+                <ClipLoader color='#ffa000' size={30} />
+              )}
+            </div>
           </div>
-        </div>
-
-        <div className='result-select'>
-          <h3 className='select-header'>Show Plots for</h3>
-          <select onChange={(e) => updateDataForPlots(e)} value={currentData}>
-            <option value='all'>all Conditions/Genomes combined</option>
-            {allGenomes.map((col, i) => {
-              return (
-                <option value={col} key={i}>
-                  {col}
-                </option>
-              );
-            })}
-          </select>
-        </div>
-
-        <div className='result-margin-left'>
-          <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
-            {showUpSet ? "-" : "+"} TSS classes overview
-          </h3>
-          {stepHeight["enriched"].length > 0 ? (
-            <UpSet classes={upsetClasses} showUpSet={showUpSet} />
-          ) : (
-            <ClipLoader color='#ffa000' size={30} />
-          )}
-        </div>
-
-        <div className='result-margin-left'>
-          <h3 className='header click-param' onClick={() => setShowStepHeight(!showStepHeight)}>
-            {showStepHeight ? "-" : "+"} Step Height overview
-          </h3>
-          {stepHeight["enriched"].length > 0 ? (
-            <Histogramm
-              elements={stepHeight}
-              xaxis='Step Height'
-              steps={2}
-              cap={stepHeightCap}
-              show={showStepHeight}
-            />
-          ) : (
-            <ClipLoader color='#ffa000' size={30} />
-          )}
-        </div>
-
-        <div className='result-margin-left'>
-          <h3 className='header click-param' onClick={() => setShowStepFactor(!showStepFactor)}>
-            {showStepFactor ? "-" : "+"} Step Factor overview
-          </h3>
-          {stepFactor["enriched"].length > 0 ? (
-            <Histogramm
-              elements={stepFactor}
-              xaxis='Step Factor'
-              steps={2}
-              cap='100'
-              show={showStepFactor}
-            />
-          ) : (
-            <ClipLoader color='#ffa000' size={30} />
-          )}
-        </div>
-        <div className='result-margin-left'>
-          <h3 className='header click-param' onClick={() => setShowEnrichFactor(!showEnrichFactor)}>
-            {showEnrichFactor ? "-" : "+"} Enrichment Factor overview
-          </h3>
-          {enrichmentFactor["enriched"].length > 0 ? (
-            <Histogramm
-              elements={enrichmentFactor}
-              xaxis='Enrichment Factor'
-              steps={2}
-              cap='100'
-              show={showEnrichFactor}
-            />
-          ) : (
-            <ClipLoader color='#ffa000' size={30} />
-          )}
-        </div>
-
-        <div className='result-margin-left'>
-          <h3 className='header click-param' onClick={() => setShowLineChart(!showLineChart)}>
-            {showLineChart ? "-" : "+"} TSS distribution per position in bp
-          </h3>
-          {enrichmentFactor["enriched"].length > 0 ? (
-            <LineChart
-              primary={linePrimary}
-              secondary={lineSecondary}
-              internal={lineInternal}
-              antisense={lineAntisense}
-              orphan={lineOrphan}
-              binSize={binSize}
-              show={showLineChart}
-            />
-          ) : (
-            <ClipLoader color='#ffa000' size={30} />
-          )}
-        </div>
-
-        <div>
-          <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>
-            {showTable ? "-" : "+"} Master Table
-          </h3>
-          {tableColumns.length > 0 ? (
-            <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} />
-          ) : (
-            <ClipLoader color='#ffa000' size={30} />
-          )}
-        </div>
-      </div>
+      }
     </>
   );
 }

@@ -184,8 +184,18 @@ def parameters():
 @app.route('/api/result/<filePath>/')
 def getFiles(filePath):
     '''send result of TSS prediction to frontend'''
+    # get path of zip file
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
-    return  send_file(completePath, mimetype='application/zip') 
+    if os.path.exists(completePath):
+        # print("test")
+        return  send_file(completePath, mimetype='application/zip')
+    else:
+        resp = Flask.make_response(app, rv="File not found")
+        resp.status_code = 404
+        resp.headers['Error'] = 'File Not found'
+        # if file not found, send error message
+        return resp
+
 
 @app.route('/api/input-test/', methods=['POST', 'GET'])
 def getInputTest():

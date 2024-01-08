@@ -1,25 +1,24 @@
 from asyncio.subprocess import PIPE
 from shutil import make_archive, rmtree
+from time import time
 from flask import Flask, request, send_file, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
+from celery.utils.log import get_task_logger
+
 
 
 import json
 import tempfile
 import subprocess
 import os
-import traceback
-# import shutil
-import tempfile
+import glob
+
 
 import server_tsspredator.parameter as parameter
 import server_tsspredator.server_handle_files as sf
 from celery import Celery, Task, shared_task
-from celery.result import AsyncResult
 
-
-# job_data = {}
 
 def celery_init_app(app: Flask) -> Celery:
     class FlaskTask(Task):
@@ -41,14 +40,27 @@ app.config.from_mapping(
     ),
 )
 celery_app = celery_init_app(app)
+logger = get_task_logger(__name__)
 
-# @shared_task(ignore_result=False)
-# def add_together(a: int, b: int) -> int:
-#     return a + b
-import uuid
+@celery_app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    # Calls delete_temp_files('specific_prefix_') every 7 days.
+    sender.add_periodic_task(60*24*7*60.0, delete_temp_files.s('tmpPred'), name='clear tmp every hour')
 
-def generate_unique_id():
-    return str(uuid.uuid4())
+@celery_app.task
+def delete_temp_files(prefix):
+    directory = tempfile.gettempdir()  # The directory to search in
+    for file_path in glob.glob(os.path.join(directory, f"{prefix}*")):
+        # check whether the file is older than 7 days
+        if os.stat(file_path).st_mtime < (time() - 60*60*24*7):
+            try:
+                rmtree(file_path)
+                print(f"Removed {file_path}")
+            except Exception as e:
+                print(f"Error while deleting file {file_path}: {str(e)}")
+        else:
+            print(f"Skipping {file_path}")
+
 
 @shared_task(ignore_result=False, track_started=True, bind=True, name='helperAsyncPredator')
 def helperAsyncPredator(self, *args ):

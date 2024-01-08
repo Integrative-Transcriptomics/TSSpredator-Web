@@ -97,6 +97,7 @@ function StatusSite() {
 
       </div>
       {ePopup && (
+        // TODO: Correct for weird popup behaviour
         <Error
           error={data["result"]["stderr"]}
           header={eHeader}

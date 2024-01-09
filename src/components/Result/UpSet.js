@@ -8,32 +8,9 @@ import { extractCombinations, UpSetJS } from '@upsetjs/react';
  */
 function UpSet({ classes, showUpSet }) {
 
-  const calcFreq = () => {
-   
-    // save all classes in array
-    const newElements = [];
-    Object.keys(classes).forEach((key, i) => {
-
-      const tmpClasses = key.split('-');
-      var classArray = [];
-      // each class is one array element
-      tmpClasses.forEach(cl => {
-        classArray.push(cl);
-      })
-
-      var tmp = { sets: [...classArray] }
-      // add current classes to array, as often as the frequncy of the current classes 
-      for (let j = 0; j < classes[key]; j++) {
-        newElements.push(tmp);
-      }
-    });
-    return newElements;
-  }
-
-  const elements = calcFreq();
-  // prevent rerendering
-  const elems = useMemo(() => [...elements], [elements]);
- // create upset plot
+  let elems = Object.entries(classes).map((other) => {
+    return { name: other[0], sets: other[1] }
+  })
   const { sets } = useMemo(() => extractCombinations(elems), [elems]);
   const combinations = useMemo(
     () => ({

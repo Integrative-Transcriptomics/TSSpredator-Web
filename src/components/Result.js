@@ -213,7 +213,7 @@ function Result() {
    * for line chart: count TSS per position
    * and get all genome/condition names
    */
-  const TSSperPosition = (rows, columns, updateGenomes) => {
+  const TSSperPosition = (rows, columns, updateGenomes, typeIntersection = "all") => {
     // get column indices
     const primaryIdx = columns.findIndex((col) => col["Header"] === "Primary");
     const secondaryIdx = columns.findIndex((col) => col["Header"] === "Secondary");
@@ -223,7 +223,7 @@ function Result() {
     const genomeIdx = columns.findIndex(
       (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
     );
-    const enriched = columns.findIndex((col) => col["Header"] === "enriched");
+    const enriched = columns.findIndex((col) => col["Header"] === "detected");
 
     // all genomes/conditions
     const allG = [];
@@ -236,38 +236,40 @@ function Result() {
     var orphan = { [binSize]: 0 };
 
     // save frequency of classes for a TSS (upset plot)
-    var classes = { primary: 0, secondary: 0, internal: 0, antisense: 0, orphan: 0 };
-    var currentPos = "";
-    var currentGenome = "";
-    var currentClass = {};
+    // var classes = { primary: 0, secondary: 0, internal: 0, antisense: 0, orphan: 0 };
+    let tssByClass = {};
+    let tssWithMultipleClasses = {};
 
-    rows.forEach((row, i) => {
+    rows.forEach((row) => {
       if (row[enriched] === "1") {
+
         const tmpPos = row[superPosIdx];
         const tmpGenome = row[genomeIdx];
         var tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+        // add tss to tssWithMultipleClasses
+        if (tmpPos in tssWithMultipleClasses) {
+          if (!tssWithMultipleClasses[tmpPos].includes(tmpClass)) {
+            tssWithMultipleClasses[tmpPos].push(tmpClass);
+          }
+        } else {
+          tssWithMultipleClasses[tmpPos] = [tmpClass];
+        }
+
+        // add tss to tssByClass
+        if (tmpClass in tssByClass) {
+          if (!tssByClass[tmpClass].includes(tmpPos)) {
+            tssByClass[tmpClass].push(tmpPos);
+          } else if (typeIntersection === "dedup") {
+            return; // Exit the current iteration of the loop
+          }
+        } else {
+          tssByClass[tmpClass] = [tmpPos];
+        }
+
 
         // add genome to all genomes
         if (!allG.includes(tmpGenome) && updateGenomes) {
           allG.push(tmpGenome);
-        }
-
-        // upset plot --------------------
-        // new TSS found -> add classes from previous TSS
-        if (tmpPos !== currentPos || tmpGenome !== currentGenome) {
-          classes = addNewTSS(currentClass, classes, i);
-          // reset value
-          currentClass = {};
-        }
-        // reset values
-        currentPos = tmpPos;
-        currentGenome = tmpGenome;
-
-        // add class from current row
-        if (tmpClass in currentClass) {
-          currentClass[tmpClass] += 1;
-        } else {
-          currentClass[tmpClass] = 1;
         }
 
         // ---------------------
@@ -286,13 +288,12 @@ function Result() {
         // -----------------------
       }
     });
-    // add last tss (upset plot)
-    classes = addNewTSS(currentClass, classes);
+
 
     if (updateGenomes) {
       setAllGenomes(allG);
     }
-    setUpsetClasses(classes);
+    setUpsetClasses(tssWithMultipleClasses);
     setLinePrimary(primary);
     setLineSecondary(secondary);
     setLineInternal(internal);
@@ -317,39 +318,6 @@ function Result() {
     } else {
       return "orphan";
     }
-  };
-
-  /**
-   * upset plot: add last tss to classes object
-   */
-  const addNewTSS = (currentClass, classes, row) => {
-    // at least two different classes
-    if (Object.keys(currentClass).length > 1) {
-      // sort classes and create new class-group
-      const tmpKey = Object.keys(currentClass);
-      var node = "";
-      tmpKey.sort().forEach((key) => {
-        node += key + "-";
-        // class multiple times
-        if (currentClass[key] > 1) {
-          classes[key] += currentClass[key] - 1;
-        }
-      });
-      // remove last '-'
-      node = node.slice(0, -1);
-      // add class-group to classes
-      if (node in classes) {
-        classes[node] += 1;
-      } else {
-        classes[node] = 1;
-      }
-      // only one class
-    } else if (Object.keys(currentClass).length > 0) {
-      Object.keys(currentClass).forEach((cl) => {
-        classes[cl] += currentClass[cl];
-      });
-    }
-    return classes;
   };
 
   /**
@@ -387,7 +355,16 @@ function Result() {
         // create new plots
         stepHeightFactorEnrichementFreq(tableData, tableColumns);
         TSSperPosition(tableData, tableColumns, false);
-      } else {
+      }
+      else if (value === "dedup") {
+        // let dedupTableData = [];
+        // let dedupTableColumns = [];
+        // console.log("tableData", tableData)
+        // console.log("tableColumns", tableColumns)
+        stepHeightFactorEnrichementFreq(tableData, tableColumns);
+        TSSperPosition(tableData, tableColumns, false, value);
+      }
+      else {
         const genomeIdx = tableColumns.findIndex(
           (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
         );
@@ -404,7 +381,6 @@ function Result() {
       }
     }
   };
-  console.log("blob", tableData)
   let spec = {
     "title": "Position of TSSs",
     "subtitle": "etst",
@@ -477,7 +453,8 @@ function Result() {
             <div className='result-select'>
               <h3 className='select-header'>Show Plots for</h3>
               <select onChange={(e) => updateDataForPlots(e)} value={currentData}>
-                <option value='all'>all Conditions/Genomes combined</option>
+                <option value='all'>Union of all TSS across Conditions/Genomes</option>
+                <option value='dedup'>Intersection of all TSS across Conditions/Genomes</option>
                 {allGenomes.map((col, i) => {
                   return (
                     <option value={col} key={i}>

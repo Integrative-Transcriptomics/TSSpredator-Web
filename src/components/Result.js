@@ -329,10 +329,12 @@ function Result() {
 
           // add tss to tssWithMultipleClasses
           if (tmpPos in tssWithMultipleClasses) {
+            // Add once to set
             if (!tssWithMultipleClasses[tmpPos]["set"].includes(tmpClass)) {
               tssWithMultipleClasses[tmpPos]["set"].push(tmpClass);
             }
-            else if (!Object.keys(tssWithMultipleClasses[tmpPos]).includes(genomeName)) {
+            // But also add to genome/condition
+            if (!Object.keys(tssWithMultipleClasses[tmpPos]).includes(genomeName)) {
               tssWithMultipleClasses[tmpPos][genomeName] = [tmpClass];
             }
             else if (!tssWithMultipleClasses[tmpPos][genomeName].includes(tmpClass)) {
@@ -371,7 +373,7 @@ function Result() {
           // -----------------------
         }
       });
-
+      console.log(tssWithMultipleClasses)
 
       setUpsetClasses(tssWithMultipleClasses);
       setLinePrimary(primary);

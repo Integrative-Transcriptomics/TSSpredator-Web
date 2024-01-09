@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { extractCombinations, UpSetJS } from '@upsetjs/react';
-import { map } from 'lodash';
+
 
 /** creates an Upset plot for the tss classes
  * 
@@ -9,12 +9,8 @@ import { map } from 'lodash';
  */
 function UpSet({ classes, showUpSet, type }) {
   let elems
-  if (type === "dedup") {
-    elems = Object.entries(classes).map((other) => {
-      return { name: other[0], sets: other[1]["set"] }
-    })
-  }
-  else {
+  if (type === "all") {
+
     elems = Object.entries(classes).reduce((accum, curr) => {
       let tssName = curr[0]
       let mapGenomes = Object.entries(curr[1]).filter(x => x[0] !== "set").map((other) => {
@@ -26,8 +22,14 @@ function UpSet({ classes, showUpSet, type }) {
       return accum.concat(mapGenomes)
     }, [])
   }
+  else {
+    elems = Object.entries(classes).map((other) => {
+      return { name: other[0], sets: other[1]["set"] }
+    })
+  }
 
-  const { sets } = useMemo(() => extractCombinations(elems), [elems]);
+
+  let { sets } = useMemo(() => extractCombinations(elems), [elems]);
   const combinations = useMemo(
     () => ({
       type: 'distinctIntersection',
@@ -37,6 +39,9 @@ function UpSet({ classes, showUpSet, type }) {
   console.log(sets)
   console.log(combinations)
   const [selection, setSelection] = useState(null);
+  if (type === "all") {
+    sets = sets.filter(x => ["primary", "secondary", "internal", "antisense", "orphan"].includes(x.name))
+  }
 
   return <UpSetJS className={showUpSet ? '' : 'hidden'}
     sets={sets}

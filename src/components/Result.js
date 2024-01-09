@@ -404,31 +404,51 @@ function Result() {
       }
     }
   };
+  console.log("blob", tableData)
   let spec = {
-    "title": "Basic Marks: bar",
-    "subtitle": "Tutorial Examples",
+    "title": "Position of TSSs",
+    "subtitle": "etst",
     "tracks": [
       {
         "layout": "linear",
         "width": 800,
         "height": 180,
         "data": {
-          "url": "https://resgen.io/api/v1/tileset_info/?d=UvVPeLHuRDiYA3qwFlm7xQ",
-          "type": "multivec",
-          "row": "sample",
-          "column": "position",
-          "value": "peak",
-          "categories": ["sample 1"],
-          "binSize": 5
+          "url": "https://raw.githubusercontent.com/sehilyi/gemini-datasets/master/data/UCSC.HG38.Human.CytoBandIdeogram.csv",
+          "type": "csv",
+          "chromosomeField": "Chromosome",
+          "genomicFields": ["chromStart", "chromEnd"]
         },
         "mark": "bar",
-        "x": { "field": "start", "type": "genomic", "axis": "bottom" },
-        "xe": { "field": "end", "type": "genomic" },
-        "y": { "field": "peak", "type": "quantitative", "axis": "right" },
-        "size": { "value": 5 }
+        "x": { "field": "chromStart", "type": "genomic", "axis": "bottom" },
+        // "xe": { "field": "chromEnd", "type": "genomic" },
+        "y": { "value": 150, "type": "quantitative", "axis": "right" },
+        "size": { "value": 2 }
       }
     ]
   }
+  // let spec2 = {
+  //   "title": "Position of TSSs",
+  //   "subtitle": "etst",
+  //   "tracks": [
+  //     {
+  //       "layout": "linear",
+  //       "width": 800,
+  //       "height": 180,
+  //       "data": {
+  //         "url": 'http://chorogenome.ie-freiburg.mpg.de/data/H3K36me3.bw',
+  //         "type": "bigwig",
+  //         "column": "position",
+  //         "value": "peak"
+  //       },
+  //       "mark": "bar",
+  //       "x": { "field": "chromStart", "type": "genomic", "axis": "bottom" },
+  //       // "xe": { "field": "chromEnd", "type": "genomic" },
+  //       "y": { "value": 150, "type": "quantitative", "axis": "right" },
+  //       "size": { "value": 2 }
+  //     }
+  //   ]
+  // }
   return (
     <>
       <header>
@@ -440,6 +460,7 @@ function Result() {
         blob === 404 ? <h2>404: File not found</h2> :
           <div className='result-container'>
             <GoslingComponent spec={spec} />
+            {/* <GoslingComponent spec={spec2} /> */}
 
             <div>
               <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>

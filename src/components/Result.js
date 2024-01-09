@@ -32,6 +32,7 @@ function Result() {
   const [tableColumns, setTableColumns] = useState([]);
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(true);
+  const [filterForPlots, setFilterForPlots] = useState("enriched");
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
@@ -71,10 +72,16 @@ function Result() {
       const headers = allRows[0].split("\t");
       // columns for the table
       const col = [];
+      let genomeIdx;
       headers.forEach((h, i) => {
         const char = i.toString();
         col.push({ Header: h, accessor: char });
+        if (h === "Genome" || h === "Condition") {
+          genomeIdx = char;
+        }
       });
+
+      let allG = [];
       setTableColumns([...col]);
 
       // save rows
@@ -87,14 +94,19 @@ function Result() {
             const char = j.toString();
             tmpRow[char] = content;
           });
+          const tmpGenome = tmp[genomeIdx];
+          // add genome to all genomes
+          if (!allG.includes(tmpGenome)) {
+            allG.push(tmpGenome);
+          }
+
           dataRows.push(tmpRow);
         }
       });
       setTableData([...dataRows]);
-      if (dataRows.length > 0) {
-        stepHeightFactorEnrichementFreq(dataRows, col);
-        TSSperPosition(dataRows, col, true);
-      }
+      setAllGenomes(allG);
+
+
     };
 
     // Fetch files from server and handle MasterTable
@@ -132,8 +144,7 @@ function Result() {
             console.log("Error loading MasterTable file:", error);
           });
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [filePath]);
 
   /**
    * download files action, after clicking on link
@@ -208,98 +219,7 @@ function Result() {
     });
   };
 
-  /**
-   * for upset plot: count frequncy of each tss class
-   * for line chart: count TSS per position
-   * and get all genome/condition names
-   */
-  const TSSperPosition = (rows, columns, updateGenomes, typeIntersection = "all") => {
-    // get column indices
-    const primaryIdx = columns.findIndex((col) => col["Header"] === "Primary");
-    const secondaryIdx = columns.findIndex((col) => col["Header"] === "Secondary");
-    const internalIdx = columns.findIndex((col) => col["Header"] === "Internal");
-    const antisenseIdx = columns.findIndex((col) => col["Header"] === "Antisense");
-    const superPosIdx = columns.findIndex((col) => col["Header"] === "SuperPos");
-    const genomeIdx = columns.findIndex(
-      (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
-    );
-    const enriched = columns.findIndex((col) => col["Header"] === "detected");
 
-    // all genomes/conditions
-    const allG = [];
-
-    // TSS per Position (line chart)
-    var primary = { [binSize]: 0 };
-    var secondary = { [binSize]: 0 };
-    var internal = { [binSize]: 0 };
-    var antisense = { [binSize]: 0 };
-    var orphan = { [binSize]: 0 };
-
-    // save frequency of classes for a TSS (upset plot)
-    // var classes = { primary: 0, secondary: 0, internal: 0, antisense: 0, orphan: 0 };
-    let tssByClass = {};
-    let tssWithMultipleClasses = {};
-
-    rows.forEach((row) => {
-      if (row[enriched] === "1") {
-
-        const tmpPos = row[superPosIdx];
-        const tmpGenome = row[genomeIdx];
-        var tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
-        // add tss to tssWithMultipleClasses
-        if (tmpPos in tssWithMultipleClasses) {
-          if (!tssWithMultipleClasses[tmpPos].includes(tmpClass)) {
-            tssWithMultipleClasses[tmpPos].push(tmpClass);
-          }
-        } else {
-          tssWithMultipleClasses[tmpPos] = [tmpClass];
-        }
-
-        // add tss to tssByClass
-        if (tmpClass in tssByClass) {
-          if (!tssByClass[tmpClass].includes(tmpPos)) {
-            tssByClass[tmpClass].push(tmpPos);
-          } else if (typeIntersection === "dedup") {
-            return; // Exit the current iteration of the loop
-          }
-        } else {
-          tssByClass[tmpClass] = [tmpPos];
-        }
-
-
-        // add genome to all genomes
-        if (!allG.includes(tmpGenome) && updateGenomes) {
-          allG.push(tmpGenome);
-        }
-
-        // ---------------------
-        // line chart
-        if (tmpClass === "primary") {
-          primary = addTSSPosition(primary, binSize, tmpPos);
-        } else if (tmpClass === "secondary") {
-          secondary = addTSSPosition(secondary, binSize, tmpPos);
-        } else if (tmpClass === "internal") {
-          internal = addTSSPosition(internal, binSize, tmpPos);
-        } else if (tmpClass === "antisense") {
-          antisense = addTSSPosition(antisense, binSize, tmpPos);
-        } else {
-          orphan = addTSSPosition(orphan, binSize, tmpPos);
-        }
-        // -----------------------
-      }
-    });
-
-
-    if (updateGenomes) {
-      setAllGenomes(allG);
-    }
-    setUpsetClasses(tssWithMultipleClasses);
-    setLinePrimary(primary);
-    setLineSecondary(secondary);
-    setLineInternal(internal);
-    setLineAntisense(antisense);
-    setLineOrphan(orphan);
-  };
 
   /**
    * return tss class of current row
@@ -346,41 +266,7 @@ function Result() {
   /**
    * update plots for selected genome/condition
    */
-  const updateDataForPlots = (event) => {
-    const value = event.target.value;
-    setCurrentData(value);
 
-    if (value !== currentData) {
-      if (value === "all") {
-        // create new plots
-        stepHeightFactorEnrichementFreq(tableData, tableColumns);
-        TSSperPosition(tableData, tableColumns, false);
-      }
-      else if (value === "dedup") {
-        // let dedupTableData = [];
-        // let dedupTableColumns = [];
-        // console.log("tableData", tableData)
-        // console.log("tableColumns", tableColumns)
-        stepHeightFactorEnrichementFreq(tableData, tableColumns);
-        TSSperPosition(tableData, tableColumns, false, value);
-      }
-      else {
-        const genomeIdx = tableColumns.findIndex(
-          (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
-        );
-        // filter table
-        const newData = [];
-        tableData.forEach((row) => {
-          if (row[genomeIdx] === value) {
-            newData.push(row);
-          }
-        });
-        // create new plots
-        stepHeightFactorEnrichementFreq(newData, tableColumns);
-        TSSperPosition(newData, tableColumns, false);
-      }
-    }
-  };
   let spec = {
     "title": "Position of TSSs",
     "subtitle": "etst",
@@ -403,28 +289,123 @@ function Result() {
       }
     ]
   }
-  // let spec2 = {
-  //   "title": "Position of TSSs",
-  //   "subtitle": "etst",
-  //   "tracks": [
-  //     {
-  //       "layout": "linear",
-  //       "width": 800,
-  //       "height": 180,
-  //       "data": {
-  //         "url": 'http://chorogenome.ie-freiburg.mpg.de/data/H3K36me3.bw',
-  //         "type": "bigwig",
-  //         "column": "position",
-  //         "value": "peak"
-  //       },
-  //       "mark": "bar",
-  //       "x": { "field": "chromStart", "type": "genomic", "axis": "bottom" },
-  //       // "xe": { "field": "chromEnd", "type": "genomic" },
-  //       "y": { "value": 150, "type": "quantitative", "axis": "right" },
-  //       "size": { "value": 2 }
-  //     }
-  //   ]
-  // }
+  useEffect(() => {
+    /**
+   * for upset plot: count frequncy of each tss class
+   * for line chart: count TSS per position
+   * and get all genome/condition names
+   */
+    const TSSperPosition = (rows, columns, typeIntersection = "all") => {
+      // get column indices
+      const primaryIdx = columns.findIndex((col) => col["Header"] === "Primary");
+      const secondaryIdx = columns.findIndex((col) => col["Header"] === "Secondary");
+      const internalIdx = columns.findIndex((col) => col["Header"] === "Internal");
+      const antisenseIdx = columns.findIndex((col) => col["Header"] === "Antisense");
+      const superPosIdx = columns.findIndex((col) => col["Header"] === "SuperPos");
+      const variableFilterTSS = columns.findIndex((col) => col["Header"] === filterForPlots);
+
+
+      // TSS per Position (line chart)
+      var primary = { [binSize]: 0 };
+      var secondary = { [binSize]: 0 };
+      var internal = { [binSize]: 0 };
+      var antisense = { [binSize]: 0 };
+      var orphan = { [binSize]: 0 };
+
+      // save frequency of classes for a TSS (upset plot)
+      let tssByClass = {};
+      let tssWithMultipleClasses = {};
+
+      rows.forEach((row) => {
+        if (row[variableFilterTSS] === "1") {
+
+          const tmpPos = row[superPosIdx];
+          // Get genome/condition name
+          const genomeIdx = columns.findIndex(
+            (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
+          );
+          const genomeName = row[genomeIdx];
+          let tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+
+          // add tss to tssWithMultipleClasses
+          if (tmpPos in tssWithMultipleClasses) {
+            if (!tssWithMultipleClasses[tmpPos]["set"].includes(tmpClass)) {
+              tssWithMultipleClasses[tmpPos]["set"].push(tmpClass);
+            }
+            else if (!Object.keys(tssWithMultipleClasses[tmpPos]).includes(genomeName)) {
+              tssWithMultipleClasses[tmpPos][genomeName] = [tmpClass];
+            }
+            else if (!tssWithMultipleClasses[tmpPos][genomeName].includes(tmpClass)) {
+              tssWithMultipleClasses[tmpPos][genomeName].push(tmpClass);
+            }
+          } else {
+            tssWithMultipleClasses[tmpPos] = { "set": [tmpClass] }
+            tssWithMultipleClasses[tmpPos][genomeName] = [tmpClass]
+          }
+
+
+
+          // add tss to tssByClass
+          if (tmpClass in tssByClass) {
+            if (!tssByClass[tmpClass].includes(tmpPos)) {
+              tssByClass[tmpClass].push(tmpPos);
+            } else if (typeIntersection === "dedup") {
+              return; // Exit the current iteration of the loop
+            }
+          } else {
+            tssByClass[tmpClass] = [tmpPos];
+          }
+          // ---------------------
+          // line chart
+          if (tmpClass === "primary") {
+            primary = addTSSPosition(primary, binSize, tmpPos);
+          } else if (tmpClass === "secondary") {
+            secondary = addTSSPosition(secondary, binSize, tmpPos);
+          } else if (tmpClass === "internal") {
+            internal = addTSSPosition(internal, binSize, tmpPos);
+          } else if (tmpClass === "antisense") {
+            antisense = addTSSPosition(antisense, binSize, tmpPos);
+          } else {
+            orphan = addTSSPosition(orphan, binSize, tmpPos);
+          }
+          // -----------------------
+        }
+      });
+
+
+      setUpsetClasses(tssWithMultipleClasses);
+      setLinePrimary(primary);
+      setLineSecondary(secondary);
+      setLineInternal(internal);
+      setLineAntisense(antisense);
+      setLineOrphan(orphan);
+    };
+    const value = currentData;
+    if (value === "all") {
+      // create new plots
+      stepHeightFactorEnrichementFreq(tableData, tableColumns);
+      TSSperPosition(tableData, tableColumns);
+    }
+    else if (value === "dedup") {
+      stepHeightFactorEnrichementFreq(tableData, tableColumns);
+      TSSperPosition(tableData, tableColumns, value);
+    }
+    else {
+      const genomeIdx = tableColumns.findIndex(
+        (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
+      );
+      // filter table
+      const newData = [];
+      tableData.forEach((row) => {
+        if (row[genomeIdx] === value) {
+          newData.push(row);
+        }
+      });
+      // create new plots
+      stepHeightFactorEnrichementFreq(newData, tableColumns);
+      TSSperPosition(newData, tableColumns);
+    }
+  }, [currentData, filterForPlots, tableColumns, tableData]);
   return (
     <>
       <header>
@@ -452,7 +433,7 @@ function Result() {
 
             <div className='result-select'>
               <h3 className='select-header'>Show Plots for</h3>
-              <select onChange={(e) => updateDataForPlots(e)} value={currentData}>
+              <select onChange={(e) => setCurrentData(e.target.value)} defaultValue={"all"} value={currentData}>
                 <option value='all'>Union of all TSS across Conditions/Genomes</option>
                 <option value='dedup'>Intersection of all TSS across Conditions/Genomes</option>
                 {allGenomes.map((col, i) => {
@@ -465,12 +446,20 @@ function Result() {
               </select>
             </div>
 
+            <div className='result-select'>
+              <h3 className='select-header'>TSS to show</h3>
+              <select onChange={(e) => setFilterForPlots(e.target.value)} defaultValue={"enriched"} value={filterForPlots}>
+                <option value='enriched'>Only enriched TSSs</option>
+                <option value='detected'>All detected TSSs</option>
+              </select>
+            </div>
+
             <div className='result-margin-left'>
               <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
                 {showUpSet ? "-" : "+"} TSS classes overview
               </h3>
               {stepHeight["enriched"].length > 0 ? (
-                <UpSet classes={upsetClasses} showUpSet={showUpSet} />
+                <UpSet classes={upsetClasses} showUpSet={showUpSet} type={currentData} />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}

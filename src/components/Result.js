@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
-import { GoslingComponent } from "gosling.js";
+import GoslingGenomeViz from "./Result/GoslingViz";
 import JSZip from "jszip";
 import "../css/Result.css";
 import "../css/App.css";
@@ -262,33 +262,40 @@ function Result() {
     }
     return tssClass;
   };
+  /**
+   * 
+   * @param {*} rows 
+   * @param {*} columns 
+   * @returns json for gosling.js 
+   */
+  const modifyTable = (rows, columns) => {
+    const primaryIdx = columns.findIndex((col) => col["Header"] === "Primary");
+    const secondaryIdx = columns.findIndex((col) => col["Header"] === "Secondary");
+    const internalIdx = columns.findIndex((col) => col["Header"] === "Internal");
+    const antisenseIdx = columns.findIndex((col) => col["Header"] === "Antisense");
+    const superPosIdx = columns.findIndex((col) => col["Header"] === "SuperPos");
+    const superStrandIdx = columns.findIndex((col) => col["Header"] === "SuperStrand");
+    const variableFilterTSS = columns.findIndex((col) => col["Header"] === filterForPlots);
+
+    const data = [];
+    rows.forEach((row) => {
+      if (row[variableFilterTSS] === "1") {
+        const tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+        const tmpPos = row[superPosIdx];
+        data.push({ "class": tmpClass, "pos": parseInt(tmpPos), "strand": row[superStrandIdx] })
+      }
+    })
+    return data
+  }
+
 
   /**
    * update plots for selected genome/condition
    */
+  let jsonData = modifyTable(tableData, tableColumns)
+  console.log("jsonData", jsonData)
 
-  let spec = {
-    "title": "Position of TSSs",
-    "subtitle": "etst",
-    "tracks": [
-      {
-        "layout": "linear",
-        "width": 800,
-        "height": 180,
-        "data": {
-          "url": "https://raw.githubusercontent.com/sehilyi/gemini-datasets/master/data/UCSC.HG38.Human.CytoBandIdeogram.csv",
-          "type": "csv",
-          "chromosomeField": "Chromosome",
-          "genomicFields": ["chromStart", "chromEnd"]
-        },
-        "mark": "bar",
-        "x": { "field": "chromStart", "type": "genomic", "axis": "bottom" },
-        // "xe": { "field": "chromEnd", "type": "genomic" },
-        "y": { "value": 150, "type": "quantitative", "axis": "right" },
-        "size": { "value": 2 }
-      }
-    ]
-  }
+
   useEffect(() => {
     /**
    * for upset plot: count frequncy of each tss class
@@ -372,8 +379,6 @@ function Result() {
           // -----------------------
         }
       });
-      console.log(tssWithMultipleClasses)
-
       setUpsetClasses(tssWithMultipleClasses);
       setLinePrimary(primary);
       setLineSecondary(secondary);
@@ -417,7 +422,7 @@ function Result() {
         // TODO: improve 404 page
         blob === 404 ? <h2>404: File not found</h2> :
           <div className='result-container'>
-            <GoslingComponent spec={spec} />
+            <GoslingGenomeViz data={jsonData} />
             {/* <GoslingComponent spec={spec2} /> */}
 
             <div>

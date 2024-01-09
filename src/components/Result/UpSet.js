@@ -8,15 +8,14 @@ import { extractCombinations, UpSetJS } from '@upsetjs/react';
  * @param showUpSet: boolean for showing/hiding the plot
  */
 function UpSet({ classes, showUpSet, type }) {
-  let elems
+  let elems;
   if (type === "all") {
-
     elems = Object.entries(classes).reduce((accum, curr) => {
       let tssName = curr[0]
       let mapGenomes = Object.entries(curr[1]).filter(x => x[0] !== "set").map((other) => {
-        return { name: tssName, sets: [...other[1], other[0]] }
-
-
+        const typesOfTSS = other[1]
+        const genomeFound = other[0]
+        return { name: tssName, sets: [...typesOfTSS, genomeFound] }
       })
       // join accum and mapGenomes
       return accum.concat(mapGenomes)
@@ -36,8 +35,6 @@ function UpSet({ classes, showUpSet, type }) {
     }),
     []
   );
-  console.log(sets)
-  console.log(combinations)
   const [selection, setSelection] = useState(null);
   if (type === "all") {
     sets = sets.filter(x => ["primary", "secondary", "internal", "antisense", "orphan"].includes(x.name))

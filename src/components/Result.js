@@ -318,7 +318,6 @@ function Result() {
 
       rows.forEach((row) => {
         if (row[variableFilterTSS] === "1") {
-
           const tmpPos = row[superPosIdx];
           // Get genome/condition name
           const genomeIdx = columns.findIndex(

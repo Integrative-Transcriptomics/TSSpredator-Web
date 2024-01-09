@@ -44,8 +44,9 @@ logger = get_task_logger(__name__)
 
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    # Calls delete_temp_files('specific_prefix_') every 7 days.
-    sender.add_periodic_task(60*24*7*60.0, delete_temp_files.s('tmpPred'), name='clear tmp every hour')
+    # Calls delete_temp_files('specific_prefix_') every day.
+    # With this, it will delete all files with the prefix 'specific_prefix_' that are older than 7 days
+    sender.add_periodic_task(60*24*60.0, delete_temp_files.s('tmpPred'), name='clear tmp every day')
 
 @celery_app.task
 def delete_temp_files(prefix):

@@ -23,11 +23,9 @@ function StatusSite() {
       if (json["state"] !== "RUNNING" && json["state"] !== "STARTED") {
         setUpdate(false);
         if (json["state"] === "INTERNAL_ERROR") {
-          console.log(data)
           setEPopup(true);
         }
       }
-      console.log(data)
     };
 
 

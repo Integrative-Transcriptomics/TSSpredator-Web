@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    command: gunicorn --workers 3 --timeout 500 --graceful-timeout 500 --bind 0.0.0.0:5001 server_tsspredator.wsgi:tsspredator
+    ports:
+      - "5001:5001"
+    volumes:
+      - type: bind
+        source: /Users/pacha/Documents/github_projects/tsspredator_web/TSSpredator-GUI/data
+        target: /data
+      - tmpDataPredator:/tmpData
+    depends_on:
+      - redis
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    command: redis-server
+
+  celery:
+    build:
+      context: .
+      dockerfile: celery/Dockerfile
+    command: celery -A server_tsspredator.celery_app worker -B --loglevel=warning
+    volumes:
+      - tmpDataPredator:/tmpData
+    depends_on:
+      - redis
+volumes:
+  tmpDataPredator:
+
+

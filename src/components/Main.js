@@ -52,10 +52,10 @@ function Main() {
   const [alignmentFile, setAlignmentFile] = useState("");
   // saves the value of the checkbox: if genome file is multiFasta or not
   const [multiFasta, setMultiFasta] = useState([false]);
-  
+
   // new GenomeTab: use replicateTemplate to update replicates
   const [replicateTemplate, setReplicateTemplate] = useState([
-    initConfigReplicates    
+    initConfigReplicates
   ]);
   // template für a single replicate
   const repTemplate =
@@ -138,13 +138,13 @@ function Main() {
 
   const checkInput = () => {
     const showErrorWithHeader = (error, header = "ERROR") => {
-        seteHeader(header);
-        showError(error);
-        return false;
+      seteHeader(header);
+      showError(error);
+      return false;
     };
 
     const isInvalidFileFormat = (file, validFormats) =>
-        !validFormats.includes(file.name.split(".").pop());
+      !validFormats.includes(file.name.split(".").pop());
 
     // Project Name Check
     if (!projectName) return showErrorWithHeader("Project Name is missing.");
@@ -152,11 +152,11 @@ function Main() {
     let studyType = parameters.setup.typeofstudy.value === "genome" ? "Genome" : "Condition";
 
     // Genome Specific Checks
-    if (studyType === "Genome" && genomes.length < 2) 
-        return showErrorWithHeader("For the Comparison of different strains/species at least 2 Genomes are needed.");
+    if (studyType === "Genome" && genomes.length < 2)
+      return showErrorWithHeader("For the Comparison of different strains/species at least 2 Genomes are needed.");
 
-    if (alignmentFile && isInvalidFileFormat(alignmentFile, ["xmfa"])) 
-        return showErrorWithHeader("Alignment file has the wrong format. XMFA file format (.xmfa) is needed.");
+    if (alignmentFile && isInvalidFileFormat(alignmentFile, ["xmfa"]))
+      return showErrorWithHeader("Alignment file has the wrong format. XMFA file format (.xmfa) is needed.");
 
     // Validate Genomes, Alignment IDs, and Fasta Files
     const names = new Set();
@@ -164,67 +164,49 @@ function Main() {
     const fastaFormats = ["fasta", "fna", "ffn", "faa", "frn", "fa"];
 
     for (let i = 0; i < genomes.length; i++) {
-        const genomeNumber = i + 1;
-        const genome = genomes[i][`genome${genomeNumber}`];
-        if (!Boolean(genome.name)) 
-            return showErrorWithHeader(`Missing name for ${studyType} ${genomeNumber}. Click in the tab header and choose a unique name.`);
-        
-        if (!genome.alignmentid) 
-            return showErrorWithHeader(`Missing Alignment ID for ${studyType} ${genomeNumber}.`);
+      const genomeNumber = i + 1;
+      const genome = genomes[i][`genome${genomeNumber}`];
+      if (!Boolean(genome.name))
+        return showErrorWithHeader(`Missing name for ${studyType} ${genomeNumber}. Click in the tab header and choose a unique name.`);
 
-        if (!genome.outputid) 
-            return showErrorWithHeader(`Missing OutputID for ${studyType} ${genomeNumber}.`);
+      if (!genome.alignmentid)
+        return showErrorWithHeader(`Missing Alignment ID for ${studyType} ${genomeNumber}.`);
 
-        if (!genome.genomefasta || isInvalidFileFormat(genome.genomefasta, fastaFormats)) 
-            return showErrorWithHeader(`Missing or incorrect 'Genome FASTA' file format for ${studyType} ${genomeNumber}.`);
+      if (!genome.outputid)
+        return showErrorWithHeader(`Missing OutputID for ${studyType} ${genomeNumber}.`);
 
-        names.add(genome.name);
-        alignmentIds.add(parseInt(genome.alignmentid));
+      if (!genome.genomefasta || isInvalidFileFormat(genome.genomefasta, fastaFormats))
+        return showErrorWithHeader(`Missing or incorrect 'Genome FASTA' file format for ${studyType} ${genomeNumber}.`);
+
+      names.add(genome.name);
+      alignmentIds.add(parseInt(genome.alignmentid));
     }
 
     // Unique Genome Names and Alignment IDs Check
-    if (names.size !== genomes.length) 
-        return showErrorWithHeader(`${studyType} names are not unique.`);
-    
-    if (alignmentIds.size !== genomes.length) 
-        return showErrorWithHeader("Alignment IDs are not unique.");
+    if (names.size !== genomes.length)
+      return showErrorWithHeader(`${studyType} names are not unique.`);
+
+    if (alignmentIds.size !== genomes.length)
+      return showErrorWithHeader("Alignment IDs are not unique.");
 
     // Validate Annotation Files
     for (let i = 0; i < genomes.length; i++) {
-        const annotations = genomes[i][`genome${i + 1}`].genomeannotation;
+      const annotations = genomes[i][`genome${i + 1}`].genomeannotation;
 
-        if (!annotations.length) 
-            return showErrorWithHeader(`Missing 'Genome Annotation' file for ${studyType} ${i + 1}. This file is not required, but if no annotation file is given, all TSS will be classified as orphan.`, "WARNING");
-        
-        if (annotations.some(annotation => isInvalidFileFormat(annotation, ["gff", "gtf", "gff3"]))) 
-            return showErrorWithHeader(`Incorrect 'Genome Annotation' file format for ${studyType} ${i + 1}. Annotation file format (.gff, .gtf, .gff3) is needed.`);
+      if (!annotations.length)
+        return showErrorWithHeader(`Missing 'Genome Annotation' file for ${studyType} ${i + 1}. This file is not required, but if no annotation file is given, all TSS will be classified as orphan.`, "WARNING");
+
+      if (annotations.some(annotation => isInvalidFileFormat(annotation, ["gff", "gtf", "gff3"])))
+        return showErrorWithHeader(`Incorrect 'Genome Annotation' file format for ${studyType} ${i + 1}. Annotation file format (.gff, .gtf, .gff3) is needed.`);
     }
-
-    // Check Replicate Files
-    // Assuming checkReplicateFiles is an existing function that returns a boolean
-    for (let i = 0; i < replicates.length; i++) {
-        const genomeReplicates = replicates[i][`genome${i + 1}`];
-        for (let j = 0; j < genomeReplicates.length; j++) {
-            const letter = String.fromCharCode(97 + j);
-            const replicate = genomeReplicates[j][`replicate${letter}`];
-            if (!["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"]
-                .every(key => checkReplicateFiles(replicate[key], `Replicate ${letter.toUpperCase()}`, studyType, i, j))) {
-                return false;
-            }
-        }
-    }
-
-    return true;
-};
-
-  /**
+    /**
    * check if replicate files are given and in the correct format
    */
-  const checkReplicateFiles = (file, errorName, studyType, idxGenome, idxRep) => {
-    const repFormats = ["gr", "wig"];
-    if (file.length <= 0) {
-      showError(
-        "Missing '" +
+    const checkReplicateFiles = (file, errorName, studyType, idxGenome, idxRep) => {
+      const repFormats = ["gr", "wig"];
+      if (file.length <= 0) {
+        showError(
+          "Missing '" +
           errorName +
           "' graph file for Replicate " +
           String.fromCharCode(97 + idxRep) +
@@ -233,13 +215,13 @@ function Main() {
           " " +
           (idxGenome + 1) +
           "."
-      );
-      return false;
-    } else {
-      const split = file.name.split(".");
-      if (!repFormats.includes(split[split.length - 1])) {
-        showError(
-          errorName +
+        );
+        return false;
+      } else {
+        const split = file.name.split(".");
+        if (!repFormats.includes(split[split.length - 1])) {
+          showError(
+            errorName +
             " graph file for Replicate  " +
             String.fromCharCode(97 + idxRep) +
             " in " +
@@ -247,12 +229,30 @@ function Main() {
             " " +
             (idxGenome + 1) +
             " has the wrong format. Wiggle file format (.gr, .wig) is needed."
-        );
-        return false;
+          );
+          return false;
+        }
+      }
+      return true;
+    };
+    // Check Replicate Files
+    // Assuming checkReplicateFiles is an existing function that returns a boolean
+    for (let i = 0; i < replicates.length; i++) {
+      const genomeReplicates = replicates[i][`genome${i + 1}`];
+      for (let j = 0; j < genomeReplicates.length; j++) {
+        const letter = String.fromCharCode(97 + j);
+        const replicate = genomeReplicates[j][`replicate${letter}`];
+        if (!["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"]
+          .every(key => checkReplicateFiles(replicate[key], `Replicate ${letter.toUpperCase()}`, studyType, i, j))) {
+          return false;
+        }
       }
     }
+
     return true;
   };
+
+
 
 
   /**
@@ -263,21 +263,21 @@ function Main() {
   function sendDataAsync() {
     const formData = new FormData();
 
-    genomes.map((genome, i) => {
+    genomes.forEach((genome, i) => {
       const { genomefasta, genomeannotation } = genome[`genome${i + 1}`];
-  
+
       formData.append("genomefasta", genomefasta);
-  
-      genomeannotation.map((annotation, k) => {
+
+      genomeannotation.forEach((annotation, k) => {
         formData.append(`genomeannotation${i + 1}`, annotation);
       });
-  
+
       const rep = replicates[i][`genome${i + 1}`];
-  
-      rep.map((replicate, j) => {
+
+      rep.forEach((replicate, j) => {
         const letter = String.fromCharCode(97 + j);
         const { enrichedforward, enrichedreverse, normalforward, normalreverse } = replicate[`replicate${letter}`];
-  
+
         formData.append("enrichedforward", enrichedforward);
         formData.append("enrichedreverse", enrichedreverse);
         formData.append("normalforward", normalforward);
@@ -490,7 +490,7 @@ function Main() {
       for (let i = numGenomes + 1; i <= val; i++) {
         const { value: studyType } = parameters.setup.typeofstudy;
         const studyTypeCapitalized = `${studyType.charAt(0).toUpperCase()}${studyType.slice(1)}`;
-        const genomeName = `${studyTypeCapitalized}_${i}`;
+        let genomeName = `${studyTypeCapitalized}_${i}`;
         const placeholder = `${studyTypeCapitalized}_${i}`;
 
         var alignmentID = "";
@@ -1045,137 +1045,7 @@ function Main() {
     setnumRep(newRepNum);
   };
 
-  /**
-   * save input to config file and download given config file
-   */
-  const saveConfigFile = () => {
-    // if studytype condition: fill out alignment and output id
-    fillGenomes();
 
-    if (checkInput()) {
-      // save filenames from genomes
-      const tmpGenome = [...genomes];
-
-      for (let i = 0; i < genomes.length; i++) {
-        var tmpFasta = "";
-        var tmpAnn = "";
-
-        // genomeFasta file
-        try {
-          tmpFasta = genomes[i]["genome" + (i + 1)]["genomefasta"].name;
-        } catch {
-          console.log("Wrong fasta file");
-        }
-        tmpGenome[i]["genome" + (i + 1)]["genomefasta"] = tmpFasta;
-
-        // genomeAnnotation file
-        try {
-          // multiFasta -> gff file in folder, else single file
-          if (multiFasta[i]) {
-            tmpAnn = genomes[i]["genome" + (i + 1)]["genomeannotation"][0].webkitRelativePath;
-            var name = tmpAnn.split("/");
-            tmpAnn = name[name.length - 2] + "/";
-          } else {
-            tmpAnn = genomes[i]["genome" + (i + 1)]["genomeannotation"][0].name;
-          }
-        } catch {
-          console.log("Wrong annotation file");
-        }
-        tmpGenome[i]["genome" + (i + 1)]["genomeannotation"] = tmpAnn;
-      }
-
-      // save file names from replicates
-      const tmpRep = [...replicates];
-
-      for (let i = 0; i < tmpRep.length; i++) {
-        var tmpG = tmpRep[i]["genome" + (i + 1)];
-
-        for (let k = 0; k < tmpG.length; k++) {
-          const letter = String.fromCharCode(97 + k);
-
-          var tmpEF = "";
-          var tmpER = "";
-          var tmpNF = "";
-          var tmpNR = "";
-
-          try {
-            tmpEF = tmpG[k]["replicate" + letter]["enrichedforward"].name;
-          } catch {
-            console.log("Wrong enriched forward file");
-          }
-          tmpG[k]["replicate" + letter]["enrichedforward"] = tmpEF;
-
-          try {
-            tmpER = tmpG[k]["replicate" + letter]["enrichedreverse"].name;
-          } catch {
-            console.log("Wrong enriched reverse file");
-          }
-          tmpG[k]["replicate" + letter]["enrichedreverse"] = tmpER;
-
-          try {
-            tmpNF = tmpG[k]["replicate" + letter]["normalforward"].name;
-          } catch {
-            console.log("Wrong normal forward file");
-          }
-          tmpG[k]["replicate" + letter]["normalforward"] = tmpNF;
-
-          try {
-            tmpNR = tmpG[k]["replicate" + letter]["normalreverse"].name;
-          } catch {
-            console.log("Wrong normal reverse file");
-          }
-          tmpG[k]["replicate" + letter]["normalreverse"] = tmpNR;
-        }
-        tmpRep[i]["genome" + (i + 1)] = tmpG;
-      }
-
-      // alignmentFile
-      var tmpAlignFile = " ";
-      try {
-        tmpAlignFile = alignmentFile.name;
-      } catch {
-        console.log("no alignment file");
-      }
-
-      // multiFasta files?
-      let multiFastaString = String(multiFasta);
-
-      // send input parameters to server
-      const formData = new FormData();
-      formData.append("projectname", JSON.stringify(projectName));
-      formData.append("parameters", JSON.stringify(parameters));
-      formData.append("rnagraph", JSON.stringify(rnaGraph));
-      formData.append("replicateNum", JSON.stringify({ num: numRep }));
-      formData.append("genomes", JSON.stringify(tmpGenome));
-      formData.append("replicates", JSON.stringify(tmpRep));
-      formData.append("alignmentFile", JSON.stringify(tmpAlignFile));
-      formData.append("multiFasta", JSON.stringify(multiFastaString));
-      fetch("/api/saveConfig/", {
-        method: "POST",
-        body: formData,
-      })
-        .then((response) => response.blob())
-        .then((blob) => {
-          var name = projectName.replace(" ", "_") + ".config";
-
-          // Create blob link to download
-          const url = window.URL.createObjectURL(new Blob([blob]));
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", name);
-
-          // Append to html link element page
-          document.body.appendChild(link);
-
-          // Start download
-          link.click();
-
-          // Clean up and remove the link
-          link.parentNode.removeChild(link);
-        })
-        .catch((err) => console.log(err));
-    }
-  };
 
   /**
    * Loads example data based on the selected organism.
@@ -1185,31 +1055,31 @@ function Main() {
   const loadExampleData = async (event) => {
     const organism = event.target.name;
     setLoading([true, true]);
-  
+
     try {
       const configResponse = await fetch(`/api/exampleData/${organism}/json/-/`);
       const configData = await configResponse.json();
       const jsonConfig = JSON.parse(configData.result);
-  
+
       setParameters(jsonConfig["parameters"]);
       setProjectName(jsonConfig["projectName"]);
       setRnaGraph(jsonConfig["rnaGraph"] === "true");
-  
+
       // Parallelize fetching of genome and replicate files
       const genomePromises = jsonConfig["genomes"].map((genome, i) => fetchGenomeFiles(organism, genome, i, jsonConfig));
       const genomes = await Promise.all(genomePromises);
       const replicatePromises = jsonConfig["replicates"].map((replicate, i) => fetchReplicateFiles(organism, replicate, i));
       const replicates = await Promise.all(replicatePromises);
-  
+
       setGenomes(genomes);
       setShowGName(true);
       setReplicates(replicates);
       updateReplicateTemplate(parseInt(jsonConfig["numReplicates"]));
-  
+
       // Convert multiFasta strings to boolean
       const multiFasta = jsonConfig["multiFasta"].map(s => s === "true");
       setMultiFasta(multiFasta);
-  
+
       // Fetch alignment file if provided
       if (jsonConfig["alignmentFile"]) {
         await fetchAlignmentFile(organism, jsonConfig["alignmentFile"]);
@@ -1220,7 +1090,7 @@ function Main() {
       setLoading([false, false]);
     }
   };
-  
+
   /**
    * Fetches genome files for a given organism and genome.
    * 
@@ -1232,12 +1102,12 @@ function Main() {
    */
   async function fetchGenomeFiles(organism, genome, index, jsonConfig) {
     // Deep copy genome object
-    let genomeNew = Object.assign({},genome);
+    let genomeNew = Object.assign({}, genome);
     // Get type of study from config
     const typeOfStudy = jsonConfig["parameters"]["setup"]["typeofstudy"]["value"];
 
-    let genomeID = typeOfStudy === "condition" ? "genome1" :  "genome" + (index+1) 
-    
+    let genomeID = typeOfStudy === "condition" ? "genome1" : "genome" + (index + 1)
+
     console.log('Fetching genome files for', genome);
     console.log('Genome index:', index);
     let genomefileName = genome[genomeID]["genomefasta"];
@@ -1254,7 +1124,7 @@ function Main() {
     genomeNew[genomeID]["genomeannotation"] = [annotationFiles];
     return genomeNew;
   }
-  
+
   async function fetchReplicateFiles(organism, replicate, index) {
     const typesOfFiles = ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"];
     // Deep copy replicate object
@@ -1262,7 +1132,7 @@ function Main() {
     // Get key of object
     const genomeID = Object.keys(replicate)[0];
     for (let replicate of replicateNew[genomeID]) {
-      for (let  value of Object.values(replicate)) {
+      for (let value of Object.values(replicate)) {
         for (let typeOfFile of typesOfFiles) {
           let fileName = value[typeOfFile];
           // Fetching logic for replicate files...
@@ -1275,14 +1145,14 @@ function Main() {
     }
     return replicateNew;
   }
-    
-  
+
+
   async function fetchAlignmentFile(organism, fileName) {
     const response = await fetch(`/api/exampleData/${organism}/files/${fileName}/`);
     const blob = await response.blob();
     setAlignmentFile(new File([blob], fileName));
   }
-  
+
 
   return (
     <div>
@@ -1328,9 +1198,11 @@ function Main() {
         setConfHeader={setConfHeader}
         setText={setText}
         setConfPopup={setConfPopup}
-        saveConfigFile={saveConfigFile}
+        // saveConfigFile={saveConfigFile}
+        fillGenomes={fillGenomes}
+        checkInput={checkInput}
         loading={loading}
-        handleSubmit={handleSubmit}/>
+        handleSubmit={handleSubmit} />
     </div>
   );
 }

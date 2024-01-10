@@ -19,6 +19,7 @@ import server_tsspredator.parameter as parameter
 import server_tsspredator.server_handle_files as sf
 from celery import Celery, Task, shared_task
 
+tempfile.tempdir = os.getenv('TSSPREDATOR_TEMPDATA', tempfile.gettempdir())
 
 def celery_init_app(app: Flask) -> Celery:
     class FlaskTask(Task):
@@ -35,8 +36,8 @@ def celery_init_app(app: Flask) -> Celery:
 app = Flask(__name__, static_folder='../build', static_url_path='/')
 app.config.from_mapping(
     CELERY=dict(
-        broker_url="redis://localhost",
-        result_backend="redis://localhost",
+        broker_url="redis://redis:6379",
+        result_backend="redis://redis:6379",
     ),
 )
 celery_app = celery_init_app(app)
@@ -46,14 +47,17 @@ logger = get_task_logger(__name__)
 def setup_periodic_tasks(sender, **kwargs):
     # Calls delete_temp_files('specific_prefix_') every day.
     # With this, it will delete all files with the prefix 'specific_prefix_' that are older than 7 days
-    sender.add_periodic_task(60*24*60.0, delete_temp_files.s('tmpPred'), name='clear tmp every day')
+    sender.add_periodic_task(30.0, delete_temp_files.s('tmpPred'), name='clear tmp every day')
+    # sender.add_periodic_task(24*7*60*60.0, delete_temp_files.s('tmpPred'), name='clear tmp every day')
 
 @celery_app.task
 def delete_temp_files(prefix):
+    '''delete all files with the prefix 'prefix' that are older than 7 days'''
+    print(f"Deleting files with prefix {prefix}")
     directory = tempfile.gettempdir()  # The directory to search in
     for file_path in glob.glob(os.path.join(directory, f"{prefix}*")):
         # check whether the file is older than 7 days
-        if os.stat(file_path).st_mtime < (time() - 60*60*24*7):
+        if os.stat(file_path).st_mtime < (time() - 24*7*60*60.0):
             try:
                 rmtree(file_path)
                 print(f"Removed {file_path}")
@@ -71,7 +75,7 @@ def helperAsyncPredator(self, *args ):
         # Give it a new state 
         self.update_state(state='RUNNING', meta={'projectName': projectName})
         # Execute JAR file with subprocess.run (this is blocking)
-        serverLocation = os.getcwd()
+        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
         # join server Location to find TSSpredator
         tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
         # Run JAR file
@@ -126,13 +130,16 @@ def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward
     result = helperAsyncPredator.apply_async(
         args=[jsonString, resultDir, newTmpDir, newAnnotationDir, projectName],
         expires=1200,
-        # kwargs=[{"headers":{'projectName': projectName}}]  # Adding customName as an extra header
     )    
     return {'id': str(result.id)}
 
 
 @app.route('/')
 def index():
+    return app.send_static_file('index.html')
+
+@app.errorhandler(404)
+def not_found(e):
     return app.send_static_file('index.html')
 
 @app.route('/api/checkStatus/<task_id>', methods=['POST', 'GET'])
@@ -339,10 +346,9 @@ def saveConfig():
 @app.route('/api/exampleData/<organism>/<type>/<filename>/')
 def exampleData(organism, type,filename):
     '''send config file (json) or zip directory to load example data'''
-
-    json_path = './exampleData/{}/{}_config.json'.format(organism, organism)
-    files_path =  './exampleData/{}/Archive'.format(organism)
-
+    data_path = os.getenv('TSSPREDATOR_DATA_PATH', "./exampleData")
+    json_path = '{}/{}/{}_config.json'.format(data_path,organism, organism)
+    files_path =  '{}/{}/Archive'.format(data_path,organism)
     if type == 'json':
         with open(json_path) as json_file:
             data = json.load(json_file)

@@ -1,0 +1,37 @@
+
+# first stage build the frontend
+# FROM node:20-alpine3.18 as build
+FROM alpine:3.18
+
+# Set the working directory in the container to /app
+WORKDIR /build
+
+
+# Set the working directory in the container to /app
+WORKDIR /app
+
+# copy the server directory and dist from previous buildstage into the container at /app
+COPY build /app/build
+COPY server_tsspredator /app/server_tsspredator
+COPY requirements.txt /app
+COPY setup.py /app
+# COPY /TSSpredator.jar /app
+
+# Install python3.11
+RUN apk add --update --no-cache python3 py3-pip
+# install python dependencies
+RUN pip install -r requirements.txt
+
+# Install the server package
+RUN pip install -e .
+RUN rm -rf /app/requirements.txt 
+RUN rm -rf /app/setup.py
+
+# Make port 5001 available to the world outside this container
+EXPOSE 5001
+ENV TSSPREDATOR_DATA_PATH="/data"
+ENV TSSPREDATOR_SERVER_LOCATION="/app"
+ENV TSSPREDATOR_TEMPDATA="/tmpData"
+
+# The command that will be executed when the container is run
+CMD ["gunicorn","--workers", "3","--timeout","500","--graceful-timeout", "500", "--bind", "0.0.0.0:5001", "server_tsspredator.wsgi:tsspredator"]

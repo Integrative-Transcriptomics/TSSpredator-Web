@@ -1,0 +1,64 @@
+name: Build and Push Docker Image
+
+# when to run the workflow
+on:
+    push:
+        branches: [main, test]
+
+# the jobs to run
+jobs:
+    build:
+        # the os to run the job on
+        runs-on: ubuntu-latest
+        steps: 
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            # build the image
+            - name: Build Docker image
+              run: docker compose --env-file variables_tsspredator.env build
+
+            - name: save images
+              run: |
+                docker save tsspredator_web:latest | gzip > image_tsspredator_web.tar.gz
+                docker save tsspredator_celery_app:latest | gzip > image_tsspredator_celery_app.tar.gz
+
+            - name: Install SSH client
+              run: sudo apt-get install -qq -y openssh-client
+
+            - name: Transfer Docker images to server
+              env:
+                    SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
+                    SSH_CONFIG: ${{secrets.SSH_CONFIG}}
+                    SERVER_IP: ${{secrets.SERVER_IP}}
+                    KNOWN_HOSTS: ${{secrets.KNOWN_HOSTS}}
+                    TARGET: ${{secrets.TARGET}}
+              run: |
+                    mkdir -p ~/.ssh && chmod 700 ~/.ssh
+                    echo "$SSH_CONFIG" > ~/.ssh/config
+                    echo "$SSH_PRIVATE_KEY" > ~/.ssh/github-actions
+                    echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+                    chmod 600 ~/.ssh/config
+                    chmod 600 ~/.ssh/github-actions
+                    chmod 600 ~/.ssh/known_hosts
+                    scp -o UserKnownHostsFile=~/.ssh/known_hosts image_tsspredator_web.tar.gz $SERVER_IP:$TARGET
+                    scp -o UserKnownHostsFile=~/.ssh/known_hosts image_tsspredator_celery_app.tar.gz $SERVER_IP:$TARGET
+                    scp -o UserKnownHostsFile=~/.ssh/known_hosts docker-compose.yml $SERVER_IP:$TARGET
+            - name: Restart service
+              env: 
+                    SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
+                    SSH_CONFIG: ${{secrets.SSH_CONFIG}}
+                    SERVER_IP: ${{secrets.SERVER_IP}}
+                    KNOWN_HOSTS: ${{secrets.KNOWN_HOSTS}}
+                    TARGET: ${{secrets.TARGET}}
+              run: |
+                    mkdir -p ~/.ssh && chmod 700 ~/.ssh
+                    echo "$SSH_CONFIG" > ~/.ssh/config
+                    echo "$SSH_PRIVATE_KEY" > ~/.ssh/github-actions
+                    echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+                    chmod 600 ~/.ssh/config
+                    chmod 600 ~/.ssh/github-actions
+                    chmod 600 ~/.ssh/known_hosts
+                    ssh -o UserKnownHostsFile=~/.ssh/known_hosts $SERVER_IP $UPDATE_CMDS
+
+            

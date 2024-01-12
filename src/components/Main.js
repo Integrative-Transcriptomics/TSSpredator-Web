@@ -1064,10 +1064,22 @@ function Main() {
       setParameters(jsonConfig["parameters"]);
       setProjectName(jsonConfig["projectName"]);
       setRnaGraph(jsonConfig["rnaGraph"] === "true");
-
+      const typeOfStudy = jsonConfig["parameters"]["setup"]["typeofstudy"]["value"];
       // Parallelize fetching of genome and replicate files
       const genomePromises = jsonConfig["genomes"].map((genome, i) => fetchGenomeFiles(organism, genome, i, jsonConfig));
-      const genomes = await Promise.all(genomePromises);
+      let genomes = await Promise.all(genomePromises);
+      if (typeOfStudy === "condition") {
+        let tempGenomes = genomes.map((cur, i, arr) => {
+          if (i !== 0) {
+            let genomeFile = arr[0][`genome1`]["genomefasta"];
+            let annotationFile = arr[0][`genome1`]["genomeannotation"];
+            cur[`genome${i + 1}`]["genomefasta"] = genomeFile;
+            cur[`genome${i + 1}`]["genomeannotation"] = annotationFile;
+          }
+          return cur;
+        });
+        genomes = tempGenomes;
+      }
       const replicatePromises = jsonConfig["replicates"].map((replicate, i) => fetchReplicateFiles(organism, replicate, i));
       const replicates = await Promise.all(replicatePromises);
 
@@ -1105,21 +1117,27 @@ function Main() {
     let genomeNew = Object.assign({}, genome);
     // Get type of study from config
     const typeOfStudy = jsonConfig["parameters"]["setup"]["typeofstudy"]["value"];
-
-    let genomeID = typeOfStudy === "condition" ? "genome1" : "genome" + (index + 1)
-
+    let genomeID = "genome" + (index + 1)
     console.log('Fetching genome files for', genome);
     console.log('Genome index:', index);
     let genomefileName = genome[genomeID]["genomefasta"];
     let annotationfileName = genome[genomeID]["genomeannotation"];
+    let genomeFiles;
+    let annotationFiles;
+    if (typeOfStudy === "condition" & index !== 0) {
+      genomeFiles = "placeholder";
+      annotationFiles = "placeholder";
+    }
 
-    // Fetching logic for genome files...
-    const responseGenome = await fetch(`/api/exampleData/${organism}/files/${genomefileName}/`)
-    const responseAnnotation = await fetch(`/api/exampleData/${organism}/files/${annotationfileName}/`)
-    const blobGenome = await responseGenome.blob();
-    const blobAnnotation = await responseAnnotation.blob();
-    const genomeFiles = new File([blobGenome], genomefileName);
-    const annotationFiles = new File([blobAnnotation], annotationfileName);
+    else {
+      // Fetching logic for genome files...
+      const responseGenome = await fetch(`/api/exampleData/${organism}/files/${genomefileName}/`)
+      const responseAnnotation = await fetch(`/api/exampleData/${organism}/files/${annotationfileName}/`)
+      const blobGenome = await responseGenome.blob();
+      const blobAnnotation = await responseAnnotation.blob();
+      genomeFiles = new File([blobGenome], genomefileName);
+      annotationFiles = new File([blobAnnotation], annotationfileName);
+    }
     genomeNew[genomeID]["genomefasta"] = genomeFiles;
     genomeNew[genomeID]["genomeannotation"] = [annotationFiles];
     return genomeNew;

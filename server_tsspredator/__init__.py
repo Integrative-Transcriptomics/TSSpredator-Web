@@ -34,10 +34,11 @@ def celery_init_app(app: Flask) -> Celery:
     return celery_app
 
 app = Flask(__name__, static_folder='../build', static_url_path='/')
+host_redis = os.getenv('TSSPREDATOR_REDIS_HOST', 'localhost')
 app.config.from_mapping(
     CELERY=dict(
-        broker_url="redis://redis:6379",
-        result_backend="redis://redis:6379",
+        broker_url=f"redis://{host_redis}:6379"  ,
+        result_backend=f"redis://{host_redis}:6379"  ,
     ),
 )
 celery_app = celery_init_app(app)
@@ -47,8 +48,7 @@ logger = get_task_logger(__name__)
 def setup_periodic_tasks(sender, **kwargs):
     # Calls delete_temp_files('specific_prefix_') every day.
     # With this, it will delete all files with the prefix 'specific_prefix_' that are older than 7 days
-    sender.add_periodic_task(30.0, delete_temp_files.s('tmpPred'), name='clear tmp every day')
-    # sender.add_periodic_task(24*7*60*60.0, delete_temp_files.s('tmpPred'), name='clear tmp every day')
+    sender.add_periodic_task(24*7*60*60.0, delete_temp_files.s('tmpPred'), name='clear tmp every day')
 
 @celery_app.task
 def delete_temp_files(prefix):
@@ -75,7 +75,8 @@ def helperAsyncPredator(self, *args ):
         # Give it a new state 
         self.update_state(state='RUNNING', meta={'projectName': projectName})
         # Execute JAR file with subprocess.run (this is blocking)
-        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
+        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
+
         # join server Location to find TSSpredator
         tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
         # Run JAR file
@@ -184,6 +185,10 @@ def remove_tmp_dirs(dirs) -> None   :
 def index_results(filePath):
     return app.send_static_file('index.html')
 
+@app.route('/status/<id>/')
+def index_status(id):
+    return app.send_static_file('index.html')
+
 @app.route('/api/parameters/')
 def parameters():
     ''' send parameter presets to frontend'''
@@ -195,7 +200,6 @@ def getFiles(filePath):
     # get path of zip file
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
     if os.path.exists(completePath):
-        # print("test")
         return  send_file(completePath, mimetype='application/zip')
     else:
         resp = Flask.make_response(app, rv="File not found")
@@ -259,9 +263,12 @@ def getAlignment():
 
         # write JSON string 
         jsonString = '{"loadConfig": "false",' + '"saveConfig": "false", "loadAlignment": "true",' + '"alignmentFile": "' + alignmentFilename + '"}'
+        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
+        # join server Location to find TSSpredator
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
 
         # call jar file for to extract genome names & ids
-        result = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stdout=PIPE, stderr=PIPE)
+        result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)
         
         if(len(result.stderr) == 0):
             return {'result': 'success', 'data':json.loads((result.stdout).decode())}
@@ -289,8 +296,11 @@ def loadConfig():
         # write JSON string 
         jsonString = '{"loadConfig": "true",' + '"saveConfig": "false", "loadAlignment": "false",' + '"configFile": "' + configFilename + '"}'
         
+        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
+        # join server Location to find TSSpredator
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
         # call jar file for to extract genome names & ids
-        result = subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString], stdout=PIPE, stderr=PIPE)        
+        result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)        
       
         if(len(result.stderr) == 0):
             config = json.loads((result.stdout).decode())
@@ -337,9 +347,11 @@ def saveConfig():
     # write JSON string 
     jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", 'false', 'true', configFilename, multiFasta)
    
-
+    serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
+    # join server Location to find TSSpredator
+    tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
     # call jar file for to write config file
-    subprocess.run(['java', '-jar', 'TSSpredator.jar', jsonString])
+    subprocess.run(['java', '-jar', tsspredatorLocation, jsonString])
 
     return send_file(configFilename, as_attachment=True)
 
@@ -357,7 +369,3 @@ def exampleData(organism, type,filename):
     elif type == 'files':
         return send_from_directory(files_path, filename)
 
-  
-
-# if __name__ == "__main__":
-#     app.run(debug=True)

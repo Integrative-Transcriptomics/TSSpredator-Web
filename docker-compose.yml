@@ -5,7 +5,8 @@ services:
     build:
       context: .
       dockerfile: webapp/Dockerfile
-    command: gunicorn --workers 3 --timeout 500 --graceful-timeout 500 --bind 0.0.0.0:5001 server_tsspredator.wsgi:tsspredator
+    working_dir: /app/server_tsspredator
+    command: gunicorn --workers 6 --timeout 500 --graceful-timeout 500 --bind 0.0.0.0:5001 server_tsspredator.wsgi:tsspredator
     ports:
       - "${PORT_OUTPUT}:5001"
     volumes:

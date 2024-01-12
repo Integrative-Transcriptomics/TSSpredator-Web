@@ -47,6 +47,7 @@ EXPOSE 5001
 ENV TSSPREDATOR_DATA_PATH="/data"
 ENV TSSPREDATOR_SERVER_LOCATION="/app"
 ENV TSSPREDATOR_TEMPDATA="/tmpData"
+ENV TSSPREDATOR_REDIS_HOST="redis"
 
 RUN rm -rf /app/requirements.txt 
 RUN rm -rf /app/setup.py

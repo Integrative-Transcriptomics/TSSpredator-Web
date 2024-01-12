@@ -25,6 +25,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 server_tsspredator/exampleData/campylobacter/Archive/*
+server_tsspredator/exampleData/pseudomonas/Archive/*
 dump.rdb
 package-lock.json
 server_tsspredator.egg-info/PKG-INFO
+celerybeat-schedule.db

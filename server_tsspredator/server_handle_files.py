@@ -122,7 +122,6 @@ def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genom
 
 def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory, loadConfig='false', saveConfig='false', configFile=" ", multiFasta=''):
     '''create json string that is needed as input for TSSpredator.jar'''
-
     json_data = {
         "loadConfig": loadConfig,
         "saveConfig": saveConfig,
@@ -176,7 +175,6 @@ def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, pr
             for js_key, data_key in zip(json_keys, data_keys):
                 json_key = f"{js_key}_{x}{repLetter}"
                 json_data[json_key] = replicate[f'replicate{repLetter}'][data_key]
-
     return json.dumps(json_data, indent=4)
 
 

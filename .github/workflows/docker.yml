@@ -41,7 +41,6 @@ jobs:
                     chmod 600 ~/.ssh/config
                     chmod 600 ~/.ssh/github-actions
                     chmod 600 ~/.ssh/known_hosts
-                    ssh -o UserKnownHostsFile=~/.ssh/known_hosts -T $SERVER_IP
                     scp -o UserKnownHostsFile=~/.ssh/known_hosts image_tsspredator_web.tar.gz $SERVER_IP:$TARGET
                     scp -o UserKnownHostsFile=~/.ssh/known_hosts image_tsspredator_celery_app.tar.gz $SERVER_IP:$TARGET
                     scp -o UserKnownHostsFile=~/.ssh/known_hosts docker-compose.yml $SERVER_IP:$TARGET

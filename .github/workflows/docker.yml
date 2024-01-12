@@ -14,7 +14,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            # build the image
+            # build the image now
             - name: Build Docker image
               run: docker compose --env-file variables_tsspredator.env build
 

@@ -217,33 +217,58 @@ def getInputTest():
 @app.route('/api/runAsync/', methods=['POST', 'GET'])
 def getInputAsync():
     '''get the input from the form and execute TSS prediction'''
-
+    # save start time
+    startTime = time()
+    request_files = request.files.to_dict(flat=False)
+    print(request_files)
     # get genome fasta files
-    genomeFasta = request.files.to_dict(flat=False)['genomefasta']  
+    genomeFasta = request_files['genomefasta']  
+
+
+    # print(genomeFasta[0].read())
 
    # multiple genomannotation files per genome possible
     genomeAnnotation = []
     try:
         for x in range(len(genomeFasta)):
-            genomeAnnotation.append(request.files.to_dict(flat=False)['genomeannotation'+str(x+1)])
+            genomeAnnotation.append(request_files['genomeannotation'+str(x+1)])
     except:
         print("No genome Annotation file.")    
   
     # get all replicate files
-    enrichedForward  = request.files.to_dict(flat=False)['enrichedforward']
-    enrichedReverse = request.files.to_dict(flat=False)['enrichedreverse']
-    normalForward = request.files.to_dict(flat=False)['normalforward']
-    normalReverse = request.files.to_dict(flat=False)['normalreverse']    
+    enrichedForward  = request_files['enrichedforward']
+    enrichedReverse = request_files['enrichedreverse']
+    normalForward = request_files['normalforward']
+    normalReverse = request_files['normalreverse']    
+    # print(request.form.to_dict(flat=False))
+    # # get parameters
+    # formAsJson = request.form.to_dict(flat=False)
+    # print(formAsJson)
+    # parameters = formAsJson['parameters'][0]
+    # projectName = formAsJson['projectname'][0]
+    # rnaGraph = formAsJson['rnagraph'][0]
+    # genomes = formAsJson['genomes'][0]
+    # replicates = formAsJson['replicates'][0]
+    # # get type of replicates
+    # print(replicates)
+    # print(type(replicates)) 
 
-    # get parameters
+    # replicateNum = formAsJson['replicateNum'][0]
+    # print(replicateNum)
     projectName = request.form['projectname']
     parameters = json.loads(request.form['parameters'])
     rnaGraph = request.form['rnagraph']
     genomes = json.loads(request.form['genomes'])
+    # print(genomes)
     replicates = json.loads(request.form['replicates'])
     replicateNum = json.loads(request.form['replicateNum'])
-    alignmentFile = request.files.get('alignmentfile')
+    alignmentFile = request_files['alignmentfile'][0]
+    print(alignmentFile)
+    print("Time: " + str(time() - startTime))
+
     result = asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum)
+    # print runnning time
+    print("Time: " + str(time() - startTime))
     return jsonify({'result': 'success', "id": result['id']})          
         
  
@@ -263,7 +288,7 @@ def getAlignment():
 
         # write JSON string 
         jsonString = '{"loadConfig": "false",' + '"saveConfig": "false", "loadAlignment": "true",' + '"alignmentFile": "' + alignmentFilename + '"}'
-        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
+        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
         # join server Location to find TSSpredator
         tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
 
@@ -284,7 +309,8 @@ def loadConfig():
     parameters = json.loads(request.form['parameters'])
     genomes = json.loads(request.form['genomes'])
     replicates = json.loads(request.form['replicates'])
-
+    print(parameters)
+    print(genomes)
     with tempfile.TemporaryDirectory() as tmpdir:
 
         newTmpDir = tmpdir.replace('\\', '/')
@@ -292,16 +318,17 @@ def loadConfig():
         # save config file
         configFilename = newTmpDir + '/' + secure_filename(configFile.filename)
         configFile.save(configFilename)
+        print(configFilename)
 
         # write JSON string 
         jsonString = '{"loadConfig": "true",' + '"saveConfig": "false", "loadAlignment": "false",' + '"configFile": "' + configFilename + '"}'
         
-        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
+        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
         # join server Location to find TSSpredator
         tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
         # call jar file for to extract genome names & ids
         result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)        
-      
+        print(result.stderr)
         if(len(result.stderr) == 0):
             config = json.loads((result.stdout).decode())
             parameters, genomes, replicates, alignmentFile, multiFasta = sf.handle_config_file(parameters, config, genomes, replicates)
@@ -346,8 +373,8 @@ def saveConfig():
 
     # write JSON string 
     jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", 'false', 'true', configFilename, multiFasta)
-   
-    serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
+    print(jsonString)
+    serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
     # join server Location to find TSSpredator
     tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
     # call jar file for to write config file
@@ -365,7 +392,14 @@ def exampleData(organism, type,filename):
         with open(json_path) as json_file:
             data = json.load(json_file)
             return {'result': json.dumps(data)}
-                
     elif type == 'files':
         return send_from_directory(files_path, filename)
 
+@app.route('/api/fetchData/<organism>/')
+def fetchZipExample(organism):
+    '''send config file (json) or zip directory to load example data'''
+    data_path = os.getenv('TSSPREDATOR_DATA_PATH', "./exampleData")
+    json_path = '{}/{}/{}_config.json'.format(data_path,organism, organism)
+    files_path =  '{}/{}'.format(data_path,organism)
+    print(files_path)
+    return send_from_directory(files_path, "files.zip")

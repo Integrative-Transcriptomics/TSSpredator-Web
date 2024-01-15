@@ -7,6 +7,7 @@ import Error from "./Main/Error";
 import LoadConfig from "./Main/LoadConfig";
 import FormConfig from "./Main/ParameterInputField";
 import Header from "./Main/Header";
+import JSZip from "jszip";
 
 /**
  * creates the main window and saves all inputs
@@ -288,6 +289,8 @@ function Main() {
     formData.append("projectname", JSON.stringify(projectName));
     formData.append("parameters", JSON.stringify(parameters));
     formData.append("rnagraph", JSON.stringify(rnaGraph));
+    console.log(formData)
+    console.log(genomes)
     formData.append("genomes", JSON.stringify(genomes));
     formData.append("replicates", JSON.stringify(replicates));
     formData.append("replicateNum", JSON.stringify({ num: numRep }));
@@ -305,8 +308,8 @@ function Main() {
         if (data.result === "success") {
           // open result in new tab
           let filePath = data.id;
-          console.log(filePath);
-          window.open(`/status/${filePath}`, "_blank", "noopener,noreferrer");
+          let URL = `/status/${filePath}`
+          window.open(URL, "_blank", "noopener,noreferrer");
         } else {
           console.log(data);
         }
@@ -866,6 +869,7 @@ function Main() {
     var filesOK = true;
 
     const files = event.target.files;
+    console.log(files)
     const tmpArray = [];
     for (let i = 0; i < files.length; i++) {
       // check file size
@@ -1045,6 +1049,41 @@ function Main() {
     setnumRep(newRepNum);
   };
 
+  const blobFiles = async (files) => {
+    let promises = Object.keys(files).map(key => {
+      return files[key].async("blob").then(blob => {
+        return { key, blob };
+      });
+    });
+
+    let results = await Promise.all(promises);
+    let blobFiles = {};
+    results.forEach(({ key, blob }) => {
+      blobFiles[key] = blob;
+    });
+
+    return blobFiles;
+  }
+
+
+  const fetchDataServer = async (jsonConfig, organism) => {
+    const fetchDataTogether = await fetch(`/api/fetchData/${organism}/`)
+    let unzippedData = new JSZip();
+    let zipFile = await unzippedData.loadAsync(fetchDataTogether.blob()).then(function (zip) {
+      return blobFiles(zip["files"]);
+    })
+    console.log(zipFile)
+    const genomeData = jsonConfig["genomes"].map((genome, i) => getGenomeFiles(genome, i, zipFile))
+    const replicateData = jsonConfig["replicates"].map((replicate, i) => getReplicateFiles(replicate, zipFile));
+    // Fetch alignment file if provided
+    if (jsonConfig["alignmentFile"]) {
+      const alignmentFileName = jsonConfig["alignmentFile"];
+      const alignmentFile = zipFile[`${alignmentFileName}`];
+      setAlignmentFile(new File([alignmentFile], alignmentFileName));
+    }
+    return { "genomes": genomeData, "replicates": replicateData }
+
+  }
 
 
   /**
@@ -1055,7 +1094,6 @@ function Main() {
   const loadExampleData = async (event) => {
     const organism = event.target.name;
     setLoading([true, true]);
-
     try {
       const configResponse = await fetch(`/api/exampleData/${organism}/json/-/`);
       const configData = await configResponse.json();
@@ -1064,25 +1102,10 @@ function Main() {
       setParameters(jsonConfig["parameters"]);
       setProjectName(jsonConfig["projectName"]);
       setRnaGraph(jsonConfig["rnaGraph"] === "true");
-      const typeOfStudy = jsonConfig["parameters"]["setup"]["typeofstudy"]["value"];
-      // Parallelize fetching of genome and replicate files
-      const genomePromises = jsonConfig["genomes"].map((genome, i) => fetchGenomeFiles(organism, genome, i, jsonConfig));
-      let genomes = await Promise.all(genomePromises);
-      if (typeOfStudy === "condition") {
-        let tempGenomes = genomes.map((cur, i, arr) => {
-          if (i !== 0) {
-            let genomeFile = arr[0][`genome1`]["genomefasta"];
-            let annotationFile = arr[0][`genome1`]["genomeannotation"];
-            cur[`genome${i + 1}`]["genomefasta"] = genomeFile;
-            cur[`genome${i + 1}`]["genomeannotation"] = annotationFile;
-          }
-          return cur;
-        });
-        genomes = tempGenomes;
-      }
-      const replicatePromises = jsonConfig["replicates"].map((replicate, i) => fetchReplicateFiles(organism, replicate, i));
-      const replicates = await Promise.all(replicatePromises);
 
+      const dataServer = await fetchDataServer(jsonConfig, organism)
+      let genomes = dataServer["genomes"]
+      let replicates = dataServer["replicates"]
       setGenomes(genomes);
       setShowGName(true);
       setReplicates(replicates);
@@ -1091,11 +1114,6 @@ function Main() {
       // Convert multiFasta strings to boolean
       const multiFasta = jsonConfig["multiFasta"].map(s => s === "true");
       setMultiFasta(multiFasta);
-
-      // Fetch alignment file if provided
-      if (jsonConfig["alignmentFile"]) {
-        await fetchAlignmentFile(organism, jsonConfig["alignmentFile"]);
-      }
     } catch (error) {
       console.error('Error loading example data:', error);
     } finally {
@@ -1103,20 +1121,9 @@ function Main() {
     }
   };
 
-  /**
-   * Fetches genome files for a given organism and genome.
-   * 
-   * @param {string} organism - The name of the organism.
-   * @param {object} genome - The genome object.
-   * @param {number} index - The index of the genome.
-   * @param {object} jsonConfig - The JSON configuration object.
-   * @returns {Promise<object>} - A promise that resolves to the updated genome object.
-   */
-  async function fetchGenomeFiles(organism, genome, index, jsonConfig) {
+  function getGenomeFiles(genome, index, zipFile) {
     // Deep copy genome object
     let genomeNew = Object.assign({}, genome);
-    // Get type of study from config
-    const typeOfStudy = jsonConfig["parameters"]["setup"]["typeofstudy"]["value"];
     let genomeID = "genome" + (index + 1)
     console.log('Fetching genome files for', genome);
     console.log('Genome index:', index);
@@ -1124,26 +1131,18 @@ function Main() {
     let annotationfileName = genome[genomeID]["genomeannotation"];
     let genomeFiles;
     let annotationFiles;
-    if (typeOfStudy === "condition" & index !== 0) {
-      genomeFiles = "placeholder";
-      annotationFiles = "placeholder";
-    }
+    const responseGenome = zipFile[`${genomefileName}`];
+    const responseAnnotation = zipFile[`${annotationfileName}`];
 
-    else {
-      // Fetching logic for genome files...
-      const responseGenome = await fetch(`/api/exampleData/${organism}/files/${genomefileName}/`)
-      const responseAnnotation = await fetch(`/api/exampleData/${organism}/files/${annotationfileName}/`)
-      const blobGenome = await responseGenome.blob();
-      const blobAnnotation = await responseAnnotation.blob();
-      genomeFiles = new File([blobGenome], genomefileName);
-      annotationFiles = new File([blobAnnotation], annotationfileName);
-    }
+    genomeFiles = new File([responseGenome], genomefileName)
+    annotationFiles = new File([responseAnnotation], annotationfileName)
+
     genomeNew[genomeID]["genomefasta"] = genomeFiles;
     genomeNew[genomeID]["genomeannotation"] = [annotationFiles];
     return genomeNew;
   }
 
-  async function fetchReplicateFiles(organism, replicate, index) {
+  function getReplicateFiles(replicate, zipFile) {
     const typesOfFiles = ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"];
     // Deep copy replicate object
     let replicateNew = Object.assign({}, replicate);
@@ -1154,21 +1153,13 @@ function Main() {
         for (let typeOfFile of typesOfFiles) {
           let fileName = value[typeOfFile];
           // Fetching logic for replicate files...
-          const response = await fetch(`/api/exampleData/${organism}/files/${fileName}/`);
-          const blob = await response.blob();
-          const file = new File([blob], fileName);
+          let fileContent = zipFile[`${fileName}`]
+          const file = new File([fileContent], fileName);
           value[typeOfFile] = file;
         }
       }
     }
     return replicateNew;
-  }
-
-
-  async function fetchAlignmentFile(organism, fileName) {
-    const response = await fetch(`/api/exampleData/${organism}/files/${fileName}/`);
-    const blob = await response.blob();
-    setAlignmentFile(new File([blob], fileName));
   }
 
 

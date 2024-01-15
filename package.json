@@ -1,5 +1,5 @@
 {
-  "name": "react-app",
+  "name": "tsspredatorweb",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -7,11 +7,14 @@
     "@testing-library/react": "^13.1.1",
     "@testing-library/user-event": "^13.5.0",
     "@upsetjs/react": "^1.11.0",
+    "gosling.js": "^0.13.2",
+    "higlass": "^1.13.3",
     "http-proxy-middleware": "^2.0.6",
     "install": "^0.13.0",
     "jszip": "^3.10.0",
     "lodash": "^4.17.21",
     "npm-run-all": "^4.1.5",
+    "pixi.js": "^6.5.10",
     "plotly.js-cartesian-dist-min": "^2.12.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -22,9 +25,16 @@
     "react-table": "^7.8.0",
     "web-vitals": "^2.1.4"
   },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.16.7"
+  },
   "scripts": {
+    "server-redis": "redis-server",
+    "server-celery": "celery -A server_tsspredator.celery_app worker -B --loglevel=warning",
     "server": "cd server_tsspredator && flask run --no-debugger",
-    "tsspredator": "run-p server start",
+    "server-deploy": "cd server_tsspredator && gunicorn --workers 3 --timeout 500 --graceful-timeout 500 --bind 0.0.0.0:3001 --log-level=debug server_tsspredator.wsgi:tsspredator",
+    "tsspredator": "run-p server server-redis server-celery start",
+    "tsspredator-test": "run-p server-deploy server-redis server-celery",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

@@ -1,0 +1,7 @@
+.github/
+data/
+env/
+build/
+node_modules/
+server_tsspredator/exampleData/
+server_tsspredator/__pycache__/

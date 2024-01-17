@@ -30,6 +30,10 @@ def celery_init_app(app: Flask) -> Celery:
     celery_app = Celery(app.name, task_cls=FlaskTask)
     celery_app.config_from_object(app.config["CELERY"])
     celery_app.set_default()
+    celery_app.conf.event_serializer = 'pickle' # this event_serializer is optional. somehow i missed this when writing this solution and it still worked without.
+    celery_app.conf.task_serializer = 'pickle'
+    celery_app.conf.result_serializer = 'pickle'
+    celery_app.conf.accept_content = ['application/json', 'application/x-python-serialize']
     app.extensions["celery"] = celery_app
     return celery_app
 
@@ -70,8 +74,10 @@ def delete_temp_files(prefix):
 @shared_task(ignore_result=False, track_started=True, bind=True, name='helperAsyncPredator')
 def helperAsyncPredator(self, *args ):
     '''call jar file for TSS prediction and zip files'''
-    [jsonString, resultDir, inputDir, annotationDir, projectName] = args
+    [request, jsonString, resultDir, inputDir, annotationDir, projectName] = args
     try:
+        print("Start TSSpredator")
+        print(request.files.to_dict(flat=False))
         # Give it a new state 
         self.update_state(state='RUNNING', meta={'projectName': projectName})
         # Execute JAR file with subprocess.run (this is blocking)
@@ -103,7 +109,7 @@ def helperAsyncPredator(self, *args ):
                                 })
         raise Ignore()
     
-def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum): 
+def asyncPredator(rquest, alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum): 
      # create temporary directory, save files and save filename in genome/replicate object
     tmpdir = tempfile.mkdtemp(prefix='tmpPredInputFolder')
 
@@ -129,7 +135,7 @@ def asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward
     # create json string for jar
     jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
     result = helperAsyncPredator.apply_async(
-        args=[jsonString, resultDir, newTmpDir, newAnnotationDir, projectName],
+        args=[request, jsonString, resultDir, newTmpDir, newAnnotationDir, projectName],
         expires=1200,
     )    
     return {'id': str(result.id)}
@@ -220,13 +226,8 @@ def getInputAsync():
     # save start time
     startTime = time()
     request_files = request.files.to_dict(flat=False)
-    print(request_files)
     # get genome fasta files
     genomeFasta = request_files['genomefasta']  
-
-
-    # print(genomeFasta[0].read())
-
    # multiple genomannotation files per genome possible
     genomeAnnotation = []
     try:
@@ -240,34 +241,17 @@ def getInputAsync():
     enrichedReverse = request_files['enrichedreverse']
     normalForward = request_files['normalforward']
     normalReverse = request_files['normalreverse']    
-    # print(request.form.to_dict(flat=False))
-    # # get parameters
-    # formAsJson = request.form.to_dict(flat=False)
-    # print(formAsJson)
-    # parameters = formAsJson['parameters'][0]
-    # projectName = formAsJson['projectname'][0]
-    # rnaGraph = formAsJson['rnagraph'][0]
-    # genomes = formAsJson['genomes'][0]
-    # replicates = formAsJson['replicates'][0]
-    # # get type of replicates
-    # print(replicates)
-    # print(type(replicates)) 
-
-    # replicateNum = formAsJson['replicateNum'][0]
-    # print(replicateNum)
+  
     projectName = request.form['projectname']
     parameters = json.loads(request.form['parameters'])
     rnaGraph = request.form['rnagraph']
     genomes = json.loads(request.form['genomes'])
-    # print(genomes)
     replicates = json.loads(request.form['replicates'])
     replicateNum = json.loads(request.form['replicateNum'])
     alignmentFile = request_files['alignmentfile'][0]
-    print(alignmentFile)
     print("Time: " + str(time() - startTime))
 
-    result = asyncPredator(alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum)
-    # print runnning time
+    result = asyncPredator(request, alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum)
     print("Time: " + str(time() - startTime))
     return jsonify({'result': 'success', "id": result['id']})          
         

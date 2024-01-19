@@ -68,7 +68,6 @@ jobs:
                     chmod 600 ~/.ssh/config
                     chmod 600 ~/.ssh/github-actions
                     chmod 600 ~/.ssh/known_hosts
-                    ssh -o UserKnownHostsFile=~/.ssh/known_hosts $SERVER_IP:$TARGET chmod +x $UPDATE_CMDS
-                    ssh -o UserKnownHostsFile=~/.ssh/known_hosts $SERVER_IP:$TARGET $UPDATE_CMDS
+                    ssh -t -o UserKnownHostsFile=~/.ssh/known_hosts $SERVER_IP "cd $TARGET; chmod +x $UPDATE_CMDS; $UPDATE_CMDS"
 
             

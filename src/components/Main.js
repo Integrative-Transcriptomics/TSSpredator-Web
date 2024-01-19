@@ -8,6 +8,7 @@ import LoadConfig from "./Main/LoadConfig";
 import FormConfig from "./Main/ParameterInputField";
 import Header from "./Main/Header";
 import JSZip from "jszip";
+import LoadingBanner from "./Main/LoadingBanner";
 
 /**
  * creates the main window and saves all inputs
@@ -53,7 +54,6 @@ function Main() {
   const [alignmentFile, setAlignmentFile] = useState("");
   // saves the value of the checkbox: if genome file is multiFasta or not
   const [multiFasta, setMultiFasta] = useState([false]);
-
   // new GenomeTab: use replicateTemplate to update replicates
   const [replicateTemplate, setReplicateTemplate] = useState([
     initConfigReplicates
@@ -81,6 +81,10 @@ function Main() {
   // loading spinner [runButton, loadExampleData]
   const [loading, setLoading] = useState([false, false]);
 
+  const [loadingFiles, setLoadingFiles] = useState({});
+  const [statusID, setStatusID] = useState(false);
+  const [readyLoaded, setReadyLoaded] = useState(false);
+
   /**
    * GETs Parameters from flask
    */
@@ -93,7 +97,7 @@ function Main() {
   /**
    * RUN Button event
    */
-  const handleSubmit = (event, check = true) => {
+  const handleSubmit = async (event, check = true) => {
 
     event.preventDefault();
     setLoading([!loading[0], loading[1]]);
@@ -109,7 +113,72 @@ function Main() {
       setEPopup(!ePopup);
     }
     if (run) {
-      sendDataAsync();
+      await fetch(`/api/startUpload/`)
+      const promises = sendDataAsync();
+      let uploadedFiles = await Promise.all(promises)
+      let modifiedGenomes = []
+      let modifiedReplicates = []
+      genomes.forEach((genome, i) => {
+        // deep copy of genome
+        let tempGenome = JSON.parse(JSON.stringify(genome))
+        let tempReplicate = {}
+        const genomeID = `genome${i + 1}`
+        let resultsFiltered = uploadedFiles.filter((file) => file.fileCategory.includes(genomeID))
+        let genomeFiles = resultsFiltered.filter((file) => file.fileCategory.includes("genomefasta"))
+        let genomeAnnotation = resultsFiltered.filter((file) => file.fileCategory.includes("genomeannotation"))[0]
+        tempGenome[genomeID].genomefasta = genomeFiles[0].fileName
+        tempGenome[genomeID].genomeannotation = genomeAnnotation.fileName
+        for (let j = 0; j < replicates[i][genomeID].length; j++) {
+          const replicateID = `replicate${String.fromCharCode(97 + j)}`
+          tempReplicate[replicateID] = {}
+          let replicateFiles = resultsFiltered.filter((file) => file.fileCategory.includes(replicateID))
+          tempReplicate[replicateID].enrichedforward = replicateFiles.filter((file) => file.fileCategory.includes("enrichedforward"))[0].fileName
+          tempReplicate[replicateID].enrichedreverse = replicateFiles.filter((file) => file.fileCategory.includes("enrichedreverse"))[0].fileName
+          tempReplicate[replicateID].normalforward = replicateFiles.filter((file) => file.fileCategory.includes("normalforward"))[0].fileName
+          tempReplicate[replicateID].normalreverse = replicateFiles.filter((file) => file.fileCategory.includes("normalreverse"))[0].fileName
+        }
+        modifiedGenomes.push(tempGenome)
+        let replicateObj = {}
+        replicateObj[`${genomeID}`] = tempReplicate
+        modifiedReplicates.push(replicateObj)
+      })
+
+      let formData = new FormData()
+      let formBody = {
+        "projectName": projectName,
+        "parameters": parameters,
+        "rnaGraph": rnaGraph,
+        "genomes": modifiedGenomes,
+        "replicates": modifiedReplicates,
+        "replicateNum": numRep
+      }
+      if (alignmentFile) {
+        formBody["alignmentFile"] = alignmentFile.name
+      }
+      formData.append("data", JSON.stringify(formBody));
+
+      fetch("/api/runAsync/", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          setLoading([false, false]);
+
+          if (data.result === "success") {
+            setStatusID(data.id);
+            setReadyLoaded("loaded");
+
+
+
+          } else {
+            console.log(data);
+          }
+        })
+
+
+
+
     }
   };
 
@@ -254,7 +323,48 @@ function Main() {
   };
 
 
+  async function uploadFile(file, fileCategory) {
+    function wait(delay) {
+      return new Promise((resolve) => setTimeout(resolve, delay));
+    }
 
+    function fetchRetry(url, delay, tries, fetchOptions = {}) {
+      function onError(err) {
+        console.log(fetchOptions.body)
+        let triesLeft = tries - 1;
+        if (!triesLeft) {
+          console.log("No more tries left");
+          throw err;
+        }
+        return wait(delay).then(() => fetchRetry(url, delay, triesLeft, fetchOptions));
+      }
+      return fetch(url, fetchOptions).catch(onError);
+    }
+    const fileName = file.name;
+    const formData = new FormData();
+
+    updateLoadingFiles(fileName, false)
+    formData.append("fileCategory", fileCategory);
+    formData.append("fileType", fileCategory.includes("annotation") ? "annotation" : "input");
+    formData.append("fileName", fileName);
+    formData.append("file", file);
+    // send file to server
+    return fetchRetry("/api/upload/", 2, 3, {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        updateLoadingFiles(fileName, "success")
+        return response.json()
+      })
+      .catch((err) => {
+        console.log(err);
+        updateLoadingFiles(fileName, "error")
+      });
+
+
+
+  }
 
   /**
    * Sends data to the server using a POST request.
@@ -262,59 +372,30 @@ function Main() {
    * @returns {void}
    */
   function sendDataAsync() {
-    const formData = new FormData();
-
+    setReadyLoaded("loading");
+    const typesOfReplicates = ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"];
+    let promises = [];
     genomes.forEach((genome, i) => {
-      const { genomefasta, genomeannotation } = genome[`genome${i + 1}`];
-
-      formData.append("genomefasta", genomefasta);
-
+      let idGenome = `genome${i + 1}`
+      const { genomefasta, genomeannotation } = genome[idGenome];
+      promises.push(uploadFile(genomefasta, `${idGenome}_genomefasta`));
       genomeannotation.forEach((annotation, k) => {
-        formData.append(`genomeannotation${i + 1}`, annotation);
+        promises.push(uploadFile(annotation, `${idGenome}_genomeannotation${i + 1}`));
       });
-
-      const rep = replicates[i][`genome${i + 1}`];
-
+      const rep = replicates[i][idGenome];
       rep.forEach((replicate, j) => {
         const letter = String.fromCharCode(97 + j);
-        const { enrichedforward, enrichedreverse, normalforward, normalreverse } = replicate[`replicate${letter}`];
-
-        formData.append("enrichedforward", enrichedforward);
-        formData.append("enrichedreverse", enrichedreverse);
-        formData.append("normalforward", normalforward);
-        formData.append("normalreverse", normalreverse);
+        const replicateID = `replicate${letter}`
+        const { enrichedforward, enrichedreverse, normalforward, normalreverse } = replicate[replicateID];
+        let replicateFiles = [enrichedforward, enrichedreverse, normalforward, normalreverse];
+        replicateFiles.forEach((file, k) => {
+          promises.push(uploadFile(file, `${idGenome}_${replicateID}_${typesOfReplicates[k]}`));
+        });
       });
     });
 
-    formData.append("projectname", JSON.stringify(projectName));
-    formData.append("parameters", JSON.stringify(parameters));
-    formData.append("rnagraph", JSON.stringify(rnaGraph));
-    console.log(formData)
-    console.log(genomes)
-    formData.append("genomes", JSON.stringify(genomes));
-    formData.append("replicates", JSON.stringify(replicates));
-    formData.append("replicateNum", JSON.stringify({ num: numRep }));
-
-    formData.append("alignmentfile", alignmentFile);
-
-    fetch("/api/runAsync/", {
-      method: "POST",
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setLoading([false, false]);
-
-        if (data.result === "success") {
-          // open result in new tab
-          let filePath = data.id;
-          let URL = `/status/${filePath}`
-          window.open(URL, "_blank", "noopener,noreferrer");
-        } else {
-          console.log(data);
-        }
-      })
-      .catch((err) => console.log(err));
+    if (alignmentFile) promises.push(uploadFile(alignmentFile, "alignmentfile"));
+    return promises
   }
 
   /**
@@ -1072,7 +1153,6 @@ function Main() {
     let zipFile = await unzippedData.loadAsync(fetchDataTogether.blob()).then(function (zip) {
       return blobFiles(zip["files"]);
     })
-    console.log(zipFile)
     const genomeData = jsonConfig["genomes"].map((genome, i) => getGenomeFiles(genome, i, zipFile))
     const replicateData = jsonConfig["replicates"].map((replicate, i) => getReplicateFiles(replicate, zipFile));
     // Fetch alignment file if provided
@@ -1084,7 +1164,10 @@ function Main() {
     return { "genomes": genomeData, "replicates": replicateData }
 
   }
-
+  const closePopup = () => {
+    setReadyLoaded(false);
+    setLoadingFiles({});
+  }
 
   /**
    * Loads example data based on the selected organism.
@@ -1162,6 +1245,16 @@ function Main() {
     return replicateNew;
   }
 
+  function updateLoadingFiles(fileName, status) {
+    setLoadingFiles((prevLoadingFiles) => {
+      // Using functional update form to ensure we're working with the latest state
+      prevLoadingFiles[fileName] = status;
+      return prevLoadingFiles
+    });
+  }
+
+
+
 
   return (
     <div>
@@ -1182,6 +1275,16 @@ function Main() {
           uploadFiles={(e) => uploadConfFiles(e)}
         />
       )}
+      {
+        typeof readyLoaded === "string" && (
+          <LoadingBanner
+            statusID={statusID}
+            listDocumentStatus={loadingFiles}
+            readyLoaded={readyLoaded}
+            closePopup={() => closePopup()}
+          />
+        )
+      }
 
       <Header loading={loading} onLoadExampleData={loadExampleData} />
 

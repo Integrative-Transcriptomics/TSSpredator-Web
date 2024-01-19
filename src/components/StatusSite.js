@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import Error from "./Main/Error";
 import ScrollableTextComponent from "./Result/ScrollableText";
 

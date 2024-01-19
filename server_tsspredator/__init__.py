@@ -1,12 +1,11 @@
 from asyncio.subprocess import PIPE
 from shutil import make_archive, rmtree
 from time import time
-from flask import Flask, request, send_file, send_from_directory, jsonify
+import traceback
+from flask import Flask, request, send_file, send_from_directory, jsonify, session
 from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
-
-
 
 import json
 import tempfile
@@ -30,19 +29,19 @@ def celery_init_app(app: Flask) -> Celery:
     celery_app = Celery(app.name, task_cls=FlaskTask)
     celery_app.config_from_object(app.config["CELERY"])
     celery_app.set_default()
-    celery_app.conf.event_serializer = 'pickle' # this event_serializer is optional. somehow i missed this when writing this solution and it still worked without.
-    celery_app.conf.task_serializer = 'pickle'
-    celery_app.conf.result_serializer = 'pickle'
-    celery_app.conf.accept_content = ['application/json', 'application/x-python-serialize']
     app.extensions["celery"] = celery_app
     return celery_app
 
 app = Flask(__name__, static_folder='../build', static_url_path='/')
+app.secret_key = os.getenv('SECRET_KEY_TSSPREDATOR', "BAD_SECRET_KEY")
+
+
 host_redis = os.getenv('TSSPREDATOR_REDIS_HOST', 'localhost')
+port_redis = os.getenv('TSSPREDATOR_REDIS_PORT', 6379)
 app.config.from_mapping(
     CELERY=dict(
-        broker_url=f"redis://{host_redis}:6379"  ,
-        result_backend=f"redis://{host_redis}:6379"  ,
+        broker_url=f"redis://{host_redis}:{port_redis}"  ,
+        result_backend=f"redis://{host_redis}:{port_redis}"  ,
     ),
 )
 celery_app = celery_init_app(app)
@@ -70,19 +69,21 @@ def delete_temp_files(prefix):
         else:
             print(f"Skipping {file_path}")
 
-
 @shared_task(ignore_result=False, track_started=True, bind=True, name='helperAsyncPredator')
 def helperAsyncPredator(self, *args ):
     '''call jar file for TSS prediction and zip files'''
-    [request, jsonString, resultDir, inputDir, annotationDir, projectName] = args
-    try:
-        print("Start TSSpredator")
-        print(request.files.to_dict(flat=False))
-        # Give it a new state 
-        self.update_state(state='RUNNING', meta={'projectName': projectName})
-        # Execute JAR file with subprocess.run (this is blocking)
-        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
+    # [request, jsonString, resultDir, inputDir, annotationDir, projectName] = args
+    [request, inputDir, annotationDir] = args
+    jsonObject = json.loads(request)
+    resultDir = tempfile.mkdtemp(prefix='tmpPredResultFolder').replace('\\', '/')
 
+    try:
+        projectName = jsonObject['projectName']
+        self.update_state(state='PENDING', meta={'projectName': projectName})
+        jsonString = sf.processRequestJSON(jsonObject, resultDir, inputDir, annotationDir)
+        # Execute JAR file with subprocess.run (this is blocking)
+        self.update_state(state='RUNNING', meta={'projectName': projectName})
+        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
         # join server Location to find TSSpredator
         tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
         # Run JAR file
@@ -109,33 +110,54 @@ def helperAsyncPredator(self, *args ):
                                 })
         raise Ignore()
     
-def asyncPredator(rquest, alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum): 
-     # create temporary directory, save files and save filename in genome/replicate object
-    tmpdir = tempfile.mkdtemp(prefix='tmpPredInputFolder')
+@app.route('/api/startUpload/', methods=['GET'])
+def startUpload():
+    session["inputFiles"] = tempfile.mkdtemp(prefix='tmpPredInputFolder')
+    session["annotationFiles"] = tempfile.mkdtemp(prefix='tmpPredAnnotation')
+    return {'result': 'success'}
 
-    newTmpDir = tmpdir.replace('\\', '/')
+@app.route('/api/upload/', methods=['POST'])
+def upload():
+    '''upload files for TSS prediction'''
+    if request.method == 'POST':
+        try:
+            # Validate file
+            if 'file' not in request.files:
+                print("No file part")
+                return jsonify({'error': 'No file part'}), 400
 
-    annotationDir = tempfile.mkdtemp(prefix='tmpPredAnnotation')
+            file = request.files['file']
+            if file.filename == '':
+                print("No selected file")
+                return jsonify({'error': 'No selected file'}), 400
 
-    newAnnotationDir = annotationDir.replace('\\', '/')
+            fileType = request.form.get('fileType')
+            fileCategory = request.form.get('fileCategory')
 
-    genomes, replicates = sf.save_files(newTmpDir, newAnnotationDir, genomes, replicates, genomeFasta, genomeAnnotation, enrichedForward, enrichedReverse, normalForward, normalReverse, replicateNum)
-    if alignmentFile:
-        # save alignment file
-        alignmentFilename = f"{newTmpDir}/{secure_filename(alignmentFile.filename)}"
-        alignmentFile.save(alignmentFilename)
+            if fileType not in ["input", "annotation"]: 
+                print(f"Invalid file type: {fileType}")
+                return jsonify({'error': 'Invalid file type'}), 400
+            # Ensure the directory exists
+            directory = session["inputFiles"] if fileType == "input" else session["annotationFiles"]
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            # Save file
+            fileName = secure_filename(file.filename)
+            filePath = os.path.join(directory, fileName)
+            file.save(filePath)
+            return jsonify({'result': 'success', "fileName": fileName, "fileCategory": fileCategory})
+        except Exception as e:
+            print(f"Exception: {e}")
+            traceback.print_exc()  # Print complete stack trace
+            return jsonify({'error': 'An error occurred'}), 500
     else:
-        alignmentFilename = ''
-        print('No alignment file')
-    
-    # save files from tss prediciton in this directory
-    resultDir = tempfile.mkdtemp(prefix='tmpPredResultFolder')
+        return jsonify({'error': 'Invalid request method'}), 405
+   
 
-    newResultDir = resultDir.replace('\\', '/')
-    # create json string for jar
-    jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFilename, projectName, parameters, rnaGraph, newResultDir)
+def asyncPredator(request_data): 
+    '''call jar file for TSS prediction and zip files'''
     result = helperAsyncPredator.apply_async(
-        args=[request, jsonString, resultDir, newTmpDir, newAnnotationDir, projectName],
+        args=[request_data, session["inputFiles"], session["annotationFiles"]],
         expires=1200,
     )    
     return {'id': str(result.id)}
@@ -153,7 +175,7 @@ def not_found(e):
 def task_status(task_id):
     task = helperAsyncPredator.AsyncResult(task_id)
    
-    if task.state in ['PENDING', 'STARTED', "RUNNING"]:
+    if task.state in ['PENDING', 'STARTED', "RUNNING", "PARSING DATA"]:
         # job did not start yet
         response = {
             'state': task.state,
@@ -224,35 +246,8 @@ def getInputTest():
 def getInputAsync():
     '''get the input from the form and execute TSS prediction'''
     # save start time
-    startTime = time()
-    request_files = request.files.to_dict(flat=False)
-    # get genome fasta files
-    genomeFasta = request_files['genomefasta']  
-   # multiple genomannotation files per genome possible
-    genomeAnnotation = []
-    try:
-        for x in range(len(genomeFasta)):
-            genomeAnnotation.append(request_files['genomeannotation'+str(x+1)])
-    except:
-        print("No genome Annotation file.")    
-  
-    # get all replicate files
-    enrichedForward  = request_files['enrichedforward']
-    enrichedReverse = request_files['enrichedreverse']
-    normalForward = request_files['normalforward']
-    normalReverse = request_files['normalreverse']    
-  
-    projectName = request.form['projectname']
-    parameters = json.loads(request.form['parameters'])
-    rnaGraph = request.form['rnagraph']
-    genomes = json.loads(request.form['genomes'])
-    replicates = json.loads(request.form['replicates'])
-    replicateNum = json.loads(request.form['replicateNum'])
-    alignmentFile = request_files['alignmentfile'][0]
-    print("Time: " + str(time() - startTime))
-
-    result = asyncPredator(request, alignmentFile, enrichedForward, enrichedReverse, normalForward, normalReverse, genomeFasta, genomeAnnotation, projectName, parameters, rnaGraph, genomes, replicates, replicateNum)
-    print("Time: " + str(time() - startTime))
+    dataSet = request.form['data']
+    result = asyncPredator(dataSet)
     return jsonify({'result': 'success', "id": result['id']})          
         
  
@@ -383,7 +378,6 @@ def exampleData(organism, type,filename):
 def fetchZipExample(organism):
     '''send config file (json) or zip directory to load example data'''
     data_path = os.getenv('TSSPREDATOR_DATA_PATH', "./exampleData")
-    json_path = '{}/{}/{}_config.json'.format(data_path,organism, organism)
     files_path =  '{}/{}'.format(data_path,organism)
     print(files_path)
     return send_from_directory(files_path, "files.zip")

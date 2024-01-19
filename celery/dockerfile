@@ -54,4 +54,4 @@ RUN rm -rf /app/setup.py
 
 
 # The command that will be executed when the container is run
-CMD ["gunicorn","--workers", "3","--timeout","500","--graceful-timeout", "500", "--bind", "0.0.0.0:5001", "wsgi:tsspredator"]
+CMD ["gunicorn","--workers", "6","--timeout","500","--graceful-timeout", "500", "--bind", "0.0.0.0:5001", "wsgi:tsspredator"]

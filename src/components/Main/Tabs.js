@@ -57,19 +57,21 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
 
   return (
     <>
-      {popup && <PopupWindow closePopup={(e) => setPopup(!popup)} numRep={numRep} gIdx={state} disabled={disabled} multiFasta={multiFasta[state-1]}
+      {popup && <PopupWindow closePopup={(e) => setPopup(!popup)} numRep={numRep} gIdx={state} disabled={disabled} multiFasta={multiFasta[state - 1]}
         saveAllFiles={(g, ef, er, nf, nr) => saveFiles(g, ef, er, nf, nr, state - 1)} studyType={(studyType[0].toUpperCase() + studyType.slice(1))} />}
 
       <div className='container'>
         <div className='tab-row'>
           {genome ? <></> : <div className='left-line'></div>}
           {genomes.map((g, i) => {
+            // console.log(g)
             var val = "";
             if (showName) {
               val = genomes[i]['genome' + (i + 1)].name;
             }
             // tooltip or not
             if (genome) {
+              // console.log(genomes[i])
               return (
                 <div className={state === (i + 1) ? tabClass + ' tab-active' : tabClass} key={(i + 1)} onClick={() => { setState((i + 1)) }}
                   data-tabs-title="Brief unique name for this strain/condition. Special characters (including spaces) should be avoided.">
@@ -94,17 +96,18 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
 
           {genomes.map((g, i) => {
 
+
             return (
               <div className={state === (i + 1) ? 'content content-active' : 'content'} key={(i + 1)}>
 
                 {genome ? <>
-                  <TextFieldGroup fields={studyType === 'genome' 
-                  ? [{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid']}, { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid']}] 
-                  : [{ "name": "Output ID", "value": g['genome' + (i + 1)]['outputid']}]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />                
+                  <TextFieldGroup fields={studyType === 'genome'
+                    ? [{ "name": "Alignment ID", "value": g['genome' + (i + 1)]['alignmentid'] }, { "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]
+                    : [{ "name": "Output ID", "value": g['genome' + (i + 1)]['outputid'] }]} studyType={studyType} id={i} handleTabs={(e) => handleTabs(e)} />
 
                   <br></br>
                   <label className={disabled ? 'multiFasta-checkbox disabled-text' : 'multiFasta-checkbox'} data-title="Check the box if the given genome file is a multi FASTA file.">
-                    <input type="checkbox" name="multiFasta" id={i} checked={multiFasta[i]} onChange={(e) => handleTabs(e)} disabled={disabled}/>
+                    <input type="checkbox" name="multiFasta" id={i} checked={multiFasta[i]} onChange={(e) => handleTabs(e)} disabled={disabled} />
                     Is the genome file a multiFASTA file?
                   </label>
                   <br></br>
@@ -112,10 +115,16 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
                   <button className="button all-files" type='button' onClick={() => setPopup(!popup)}>Upload Files together</button>
 
                   <UploadFilesIndividually files={fileNames} studyType={studyType} id={i} genomes={genomes} handleTabs={(e) => handleTabs(e)}
-                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} multiFasta={multiFasta[i]}/>
+                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} multiFasta={multiFasta[i]} />
 
-                  <Tabs genomes={replicates[i]['genome' + (i + 1)]} genome={false} whichGenome={i} handleTabs={(e) => handleTabs(e)}
-                    saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} />
+                  <Tabs
+                    genomes={replicates[i]['genome' + (i + 1)]}
+                    genome={false}
+                    whichGenome={i}
+                    handleTabs={(e) => handleTabs(e)}
+                    saveIndividualFile={(e) => saveIndividualFile(e)}
+                    saveAnnotationFile={(e) => saveAnnotationFile(e)}
+                  />
                 </>
                   : <><div className="info-row"><div className='info-icon'>i</div><div className="info-text">tagRNA-seq: Use the TSS reads as the enriched library and the PSS reads as the normal library.</div></div>
                     <UploadFilesIndividually files={fileNames} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)}

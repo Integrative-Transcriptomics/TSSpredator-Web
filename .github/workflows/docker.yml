@@ -33,6 +33,10 @@ jobs:
                     SERVER_IP: ${{secrets.SERVER_IP}}
                     KNOWN_HOSTS: ${{secrets.KNOWN_HOSTS}}
                     TARGET: ${{secrets.TARGET}}
+                    DEPLOY_FILE: ${{secrets.DEPLOY_FILE}}
+                    DEPLOY_FILE_NAME: ${{secrets.DEPLOY_FILE_NAME}}
+                    ENV_FILE: ${{secrets.ENV_FILE}}
+                    ENV_FILE_NAME: ${{secrets.ENV_FILE_NAME}}
               run: |
                     mkdir -p ~/.ssh && chmod 700 ~/.ssh
                     echo "$SSH_CONFIG" > ~/.ssh/config
@@ -55,6 +59,7 @@ jobs:
                     SERVER_IP: ${{secrets.SERVER_IP}}
                     KNOWN_HOSTS: ${{secrets.KNOWN_HOSTS}}
                     TARGET: ${{secrets.TARGET}}
+                    UPDATE_CMDS: ${{secrets.UPDATE_CMDS}}
               run: |
                     mkdir -p ~/.ssh && chmod 700 ~/.ssh
                     echo "$SSH_CONFIG" > ~/.ssh/config

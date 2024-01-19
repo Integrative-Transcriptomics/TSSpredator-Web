@@ -120,6 +120,77 @@ def save_files(newTmpDir, annotationDir, genomes, replicates, genomeFasta, genom
 
     return [genomes_new, replicates_new]
 
+
+def processRequestJSON(request, outputDir, inputDir, annotationDir):
+    # Get data
+    replicateNum = request['replicateNum']
+    projectName = request['projectName']
+    parameters = request['parameters']
+    genomes = request['genomes']
+    rnaGraph = request['rnaGraph']
+    replicates = request['replicates']
+    alignmentFilepath = "" if "alignmentFile" not in request.keys() else os.path.join(inputDir,request['alignmentFile'])
+    # Create json body
+    json_data = {
+        "loadConfig": 'false',
+        "saveConfig": 'false',
+        "loadAlignment": "false",
+        "numReplicates": str(replicateNum),
+        "numberOfDatasets": str(len(genomes)),
+        "configFile": " ",
+        "multiFasta": '',
+        "outputDirectory": outputDir + '/',
+        "projectName": projectName,
+        "superGraphCompatibility": "igb",
+        "maxGapLengthInGene": "500",
+        "writeNocornacFiles": "0"
+    }
+
+    setupBox = parameters['setup']
+    parameterBox = parameters['parameterBox']
+    studytype = 'cond' if setupBox['typeofstudy']['value'] == 'condition' else 'align'
+    json_data["mode"] = studytype
+    if studytype == 'cond':
+        json_data["printReplicateStats"] = "1"
+    else:
+        json_data["xmfa"] = alignmentFilepath
+
+    json_data["writeGraphs"] = "1" if rnaGraph == 'true' else "0"
+
+    # Add parameters
+    for category, items in parameterBox.items():
+        for key, value in items.items():
+            json_key = f"{category}_{key}"
+            json_data[TRANSLATE_DICT[json_key]] = str(value['value'])
+
+    # Add genome information
+    for x, genomeValue in enumerate(genomes, start=1):
+        genome = genomeValue[f'genome{x}']
+        json_keys = ["annotation", "genome", "outputPrefix", "outputID"]
+        data_keys =  ['genomeannotation', 'genomefasta', 'name', 'outputid']
+        for (js_key, data_key) in zip(json_keys, data_keys):
+            json_data[f"{js_key}_{x}"] = os.path.join((annotationDir if data_key == "genomeannotation" else inputDir if data_key == "genomefasta" else ""), genome[data_key])
+    # print(genomes[0].values())
+    json_data["idList"] = ','.join(str(genome[f'genome{x}']['alignmentid']) for x, genome in enumerate(genomes, start=1))
+
+    # Add replicate files
+    for x, currentGenome in enumerate(replicates, start=1):
+        print(currentGenome)
+        # get key of current genome
+        key = f'genome{x}'
+        value = currentGenome[key]
+        # iterate over objects in current genome
+        for y, (replicateKey, replicateValue) in enumerate(value.items(), start=0):
+            repLetter = chr(97 + y)
+            json_keys = ["fivePrimePlus", "fivePrimeMinus", "normalPlus", "normalMinus"]
+            data_keys = ['enrichedforward', 'enrichedreverse', 'normalforward', 'normalreverse']
+            for js_key, data_key in zip(json_keys, data_keys):
+                json_key = f"{js_key}_{x}{repLetter}"
+                json_data[json_key] = os.path.join(inputDir, replicateValue[data_key])
+    return json.dumps(json_data, indent=4)
+
+
+
 def create_json_for_jar(genomes, replicates, replicateNum, alignmentFilepath, projectName, parameters, rnaGraph, outputDirectory, loadConfig='false', saveConfig='false', configFile=" ", multiFasta=''):
     '''create json string that is needed as input for TSSpredator.jar'''
     json_data = {

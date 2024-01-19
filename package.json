@@ -12,7 +12,6 @@
     "http-proxy-middleware": "^2.0.6",
     "install": "^0.13.0",
     "jszip": "^3.10.0",
-    "lodash": "^4.17.21",
     "npm-run-all": "^4.1.5",
     "pixi.js": "^6.5.10",
     "plotly.js-cartesian-dist-min": "^2.12.1",
@@ -31,7 +30,7 @@
   "scripts": {
     "server-redis": "redis-server",
     "server-celery": "celery -A server_tsspredator.celery_app worker -B --loglevel=warning",
-    "server": "cd server_tsspredator && flask run --no-debugger",
+    "server": "cd server_tsspredator && flask run --with-threads",
     "server-deploy": "cd server_tsspredator && gunicorn --workers 3 --timeout 500 --graceful-timeout 500 --bind 0.0.0.0:3001 --log-level=debug server_tsspredator.wsgi:tsspredator",
     "tsspredator": "run-p server server-redis server-celery start",
     "tsspredator-test": "run-p server-deploy server-redis server-celery",

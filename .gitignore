@@ -30,3 +30,5 @@ dump.rdb
 package-lock.json
 server_tsspredator.egg-info/PKG-INFO
 celerybeat-schedule.db
+server_tsspredator/exampleData/campylobacter/files.zip
+server_tsspredator/exampleData/pseudomonas/files.zip

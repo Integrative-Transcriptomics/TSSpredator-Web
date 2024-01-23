@@ -1,5 +1,5 @@
 from asyncio.subprocess import PIPE
-from shutil import make_archive, rmtree
+from shutil import make_archive, rmtree, unpack_archive
 from time import time
 import traceback
 from flask import Flask, request, send_file, send_from_directory, jsonify, session
@@ -229,6 +229,157 @@ def getFiles(filePath):
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
     if os.path.exists(completePath):
         return  send_file(completePath, mimetype='application/zip')
+    else:
+        resp = Flask.make_response(app, rv="File not found")
+        resp.status_code = 404
+        resp.headers['Error'] = 'File Not found'
+        # if file not found, send error message
+        return resp
+    
+def getHeaderIndices(header):
+    print(header)
+    return {
+        'genome': header.index('Genome') if 'Genome' in header else header.index('Condition'),
+        'superPos': header.index('SuperPos'),
+        'superStrand': header.index('SuperStrand'),
+        'detected': header.index('detected'),
+        'enriched': header.index('enriched'),
+        'primary': header.index('Primary'),
+        'secondary': header.index('Secondary'),
+        'internal': header.index('Internal'),
+        'antisense': header.index('Antisense')
+    }
+
+def getTSSClass(line, headerIndices):
+    '''get TSS class from MasterTable'''
+    classesIndices = [headerIndices['primary'], headerIndices['secondary'], headerIndices['internal'], headerIndices['antisense']]
+    classLine = ",".join([ line[indexUsed] for indexUsed in classesIndices ])
+    match classLine:
+        case '1,0,0,0':
+            return 'Primary'
+        case '0,1,0,0':
+            return 'Secondary'
+        case '0,0,1,0':
+            return 'Internal'
+        case '0,0,0,1':
+            return 'Antisense'
+        case _:
+            return "Orphan"
+        
+def getTSSType(line, headerIndices):
+    '''get TSS type from MasterTable'''
+    tssClass = ",".join([line[indexUsed] for indexUsed in [headerIndices['detected'], headerIndices['enriched']]])
+    match tssClass:
+        case '1,0':
+            return 'Detected'
+        case '1,1':
+            return 'Enriched'
+        case _:
+            return "Undetected"
+        
+def decideMainClass(newClass, oldClass):
+    orderTSS = ['Primary', 'Secondary', 'Internal', 'Antisense', 'Orphan']
+    if orderTSS.index(newClass) < orderTSS.index(oldClass):
+        return newClass
+    else:
+        return oldClass
+    
+def readMasterTable(path):
+    '''read MasterTable and return as JSON'''
+    data_per_genome = {}
+    with open(path, 'r') as f:
+        # Parse Header
+        header = f.readline().rstrip().split('\t')
+        # get indices of relevant columns
+        headerIndices = getHeaderIndices(header)
+        for line in f:
+            line = line.rstrip().split('\t')
+            genome = line[headerIndices['genome']]
+            if genome not in data_per_genome:
+                data_per_genome[genome] = {}
+                data_per_genome[genome]['TSS'] = {}
+            superPos = line[headerIndices['superPos']]
+            superStrand = line[headerIndices['superStrand']]
+            tss_key = f"{superPos}_{superStrand}"
+            classesTSS = getTSSClass(line, headerIndices)
+            if tss_key not in data_per_genome[genome]["TSS"]:
+                typeTSS = getTSSType(line, headerIndices)
+                data_per_genome[genome]["TSS"][tss_key] = {
+                    'superPos': superPos,
+                    'superStrand': superStrand,
+                    'classesTSS': [classesTSS],
+                    "mainClass": classesTSS,
+                    'typeTSS': typeTSS
+                }
+            else:
+                data_per_genome[genome]["TSS"][tss_key]['classesTSS'].append(classesTSS)
+                data_per_genome[genome]["TSS"][tss_key]['mainClass'] = decideMainClass(classesTSS, data_per_genome[genome]["TSS"][tss_key]['mainClass'])   
+    return data_per_genome
+
+
+def descriptionToObject(description):
+    '''convert description to object'''
+    data = {}
+    for entry in description:
+        entry = entry.split('=')
+        data[entry[0]] = entry[1]
+    return data
+
+
+def parseSuperGFF (path):
+    '''parse SuperGFF and return as JSON'''
+    data_per_gene = []
+    maxValue = 0
+    with open(path, 'r') as f:
+        for line in f:
+            if line.startswith('#'):
+                continue
+            line = line.rstrip().split('\t')
+            description = descriptionToObject(line[8].split(';'))
+            data_per_gene.append({
+                "start": line[3],
+                "end": line[4],
+                "strand": line[6],
+                "locus_tag": description.get('locus_tag', ''),
+                "product": description.get('product', ''),
+            })
+            maxValue = max(maxValue, int(line[4]))
+            
+    return data_per_gene, maxValue
+    
+@app.route('/api/TSSViewer/<filePath>/')
+def getTSSViewer(filePath):
+    '''send result of TSS prediction to frontend'''
+    print(filePath)
+    # get path of zip file
+    completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
+    if os.path.exists(completePath):
+        print(completePath)
+         # Unzip MasterTable
+        try:
+            with tempfile.TemporaryDirectory(prefix="tmpPredViewer") as tmpdir:
+                unpack_archive(completePath, tmpdir)
+                # get path of MasterTable
+                masterTablePath = tmpdir + '/MasterTable.tsv'
+                # read MasterTable
+                masterTable = readMasterTable(masterTablePath)
+                for genomeKey in masterTable.keys():
+                    masterTable[genomeKey]['TSS'] = list(masterTable[genomeKey]['TSS'].values())
+                    # get path of SuperGFF
+                    superGFFPath = tmpdir + '/' + genomeKey + '_super.gff'
+                    # read SuperGFF
+                    masterTable[genomeKey]['superGFF'], maxValue = parseSuperGFF(superGFFPath)
+                    masterTable[genomeKey]['maxValue'] = maxValue
+                
+                return jsonify({'result': 'success', 'data': masterTable})
+        except Exception as e:
+            print(e)
+            traceback.print_exc() 
+            resp = Flask.make_response(app, rv="File not found")
+            resp.status_code = 404
+            resp.headers['Error'] = 'File Not found'
+            # if file not found, send error message
+            return resp
     else:
         resp = Flask.make_response(app, rv="File not found")
         resp.status_code = 404

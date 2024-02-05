@@ -24,9 +24,8 @@ services:
 
   redis:
     image: "redis:alpine"
-    ports:
-      - "${TSSPREDATOR_REDIS_PORT}:6379"
     command: redis-server
+    
 
   celery:
     image: tsspredator_celery_app:latest

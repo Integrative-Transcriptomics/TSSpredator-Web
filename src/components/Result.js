@@ -49,6 +49,7 @@ function Result() {
 
   // line Chart
   const [showLineChart, setShowLineChart] = useState(false);
+  const [showGFFViewer, setGFFViewer] = useState(false);
   const [linePrimary, setLinePrimary] = useState({});
   const [lineSecondary, setLineSecondary] = useState({});
   const [lineInternal, setLineInternal] = useState({});
@@ -112,8 +113,6 @@ function Result() {
     // Fetch files from server and handle MasterTable
     fetch(`/api/result/${filePath}/`)
       .then((res) => {
-        console.log("res", res);
-
         if (res.status === 404) {
           console.log("404");
           return 404
@@ -126,11 +125,9 @@ function Result() {
       )
       .then((blob) => {
         if (blob === 404) {
-          console.log("404");
           setBlob(404);
           return
         }
-        console.log("blob", blob);
         setBlob(blob);
 
         JSZip.loadAsync(blob)
@@ -262,6 +259,13 @@ function Result() {
     }
     return tssClass;
   };
+  const orderTSSClasses = (tssClasses) => {
+    const order = ['primary', 'secondary', 'internal', 'antisense', 'orphan'];
+    tssClasses.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    return tssClasses
+
+  }
+
   /**
    * 
    * @param {*} rows 
@@ -276,15 +280,47 @@ function Result() {
     const superPosIdx = columns.findIndex((col) => col["Header"] === "SuperPos");
     const superStrandIdx = columns.findIndex((col) => col["Header"] === "SuperStrand");
     const variableFilterTSS = columns.findIndex((col) => col["Header"] === filterForPlots);
+    const contigID = columns.findIndex((col) => col["Header"] === "contigID");
+    // const contigPos = columns.findIndex((col) => col["Header"] === "contigPos");
+    // const strand = columns.findIndex((col) => col["Header"] === "strand");
+    const genomeIdx = columns.findIndex((col) => col["Header"] === "Genome" || col["Header"] === "Condition");
+    console.log(columns)
+    const data = {};
 
-    const data = [];
     rows.forEach((row) => {
       if (row[variableFilterTSS] === "1") {
+        const conditionGenome = row[genomeIdx];
+        if (!Object.keys(data).includes(conditionGenome)) {
+          data[conditionGenome] = {};
+        }
+
         const tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
         const tmpPos = row[superPosIdx];
-        data.push({ "class": tmpClass, "pos": parseInt(tmpPos), "strand": row[superStrandIdx] })
+        const tmpStrand = row[superStrandIdx];
+        if (!Object.keys(data[conditionGenome]).includes(`${tmpPos}_${tmpStrand}`)) {
+          data[conditionGenome][`${tmpPos}_${tmpStrand}`] = [];
+        }
+        if (!data[conditionGenome][`${tmpPos}_${tmpStrand}`].includes(tmpClass)) {
+          data[conditionGenome][`${tmpPos}_${tmpStrand}`].push(tmpClass)
+        }
       }
     })
+    for (const genome in data) {
+      let genomeData = Object.entries(data[genome]).reduce((acc, curr) => {
+        const pos_strand = curr[0];
+        const tmp = pos_strand.split("_");
+        const pos = tmp[0];
+        const strand = tmp[1];
+        const classes = orderTSSClasses(curr[1]);
+        const mainClass = classes[0];
+        return [...acc, { "pos": pos, "strand": strand, "allClasses": classes, "mainClass": mainClass }]
+
+
+      }, [])
+      data[genome] = genomeData;
+    }
+
+
     return data
   }
 
@@ -292,8 +328,8 @@ function Result() {
   /**
    * update plots for selected genome/condition
    */
-  let jsonData = modifyTable(tableData, tableColumns)
-  console.log("jsonData", jsonData)
+  // let jsonData = modifyTable(tableData, tableColumns)
+  // console.log("jsonData", jsonData)
 
 
   useEffect(() => {
@@ -422,8 +458,6 @@ function Result() {
         // TODO: improve 404 page
         blob === 404 ? <h2>404: File not found</h2> :
           <div className='result-container'>
-            <GoslingGenomeViz data={jsonData} />
-            {/* <GoslingComponent spec={spec2} /> */}
 
             <div>
               <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>
@@ -535,6 +569,20 @@ function Result() {
                   binSize={binSize}
                   show={showLineChart}
                 />
+              ) : (
+                <ClipLoader color='#ffa000' size={30} />
+              )}
+            </div>
+            <div className='result-margin-left'>
+              <h3 className='header click-param' onClick={() => setGFFViewer(!showGFFViewer)}>
+                {showGFFViewer ? "-" : "+"} TSS distribution within GFF viewer
+              </h3>
+              {enrichmentFactor["enriched"].length > 0 ? (
+                <GoslingGenomeViz
+                  showPlot={showGFFViewer}
+                  dataKey={filePath}
+                  filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]} />
+
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}

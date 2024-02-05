@@ -24,7 +24,12 @@ services:
 
   redis:
     image: "redis:alpine"
-    command: redis-server
+    restart: always
+    volumes:
+      - type: bind
+        source: ${REDIS_DATA_PATH}
+        target: /data
+    command: redis-server /data/redis.config
     
 
   celery:
@@ -37,7 +42,10 @@ services:
       - tmpDataPredator:/tmpData
     depends_on:
       - redis
+
 volumes:
   tmpDataPredator:
+  
+
 
 

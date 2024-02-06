@@ -34,6 +34,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                 const spec = {
                     "arrangement": "vertical",
                     "spacing": 50,
+                    "linkingId": "detail",
                     "views": getViews(data["data"])
                 };
                 setSpec(spec);
@@ -90,8 +91,60 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
     }
 
     const createTSSTrack = (data, aggregatedTSS, strand, title = null) => {
-        console.log(aggregatedTSS);
-        console.log(data);
+        let binnedViews = [
+            { "GT": 50000, "LT": 200000, "size": 5000 },
+            { "GT": 200000, "LT": 500000, "size": 10000 },
+            { "GT": 500000, "LT": NaN, "size": 50000 }].map(({ GT, LT, size }) => {
+                let transitionPadding = 20000;
+                return {
+                    "data": {
+                        "values": aggregatedTSS[size].filter(d => filter.includes(d["typeTSS"])),
+                        "type": "json",
+                        "genomicFields": ["binStart", "binEnd"],
+                    },
+                    "dataTransform": [
+                        { "type": "filter", "field": "strand", "oneOf": [strand] }
+                    ],
+                    "x": { "field": "binStart", "type": "genomic", "axis": strand === "+" ? "top" : "none", },
+                    "xe": { "field": "binEnd", "type": "genomic", },
+                    "mark": "bar",
+                    "y": { "field": "count", "type": "quantitative", axis: "left" },
+                    "color": {
+                        "field": "mainClass",
+                        "type": "nominal",
+                        "domain": ["Primary", "Secondary", "Internal", "Antisense", "Orphan"],
+                        "range": ["#7585FF", "#FF8A85", "#FFC785", "#85FFD9", "#B285FF"],
+                        "legend": strand === "+"
+                    },
+                    "tooltip": [
+                        { "field": "binStart", "type": "genomic", "alt": "Bin start" },
+                        { "field": "binEnd", "alt": "Bin end" },
+                        {
+                            "field": "mainClass",
+                            "type": "nominal",
+                            "alt": "Main TSS class",
+                        },
+                        { "field": "count", "alt": "Number of TSS" },
+                    ],
+                    "visibility": [
+                        {
+                            "operation": "GT",
+                            "measure": "zoomLevel",
+                            "threshold": GT,
+                            "transitionPadding": transitionPadding,
+                            "target": "track"
+                        },
+                        !isNaN(LT) &&
+                        {
+                            "operation": "LT",
+                            "measure": "zoomLevel",
+                            "threshold": LT + 7500,
+                            "transitionPadding": transitionPadding,
+                            "target": "track"
+                        }
+                    ]
+                }
+            });
         return [
             {
                 "title": title,
@@ -102,13 +155,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                     "genomicFields": ["superPos"],
                 },
 
-                "color": {
-                    "field": "mainClass",
-                    "type": "nominal",
-                    "domain": ["Primary", "Secondary", "Internal", "Antisense", "Orphan"],
-                    "range": ["#7585FF", "#FF8A85", "#FFC785", "#85FFD9", "#B285FF"],
-                    "legend": strand === "+"
-                },
+
                 "tracks": [
                     {
 
@@ -118,7 +165,14 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                         "x": { "field": "superPos", "type": "genomic", "axis": strand === "+" ? "top" : "none" },
                         "mark": strand === "+" ? "triangleRight" : "triangleLeft",
                         "style": { "align": strand === "+" ? "left" : "right" },
-                        "size": { "value": 15 },
+                        "size": { "value": 10, "legend": false, axis: "none" },
+                        "color": {
+                            "field": "mainClass",
+                            "type": "nominal",
+                            "domain": ["Primary", "Secondary", "Internal", "Antisense", "Orphan"],
+                            "range": ["#7585FF", "#FF8A85", "#FFC785", "#85FFD9", "#B285FF"],
+                            "legend": strand === "+"
+                        },
                         "tooltip": [
                             { "field": "superPos", "type": "genomic", "alt": "TSS Position" },
                             {
@@ -132,87 +186,12 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                             {
                                 "operation": "LT",
                                 "measure": "zoomLevel",
-                                "threshold": 50000,
-                                "transitionPadding": 500,
-                                "target": "mark"
+                                "threshold": 57500,
+                                "transitionPadding": 0,
+                                "target": "track"
                             }
                         ]
-                    }, ...[
-                        { "GT": 50000, "LT": 200000, "size": 5000 },
-                        { "GT": 200000, "LT": 500000, "size": 10000 },
-                        { "GT": 500000, "LT": null, "size": 50000 }].map(({ GT, LT, size }) => {
-                            console.log(GT, LT, size);
-                            return {
-                                "data": {
-                                    "values": aggregatedTSS[size].filter(d => filter.includes(d["typeTSS"])),
-                                    "type": "json",
-                                    "genomicFields": ["binStart", "binEnd"],
-                                },
-                                "dataTransform": [
-                                    { "type": "filter", "field": "strand", "oneOf": [strand] }
-                                ],
-                                "x": { "field": "binStart", "type": "genomic", "axis": strand === "+" ? "top" : "none", },
-                                "xe": { "field": "binEnd", "type": "genomic", },
-                                "mark": "bar",
-                                "y": { "field": "count", "type": "quantitative" },
-                                "color": {
-                                    "field": "mainClass",
-                                    "type": "nominal",
-                                    "domain": ["Primary", "Secondary", "Internal", "Antisense", "Orphan"],
-                                    "range": ["#7585FF", "#FF8A85", "#FFC785", "#85FFD9", "#B285FF"],
-                                    "legend": false
-                                },
-                                "tooltip": [
-                                    { "field": "binStart", "type": "genomic", "alt": "Bin start" },
-                                    {
-                                        "field": "mainClass",
-                                        "type": "nominal",
-                                        "alt": "Main TSS class",
-                                    },
-                                    { "field": "count", "alt": "Number of TSS" },
-                                    { "field": "binEnd", "alt": "Bin end" },
-                                ],
-                                "visibility": [
-                                    {
-                                        "operation": "GT",
-                                        "measure": "zoomLevel",
-                                        "threshold": GT,
-                                        "transitionPadding": 10,
-                                        "target": "mark"
-                                    },
-                                    {
-                                        "operation": "LT",
-                                        "measure": "zoomLevel",
-                                        "threshold": LT,
-                                        "transitionPadding": 10,
-                                        "target": "mark"
-                                    }
-                                ]
-                            }
-                        })
-
-                    ,
-                    // {
-                    //     "data": {
-                    //         "values": [{ "test": 1, "binStart": 12, "binEnd": 412 }],
-                    //         "type": "json",
-                    //         // "genomicFields": ["binStart", "binEnd"],
-
-                    //     },
-                    //     // "dataTransform": [
-                    //     //     { "type": "filter", "field": "strand", "oneOf": [strand] }
-                    //     // ],
-                    //     // "x": { "field": "binStart", "type": "genomic", "axis": "none" },
-                    //     // "size": { "value": 1 },
-                    //     // "color": {
-                    //     //     "field": "typeTSS",
-                    //     //     "type": "nominal",
-                    //     //     "domain": ["Primary", "Secondary", "Internal", "Antisense", "Orphan"],
-                    //     //     "range": ["#7585FF", "#FF8A85", "#FFC785", "#85FFD9", "#B285FF"],
-                    //     //     "legend": false
-                    //     // },
-                    //     "mark": "bar",
-                    // }
+                    }, ...binnedViews
                 ]
             }
 
@@ -228,7 +207,6 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
 
     const getViews = (data) => {
         let views = [];
-        console.log(data);
         for (let genome of Object.keys(data)) {
             views.push({
                 "alignment": "stack",

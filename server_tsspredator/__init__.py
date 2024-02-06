@@ -381,7 +381,6 @@ def aggregateTSS(tssList, maxGenome):
 @app.route('/api/TSSViewer/<filePath>/')
 def getTSSViewer(filePath):
     '''send result of TSS prediction to frontend'''
-    print(filePath)
     # get path of zip file
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
     if os.path.exists(completePath):
@@ -401,7 +400,6 @@ def getTSSViewer(filePath):
                     masterTable[genomeKey]['superGFF'], maxValue = parseSuperGFF(superGFFPath)
                     masterTable[genomeKey]['maxValue'] = maxValue
                     masterTable[genomeKey]['aggregatedTSS'] = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
-                    print(masterTable[genomeKey]['aggregatedTSS'])
                 
                 return jsonify({'result': 'success', 'data': masterTable})
         except Exception as e:

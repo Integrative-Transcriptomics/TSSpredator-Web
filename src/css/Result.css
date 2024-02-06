@@ -29,3 +29,14 @@
 .result-margin-left {
     margin-left: 3%;
 }
+
+.gosling-component{
+    padding: 0 0 0 0 !important; /* remove padding */
+    /* center elements */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin: 0 0 0 0;
+    
+}

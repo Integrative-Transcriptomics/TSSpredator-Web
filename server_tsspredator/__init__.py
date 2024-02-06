@@ -305,6 +305,8 @@ def readMasterTable(path):
             classesTSS = getTSSClass(line, headerIndices)
             if tss_key not in data_per_genome[genome]["TSS"]:
                 typeTSS = getTSSType(line, headerIndices)
+                if typeTSS == "Undetected":
+                    continue
                 data_per_genome[genome]["TSS"][tss_key] = {
                     'superPos': superPos,
                     'superStrand': superStrand,
@@ -353,28 +355,37 @@ def aggregateTSS(tssList, maxGenome):
     '''aggregate TSS'''
     aggregatedTSS = {}
     binSizes = [5000,10000,50000]
+    binSizeMax = {}
     for binSize in binSizes:
         aggregatedTSS[binSize] = []
+        maxBinCount = {"+": 0, "-": 0}
         for i in range(0, maxGenome, binSize):
             binStart = i
             binEnd = i + binSize
-            filteredTSS = [(tss["mainClass"],tss["superStrand"], tss["typeTSS"]) for tss in tssList if binStart <= int(tss["superPos"]) <= binEnd]
+            filteredTSS = [(tss["mainClass"],tss["superStrand"], tss["typeTSS"]) for tss in tssList if binStart <= int(tss["superPos"]) < binEnd]
             countedTSS = dict(collections.Counter(filteredTSS))
             expanded_countedTSS = []
+            binSum = {"+": 0, "-": 0}
             for key in countedTSS.keys():
+
+                binSum[key[1]] += countedTSS[key]
                 tempValue = {}
                 tempValue['mainClass'] = key[0]
                 tempValue['strand'] = key[1]
                 tempValue['typeTSS'] = key[2]
                 tempValue['count'] = countedTSS[key]
+                
                 tempValue['binStart'] = binStart
 
                 tempValue['binEnd'] = min(binEnd, maxGenome)
                 expanded_countedTSS.append(tempValue)
-                
-        
+            maxBinCount = {"+": max(maxBinCount["+"], binSum["+"]), "-": max(maxBinCount["-"], binSum["-"])}
+            if binSum['+'] ==64:
+                print(expanded_countedTSS)
             aggregatedTSS[binSize].extend(expanded_countedTSS)
-    return aggregatedTSS
+        binSizeMax[binSize] = maxBinCount
+       
+    return aggregatedTSS, binSizeMax
 
 
     
@@ -399,7 +410,8 @@ def getTSSViewer(filePath):
                     # read SuperGFF
                     masterTable[genomeKey]['superGFF'], maxValue = parseSuperGFF(superGFFPath)
                     masterTable[genomeKey]['maxValue'] = maxValue
-                    masterTable[genomeKey]['aggregatedTSS'] = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
+                    masterTable[genomeKey]['aggregatedTSS'], maxValueTSS = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
+                    masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
                 
                 return jsonify({'result': 'success', 'data': masterTable})
         except Exception as e:

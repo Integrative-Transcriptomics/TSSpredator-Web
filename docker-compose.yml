@@ -10,7 +10,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '6'
+          cpus: '8'
           memory: 16G
     ports:
       - "${PORT_OUTPUT}:5001"

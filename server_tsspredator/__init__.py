@@ -6,6 +6,7 @@ from flask import Flask, request, send_file, send_from_directory, jsonify, sessi
 from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
+import collections
 
 import json
 import tempfile
@@ -304,12 +305,15 @@ def readMasterTable(path):
             classesTSS = getTSSClass(line, headerIndices)
             if tss_key not in data_per_genome[genome]["TSS"]:
                 typeTSS = getTSSType(line, headerIndices)
+                if typeTSS == "Undetected":
+                    continue
                 data_per_genome[genome]["TSS"][tss_key] = {
                     'superPos': superPos,
                     'superStrand': superStrand,
                     'classesTSS': [classesTSS],
                     "mainClass": classesTSS,
-                    'typeTSS': typeTSS
+                    'typeTSS': typeTSS, 
+                    "count": 1
                 }
             else:
                 data_per_genome[genome]["TSS"][tss_key]['classesTSS'].append(classesTSS)
@@ -347,14 +351,50 @@ def parseSuperGFF (path):
             
     return data_per_gene, maxValue
     
+def aggregateTSS(tssList, maxGenome):
+    '''aggregate TSS'''
+    aggregatedTSS = {}
+    binSizes = [5000,10000,50000]
+    binSizeMax = {}
+    for binSize in binSizes:
+        aggregatedTSS[binSize] = []
+        maxBinCount = {"+": 0, "-": 0}
+        for i in range(0, maxGenome, binSize):
+            binStart = i
+            binEnd = i + binSize
+            filteredTSS = [(tss["mainClass"],tss["superStrand"], tss["typeTSS"]) for tss in tssList if binStart <= int(tss["superPos"]) < binEnd]
+            countedTSS = dict(collections.Counter(filteredTSS))
+            expanded_countedTSS = []
+            binSum = {"+": 0, "-": 0}
+            for key in countedTSS.keys():
+
+                binSum[key[1]] += countedTSS[key]
+                tempValue = {}
+                tempValue['mainClass'] = key[0]
+                tempValue['strand'] = key[1]
+                tempValue['typeTSS'] = key[2]
+                tempValue['count'] = countedTSS[key]
+                
+                tempValue['binStart'] = binStart
+
+                tempValue['binEnd'] = min(binEnd, maxGenome)
+                expanded_countedTSS.append(tempValue)
+            maxBinCount = {"+": max(maxBinCount["+"], binSum["+"]), "-": max(maxBinCount["-"], binSum["-"])}
+            if binSum['+'] ==64:
+                print(expanded_countedTSS)
+            aggregatedTSS[binSize].extend(expanded_countedTSS)
+        binSizeMax[binSize] = maxBinCount
+       
+    return aggregatedTSS, binSizeMax
+
+
+    
 @app.route('/api/TSSViewer/<filePath>/')
 def getTSSViewer(filePath):
     '''send result of TSS prediction to frontend'''
-    print(filePath)
     # get path of zip file
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
     if os.path.exists(completePath):
-        print(completePath)
          # Unzip MasterTable
         try:
             with tempfile.TemporaryDirectory(prefix="tmpPredViewer") as tmpdir:
@@ -370,6 +410,8 @@ def getTSSViewer(filePath):
                     # read SuperGFF
                     masterTable[genomeKey]['superGFF'], maxValue = parseSuperGFF(superGFFPath)
                     masterTable[genomeKey]['maxValue'] = maxValue
+                    masterTable[genomeKey]['aggregatedTSS'], maxValueTSS = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
+                    masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
                 
                 return jsonify({'result': 'success', 'data': masterTable})
         except Exception as e:

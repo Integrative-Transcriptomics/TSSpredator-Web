@@ -49,12 +49,12 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           echo "$DEPLOY_FILE" > $DEPLOY_FILE_NAME
           echo "$ENV_FILE" > variables_tsspredator.env
-          echo "$REDIS_CONFIG_FILE" > redis.conf
+          echo "$REDIS_CONFIG_FILE" > redis.config
           scp -o UserKnownHostsFile=~/.ssh/known_hosts image_tsspredator_web.tar.gz $SERVER_IP:$TARGET
           scp -o UserKnownHostsFile=~/.ssh/known_hosts image_tsspredator_celery_app.tar.gz $SERVER_IP:$TARGET
           scp -o UserKnownHostsFile=~/.ssh/known_hosts docker-compose.yml $SERVER_IP:$TARGET
           scp -o UserKnownHostsFile=~/.ssh/known_hosts $ENV_FILE_NAME $SERVER_IP:$TARGET
-          scp -o UserKnownHostsFile=~/.ssh/known_hosts redis.conf $SERVER_IP:$TARGET
+          scp -o UserKnownHostsFile=~/.ssh/known_hosts redis.config $SERVER_IP:$TARGET
           scp -o UserKnownHostsFile=~/.ssh/known_hosts $DEPLOY_FILE_NAME $SERVER_IP:$TARGET
       - name: Restart service
         env:

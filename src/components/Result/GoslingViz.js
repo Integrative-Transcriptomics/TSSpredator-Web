@@ -106,10 +106,16 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
     }
 
     const createTSSTrack = (data, aggregatedTSS, binSizes, strand, maxGenome, title = null) => {
-        let sizesBins = Object.keys(binSizes).map((size, i) => { return { "GT": size * 10, "LT": (i === Object.keys(binSizes).length - 1) ? maxGenome * 1.1 : size * 40, size: parseInt(size), maxValueBin: binSizes[size] } })
-        console.log(sizesBins)
+        const TSS_DETAIL_LEVEL_ZOOM = 57500;
+        let sizesBins = Object.keys(binSizes).sort((a, b) => parseInt(a) - parseInt(b)).map((size, i, arr) => {
+            return {
+                "GT": i === 0 ? TSS_DETAIL_LEVEL_ZOOM : arr[i - 1] * 40,
+                "LT": (i === Object.keys(binSizes).length - 1) ? maxGenome * 1.1 : size * 40,
+                size: parseInt(size), maxValueBin: binSizes[size]
+            }
+        })
         let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => {
-            let transitionPadding = 25000;
+            let transitionPadding = 5000;
             return {
                 "data": {
                     "values": aggregatedTSS[size].filter(d => filter.includes(d["typeTSS"])),
@@ -200,7 +206,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                             {
                                 "operation": "LT",
                                 "measure": "zoomLevel",
-                                "threshold": 57500,
+                                "threshold": TSS_DETAIL_LEVEL_ZOOM,
                                 "transitionPadding": 0,
                                 "target": "track"
                             }

@@ -9,7 +9,7 @@ import { GoslingComponent } from "gosling.js";
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
 function GoslingGenomeViz({ dataKey, showPlot, filter }) {
-    const COLORS_TSS = ["#80b1d3", "#fb8072", "#ffffb3", "#8dd3c7", "#bebada"]
+    const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
     const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
     const [spec, setSpec] = useState(null);
 
@@ -63,6 +63,9 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
 
 
     const createGeneTrack = (data) => {
+        const TSS_DETAIL_LEVEL_ZOOM = 50000;
+        let transitionPadding = 5000;
+
 
         return [{
             "alignment": "overlay",
@@ -78,27 +81,70 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
             "color": { "value": "grey" },
             "opacity": { "value": 0.4 },
             "size": { "value": 4 },
-            "tracks": [{
-                "tooltip": [
-                    { "field": "start", "type": "genomic", "alt": "Gene Start" },
-                    { "field": "end", "type": "genomic", "alt": "Gene End" },
-                    {
-                        "field": "locus_tag",
-                        "type": "nominal",
-                        "alt": "Locus Tag",
-                    },
-                    { "field": "product", "alt": "Gene Product" },
-                ],
+            "tracks": [
+                {
+                    "tooltip": [
+                        { "field": "start", "type": "genomic", "alt": "Gene Start" },
+                        { "field": "end", "type": "genomic", "alt": "Gene End" },
+                        {
+                            "field": "locus_tag",
+                            "type": "nominal",
+                            "alt": "Locus Tag",
+                        }, {
+                            "field": "gene_name",
+                            "type": "nominal",
+                            "alt": "Gene name",
+                        },
+                        { "field": "product", "alt": "Gene Product" },
+                    ],
 
-                "dataTransform": [
-                    { "type": "filter", "field": "strand", "oneOf": "+" }
-                ],
-            }, {
+                    "dataTransform": [
+                        { "type": "filter", "field": "strand", "oneOf": "+" }
+                    ],
+                }, {
+                    "dataTransform": [
+                        { "type": "filter", "field": "strand", "oneOf": ["+"] }
+                    ],
+                    "mark": "text",
+                    "text": { "field": "locus_tag", "type": "nominal" },
+                    "x": { "field": "start", "type": "genomic" },
+                    "xe": { "field": "end", "type": "genomic" },
+                    "size": { "value": 8 },
+                    "style": { "textFontSize": 8, "dy": -12 },
+                    "visibility": [
+                        {
+                            "operation": "LT",
+                            "measure": "zoomLevel",
+                            "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                            "transitionPadding": transitionPadding,
+                            "target": "track"
+                        }]
+                },
+                {
 
-                "dataTransform": [
-                    { "type": "filter", "field": "strand", "oneOf": "-" }
-                ],
-            }
+                    "dataTransform": [
+                        { "type": "filter", "field": "strand", "oneOf": "-" }
+                    ],
+                },
+                {
+                    "dataTransform": [
+                        { "type": "filter", "field": "strand", "oneOf": ["-"] }
+                    ],
+                    "mark": "text",
+                    "text": { "field": "locus_tag", "type": "nominal" },
+                    "x": { "field": "start", "type": "genomic" },
+                    "xe": { "field": "end", "type": "genomic" },
+                    "size": { "value": 8 },
+                    "style": { "textFontSize": 8, "dy": -12 },
+                    "visibility": [
+                        {
+                            "operation": "LT",
+                            "measure": "zoomLevel",
+                            "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                            "transitionPadding": transitionPadding,
+                            "target": "track"
+                        }]
+                },
             ]
         }]
 
@@ -106,7 +152,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
     }
 
     const createTSSTrack = (data, aggregatedTSS, binSizes, strand, maxGenome, title = null) => {
-        const TSS_DETAIL_LEVEL_ZOOM = 57500;
+        const TSS_DETAIL_LEVEL_ZOOM = 50000;
         let sizesBins = Object.keys(binSizes).sort((a, b) => parseInt(a) - parseInt(b)).map((size, i, arr) => {
             return {
                 "GT": i === 0 ? TSS_DETAIL_LEVEL_ZOOM : arr[i - 1] * 40,
@@ -118,7 +164,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
             let transitionPadding = 5000;
             return {
                 "data": {
-                    "values": aggregatedTSS[size].filter(d => filter.includes(d["typeTSS"])),
+                    "values": aggregatedTSS[size].filter(d => filter.includes(d["typeTSS"])).sort((a, b) => ORDER_TSS_CLASSES.indexOf(a["mainClass"]) - ORDER_TSS_CLASSES.indexOf(b["mainClass"])),
                     "type": "json",
                     "genomicFields": ["binStart", "binEnd"],
                 },
@@ -128,7 +174,14 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                 "x": { "field": "binStart", "type": "genomic", "axis": strand === "+" ? "top" : "none", },
                 "xe": { "field": "binEnd", "type": "genomic", "axis": "none" },
                 "mark": "bar",
-                "y": { "field": "count", "type": "quantitative", axis: "left", domain: [0, maxValueBin[strand]], range: [0, 90] },
+                "y": {
+                    "field": "count",
+                    "type": "quantitative",
+                    axis: "left",
+                    domain: [0, maxValueBin[strand]],
+                    range: [0, 90],
+                    // flip: strand === "-"
+                },
                 "color": {
                     "field": "mainClass",
                     "type": "nominal",

@@ -3,6 +3,7 @@ import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } 
 import Main from './components/Main';
 import Result from './components/Result';
 import StatusSite from './components/StatusSite';
+import NotFoundPage from './components/404Page';
 
 function App() {
   const router = createBrowserRouter(createRoutesFromElements(
@@ -10,6 +11,7 @@ function App() {
       <Route path="/" element={<Main />} />
       <Route path="/result/:filePath" element={<Result />} />
       <Route path="/status/:id" element={<StatusSite />} />
+      <Route path="*" element={<NotFoundPage />} />
     </>
 
   ));

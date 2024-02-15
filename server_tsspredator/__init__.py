@@ -345,6 +345,7 @@ def parseSuperGFF (path):
                 "end": line[4],
                 "strand": line[6],
                 "locus_tag": description.get('locus_tag', ''),
+                "gene_name": description.get('gene_name', ''),
                 "product": description.get('product', ''),
             })
             maxValue = max(maxValue, int(line[4]))

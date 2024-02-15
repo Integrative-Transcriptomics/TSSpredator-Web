@@ -1,0 +1,27 @@
+.header-left {
+    display: flex; /* Enables flexbox layout for the container */
+    justify-content: space-between; /* Places items on both ends with maximum space between */
+    align-items: center; /* Vertically aligns items in the middle */
+  }
+  
+  .header-left h1 {
+    margin: 0; /* Removes default margin from h1 for cleaner alignment */
+    flex: 1; /* Allows h1 to grow and take necessary space, pushing the icon to the right */
+  }
+  
+  .header-left div {
+    /* If you need specific styling for the div or the icon, add it here */
+    /* For example, adding a little margin to the left of the icon div */
+    margin-left: 20px; /* Adjust the distance as needed */
+  }
+  .small-url{
+    font-size: 0.6em;
+    /* add url appearence */
+
+  }
+  .url{
+    text-decoration: underline;
+    cursor: pointer;
+
+  }
+  

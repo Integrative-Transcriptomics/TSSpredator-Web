@@ -1,24 +1,46 @@
 import React from 'react';
+import { useEffect } from 'react';
 import ClipLoader from "react-spinners/ClipLoader";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleXmark } from '@fortawesome/pro-light-svg-icons';
 
 
-/**
- * error/warning/info popup 
- * @param header: defines the type of popup (ERROR, WARNING, INFO)
- * @param error: the error/warning/info text
- * @param onCancel: function for pressing cancel button
- * @param onRun: function to start the tss prediction
- * @param sendAlignmentFile: INFO: send alignment file to server to read genome names/ids
- */
-
+/** creates a loading banner
+ *  
+ * @param statusID: id of the status page
+ * @param listDocumentStatus: object -> file labels
+ * @param readyLoaded: 'loading' or 'loaded'
+ * @param closePopup: close the loading banner
+ *  
+ * @return loading banner
+ *  
+* @example
+* statusID = '1234'
+* listDocumentStatus = {'file1': 'success', 'file2': 'error'}
+* readyLoaded = 'loaded'
+* closePopup = () => {console.log('close')}
+*   
+* <LoadingBanner statusID={statusID} listDocumentStatus={listDocumentStatus} readyLoaded={readyLoaded} closePopup={closePopup} />
+*   
+*/
 function LoadingBanner({ statusID, listDocumentStatus, readyLoaded, closePopup }) {
     const [isCollapsed, setIsCollapsed] = React.useState(false)
     const toggleCollapse = (isCollapsed) => setIsCollapsed(!isCollapsed)
+    useEffect(() => { console.log(listDocumentStatus) }, [listDocumentStatus]);
     return (
         <div className='error-popup'>
             <div className='text-popup-inner'>
+                <div className='close-popup'>
+                    <FontAwesomeIcon style={{ "cursor": readyLoaded === "loaded" ? "pointer" : "not-allowed", color: "#ffa000" }} onClick={() => {
+                        if (readyLoaded === "loaded") {
+                            closePopup()
+                        }
+                    }} size="xl" icon={faCircleXmark} />
+                </div>
                 <h3 className='header error-popup-header'>{readyLoaded === "loading" ? "Loading your data" :
                     "Succesfull upload"}</h3>
+
+
                 <div className='loading-popup-body'>
                     <div className='loading-text-field' >
                         {readyLoaded === "loading" ? "Your data is being uploaded. Please wait and do not close the window" :
@@ -61,11 +83,9 @@ function LoadingBanner({ statusID, listDocumentStatus, readyLoaded, closePopup }
                     )}
                     <div className='button-container'>
                         <button className='button error' disabled={readyLoaded !== "loaded"} onClick={() => window.open("/status/" + statusID, "_blank")}>
-                            {!readyLoaded ? "Loading" : "Check Status"}
+                            {!readyLoaded ? "Loading" : "Go To Status Page"}
                         </button>
-                        <button className='button' disabled={readyLoaded !== "loaded"} onClick={() => closePopup()}>
-                            Close
-                        </button>
+
                     </div>
                 </div>
 

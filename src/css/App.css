@@ -418,7 +418,16 @@ a.open-results {
     justify-content: space-around;
 
 }
-
+.close-popup {
+    position: absolute; /* Position absolutely to break the flow and place it over the corner */
+    right: 2em; /* Align to the right side */
+    top: 1em; /* Align to the top */
+    cursor: pointer; /* Keep the pointer cursor as you have */
+  }
+  .text-popup-inner {
+  /* Your existing styles */
+  position: relative; /* Ensure this is positioned relatively for absolute positioning inside */
+}
 .error-popup-header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.3);
     height: 15%;

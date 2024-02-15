@@ -1253,7 +1253,9 @@ function Main() {
     });
   }
 
-
+  useEffect(() => {
+    console.log('Loading files:', loadingFiles);
+  }, [loadingFiles]);
 
 
   return (
@@ -1286,7 +1288,7 @@ function Main() {
         )
       }
 
-      <Header loading={loading} onLoadExampleData={loadExampleData} />
+      <Header loading={loading} onLoadExampleData={loadExampleData} showExamples={true} statusID={!statusID ? null : statusID} />
 
       <FormConfig projectName={projectName}
         setProjectName={setProjectName}

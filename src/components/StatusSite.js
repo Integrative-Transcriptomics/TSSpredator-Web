@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Error from "./Main/Error";
 import ScrollableTextComponent from "./Result/ScrollableText";
+import Header from "./Main/Header";
 
 function StatusSite() {
   const { id } = useParams(); // Grab the ID from URL parameters
@@ -45,9 +46,8 @@ function StatusSite() {
   }, [data]);
   return (
     <>
-      <header>
-        <h1>TSSpredator</h1>
-      </header>
+      <Header />
+
 
       <div className='result-container' style={{
         display: 'flex',
@@ -55,6 +55,7 @@ function StatusSite() {
         alignItems: 'center',    // Center children horizontally
         height: "100%",
       }}>
+
         <div className='result-header' style={{
           display: 'flex',
           flexDirection: 'row', // Elements side by side
@@ -76,6 +77,7 @@ function StatusSite() {
             <span className='row'>{data["state"]}</span>
           </div>
         </div>
+        Please, save this URL to check the status of your prediction: <a href={`/status/${id}`}>{`/status/${id}`}</a>
         {data["state"] === "SUCCESS" &&
           <>
 

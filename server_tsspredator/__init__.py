@@ -80,7 +80,7 @@ def helperAsyncPredator(self, *args ):
 
     try:
         projectName = jsonObject['projectName']
-        self.update_state(state='PENDING', meta={'projectName': projectName})
+        # self.update_state(state='PENDING', meta={'projectName': projectName})
         jsonString = sf.processRequestJSON(jsonObject, resultDir, inputDir, annotationDir)
         # Execute JAR file with subprocess.run (this is blocking)
         self.update_state(state='RUNNING', meta={'projectName': projectName})
@@ -175,8 +175,14 @@ def not_found(e):
 @app.route('/api/checkStatus/<task_id>', methods=['POST', 'GET'])
 def task_status(task_id):
     task = helperAsyncPredator.AsyncResult(task_id)
-   
-    if task.state in ['PENDING', 'STARTED', "RUNNING", "PARSING DATA"]:
+    if task.state == 'PENDING':
+        resp = Flask.make_response(app, rv="ID not found")
+        resp.status_code = 404
+        resp.headers['Error'] = 'ID Not found'
+        # if file not found, send error message
+        return resp
+
+    elif task.state in ['STARTED', "RUNNING", "PARSING DATA"]:
         # job did not start yet
         response = {
             'state': task.state,

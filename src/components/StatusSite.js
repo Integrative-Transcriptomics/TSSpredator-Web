@@ -19,8 +19,16 @@ function StatusSite() {
   useEffect(() => {
     const fetchData = async () => {
       const response = await fetch(`/api/checkStatus/${id}`);
+      // If response is 404, set state to "NOT_FOUND"
+      if (response.status === 404) {
+        setData({ state: "NOT_FOUND" });
+        setUpdate(false);
+      }
       const json = await response.json();
+      console.log(json);
+
       setData(json);
+
       if (json["state"] !== "RUNNING" && json["state"] !== "STARTED") {
         setUpdate(false);
         if (json["state"] === "INTERNAL_ERROR") {
@@ -56,6 +64,8 @@ function StatusSite() {
         height: "100%",
       }}>
 
+
+
         <div className='result-header' style={{
           display: 'flex',
           flexDirection: 'row', // Elements side by side
@@ -77,7 +87,15 @@ function StatusSite() {
             <span className='row'>{data["state"]}</span>
           </div>
         </div>
-        Please, save this URL to check the status of your prediction: <a href={`/status/${id}`}>{`/status/${id}`}</a>
+        {data["state"] !== "NOT_FOUND" ?
+          <>
+            Please, save this URL to check the status of your prediction: <a href={`/status/${id}`}>{`/status/${id}`}</a>
+          </> :
+          <>
+            <p>Sorry, the ID you are looking for does not exist</p>
+            <p>You can always go back to the <a href="/">homepage</a>.</p>
+          </>
+        }
         {data["state"] === "SUCCESS" &&
           <>
 
@@ -104,6 +122,8 @@ function StatusSite() {
           onCancel={() => setEPopup(!ePopup)}
         />
       )}
+
+
     </>)
 }
 

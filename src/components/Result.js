@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
-import GoslingGenomeViz from "./Result/GoslingViz";
+import GoslingGenomeViz from "./Result/SingleGoslingViz";
 import JSZip from "jszip";
 import "../css/Result.css";
 import "../css/App.css";

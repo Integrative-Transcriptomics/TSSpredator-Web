@@ -9,6 +9,12 @@ repositories {
     mavenCentral()
 }
 
+jar {
+    
+    manifest {
+        attributes 'Main-Class': 'main.main.App'
+    }
+}
 
 
 dependencies {

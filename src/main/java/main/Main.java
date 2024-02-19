@@ -19,13 +19,13 @@ import wiggle.XYtools;
 import wiggle.ioNew.WiggleParser;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.SimpleTimeZone;
 import java.util.*;
-import java.util.List;
 
 public class Main {
 
-    public static String programInfo = "TSSpredator v1.1beta   --  built 2021/03/31  --  http://it.inf.uni-tuebingen.de/tsspredator\n";
-
+    public static String programInfo = "TSSpredatorWEB v1.0   --  built 2024/02/19  --  http://it.inf.uni-tuebingen.de/tsspredator\n";
 
     /**
      * The default gene identifier type.
@@ -71,23 +71,23 @@ public class Main {
         this.readAlignment = main.readAlignment;
 
         // read config file
-        if(this.loadConfig) {
+        if (this.loadConfig) {
             // under 'configFile' the path to the file is saved
             Config.readConfigFile(this.values.get("configFile"));
             this.values = Config.getConfig();
             String json = JSONwrite.write(this.values);
             System.out.println(json);
 
-        // create config File
-        } else if(this.saveConfig) {
+            // create config File
+        } else if (this.saveConfig) {
             saveConfig();
 
-        // read alignment File
-        } else if(this.readAlignment) {
+            // read alignment File
+        } else if (this.readAlignment) {
             String json = setNamesAndIDsFromXMFA(this.values.get("alignmentFile"));
             System.out.println(json);
 
-        // Start TSS prediction
+            // Start TSS prediction
         } else {
             Config.setConfig(this.values);
             alignMode();
@@ -110,7 +110,7 @@ public class Main {
             BufferedWriter bw = new BufferedWriter(new FileWriter(this.values.get("configFile")));
 
             for (String s : keys) {
-                if(!s.equals("configFile") && !s.equals("outputDirectory")) {
+                if (!s.equals("configFile") && !s.equals("outputDirectory")) {
                     bw.write(s + " = " + values.get(s));
                     bw.newLine();
                 }
@@ -122,23 +122,26 @@ public class Main {
     }
 
     public void alignMode() throws Exception {
+        SimpleDateFormat dateFormat = new SimpleDateFormat();
+        dateFormat.setTimeZone(new SimpleTimeZone(0, "GMT"));
 
         long timeStart = System.currentTimeMillis();
 
         System.out.println(programInfo);
 
-        //IDs
+        // IDs
         String[] ids = Config.getString("idList").split(",");
 
-        //print rep stats
+        // print rep stats
         boolean printRepStats = false;
         if (Config.entryExists("printReplicateStats"))
             printRepStats = Config.getBoolean("printReplicateStats");
 
-
-        //RepIDs
-        char[] repIDs = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
-
+        // RepIDs
+        char[] repIDs = new char[26];
+        for (int i = 0; i < 26; i++) {
+            repIDs[i] = (char) ('a' + i);
+        }
         if (Parameters.numReplicates > 26) {
             System.err.println("Not more than 26 replicates supported!");
             return;
@@ -147,120 +150,108 @@ public class Main {
             System.err.println("numberOfDatasets does not match length of idList!");
             return;
         }
-        //output directory
+        // output directory
         String outDir = Config.getString("outputDirectory") + "/";
 
-        //Genomes and Annotations
-         System.out.println("Reading Genomes and Annotations...");
+        // Genomes and Annotations
+        System.out.println("Reading Genomes and Annotations...");
 
         Map<String, String> genomeMap = new HashMap<String, String>();
 
         Map<String, MultiContigHandler> contigHandlerMap = new HashMap<>();
-
-        ArrayList<String> genomeNames = new ArrayList<>();
         for (String id : ids) {
             MultiContigHandler newHandler = new MultiContigHandler();
             newHandler.parseAndMergeFASTANew(Config.getString("genome_" + id), DEFAULT_SEQUENCE_IDENTIFIER.get(id));
-            // System.out.println("contighandler" + id + " DS " + DEFAULT_SEQUENCE_IDENTIFIER.get(id));
 
             contigHandlerMap.put(id, newHandler);
 
             genomeMap.put(id, newHandler.getSuperContig());
 
         }
-        // System.out.println("sizeGenomeMap:" + genomeMap.size());
 
         Map<String, List<Gene>> annotationMap = new HashMap<String, List<Gene>>();
         for (String id : ids) {
 
-        	/* Check, if we have a multi-FASTA file as input,
-            which means, that we also check for multiple GFF files
-            automatically in the same directory
+            /*
+             * Check, if we have a multi-FASTA file as input,
+             * which means, that we also check for multiple GFF files
+             * automatically in the same directory
              */
-            // System.out.println("size: " + contigHandlerMap.get(id).getFASTAentries().size());
+            // System.out.println("size: " +
+            // contigHandlerMap.get(id).getFASTAentries().size());
             if (contigHandlerMap.get(id).getFASTAentries().size() > 1) {
-                //store fastaEntries
+                // store fastaEntries
                 Set<String> fastaEntries = contigHandlerMap.get(id).getFASTAentries().keySet();
-                Object[] fastaIDs = fastaEntries.toArray();
-                // System.out.println(fastaEntries.toString());
-                //store GFF files
-                List<String> allGffs = GFFio.scanDir(Config.getString("annotation_" + id));
-                //System.out.println("gffs: " + allGffs);
+                // store GFF files
                 List<String> gffIdentifier = GFFio.extractAnnotationIdentifier(Config.getString("annotation_" + id));
-                //System.out.println("size " + gffIdentifier.size());
 
-                for (int i = 0; i < gffIdentifier.size(); i++) {
-                    //System.out.println("gff: " + gffIdentifier.get(i));
-                }
-
-                //store chromosome Names of all wiggle files
-                LinkedHashMap<String, LinkedList<Pair<Integer, Double>>> wiggleFiles = WiggleParser.parseWiggleFileNew(Config.getString("fivePrimePlus_" + id + "a"), "");
+                // store chromosome Names of all wiggle files
+                LinkedHashMap<String, LinkedList<Pair<Integer, Double>>> wiggleFiles = WiggleParser
+                        .parseWiggleFileNew(Config.getString("fivePrimePlus_" + id + "a"), "");
                 Set<String> chromNames = wiggleFiles.keySet();
-                Object[] chromosomeNames = chromNames.toArray();
                 for (String s : fastaEntries) {
                     for (String w : chromNames) {
                         if (s.equals(w)) {
                             if (!gffIdentifier.contains(s)) {
-                                System.out.println("Fasta ID: " + s + " and" + " Wiggle ID: " + w + " could not found in gff header! \n "
+                                System.out.println("Fasta ID: " + s + " and" + " Wiggle ID: " + w
+                                        + " could not found in gff header! \n "
                                         + "Either other header is used or annotation file is not available! In the last case TSS will be classified as orphan!");
                             }
                         }
                     }
                 }
 
-                annotationMap.put(id, GFFio.parseMultiGFF(Config.getString("annotation_" + id), contigHandlerMap.get(id), Config.getString("outputID_" + id), System.out));
-                //System.out.print("anno: " + annotationMap.get(id));
-                //System.out.println("id: " +  id + "entries" + contigHandlerMap.get(id).getFASTAentries());
-                //the case with only one fasta entry and one gff file
+                annotationMap.put(id, GFFio.parseMultiGFF(Config.getString("annotation_" + id),
+                        contigHandlerMap.get(id), Config.getString("outputID_" + id), System.out));
+                // the case with only one fasta entry and one gff file
             } else {
                 try {
-                    String df = EvaluateIdentifier.evaluateCommonIdentifierNew(Config.getString("genome_" + id), Config.getString("fivePrimePlus_" + id + "a"), System.out, Config.getString("annotation_" + id));
-                    //System.out.println("testid: "+df);
+                    String df = EvaluateIdentifier.evaluateCommonIdentifierNew(Config.getString("genome_" + id),
+                            Config.getString("fivePrimePlus_" + id + "a"), System.out,
+                            Config.getString("annotation_" + id));
                     DEFAULT_SEQUENCE_IDENTIFIER.put(id, df);
-                    //System.out.println(DEFAULT_SEQUENCE_IDENTIFIER);
-                    //DEFAULT_SEQUENCE_IDENTIFIER = EvaluateIdentifier.evaluateCommonIdentifierNew(Config.getString("genome_1"),
-                    // Config.getString("fivePrimePlus_1a"), Config.getString("annotation_1")); }
                 } catch (IOException e) {
-                    throw new Exception("Could not find " + e.getMessage()); //System.out.println("default sequence identifier: " + DEFAULT_SEQUENCE_IDENTIFIER);
+                    throw new Exception("Could not find " + e.getMessage());
                 }
                 System.out.println("Common Identifier " + DEFAULT_SEQUENCE_IDENTIFIER.get(id) + " was found.");
-                //System.err.println("Hello");
                 if (DEFAULT_SEQUENCE_IDENTIFIER.get(id) == null) {
-                    //throw new Exception("A common gene identifier (gi, gb, ref...) has to be present in all files! check for files");
-                    throw new Exception("A common identifier has to be present in all files! Check for identifiers in files!");
+                    // throw new Exception("A common gene identifier (gi, gb, ref...) has to be
+                    // present in all files! check for files");
+                    throw new Exception(
+                            "A common identifier has to be present in all files! Check for identifiers in files!");
                 }
 
-                annotationMap.put(id, GFFio.parseGFF(Config.getString("annotation_" + id), Config.getString("outputID_" + id), System.out));
+                annotationMap.put(id, GFFio.parseGFF(Config.getString("annotation_" + id),
+                        Config.getString("outputID_" + id), System.out));
             }
         }
 
-
-        //check if annotation file is available
+        // check if annotation file is available
         if (annotationMap.get("1").size() == 0) {
             System.out.println("There is no annotation file! All TSS will be classified as orphan!");
         }
 
-        //read alignment
+        // read alignment
         SuperGenome superG;
         if (Config.getString("mode").equalsIgnoreCase("align")) {
             System.out.println("Reading alignment...");
             List<XmfaBlock> alignmentBlocks = XmfaParser.parseXmfa(Config.getString("xmfa"));
 
-            //SuperGenome
+            // SuperGenome
             System.out.println("Building SuperGenome...");
             superG = new SuperGenome(alignmentBlocks, ids);
         } else if (Config.getString("mode").equalsIgnoreCase("cond")) {
             superG = new SuperGenome(genomeMap.values().iterator().next().length(), ids);
         } else {
-            System.err.println("Unknown mode: " + Config.getString("mode") + " Please check the config file. 'mode' has to be 'align' or 'cond'.");
+            System.err.println("Unknown mode: " + Config.getString("mode")
+                    + " Please check the config file. 'mode' has to be 'align' or 'cond'.");
             return;
         }
 
-        //correct annotations
+        // correct annotations
         if (Config.entryExists("annotationCorrection")) {
-            // System.out.println("CorrSet contains javaecting Annotations...");
-            // System.err.println("Follow 'SOP for annotation correction' carefully! (See respective e-mail)");
-            Map<String, String[]> corrMap = NameListReader.readKonradsCorrectedAnnotations(Config.getString("annotationCorrection"));
+            Map<String, String[]> corrMap = NameListReader
+                    .readKonradsCorrectedAnnotations(Config.getString("annotationCorrection"));
 
             for (String id : ids)
                 for (Gene g : annotationMap.get(id)) {
@@ -275,13 +266,14 @@ public class Main {
                 }
 
             if (corrMap.keySet().size() > 0) {
-                System.err.println(corrMap.keySet().size() + " elements in the annotation correction list could not be matched:\n");
+                System.err.println(corrMap.keySet().size()
+                        + " elements in the annotation correction list could not be matched:\n");
                 for (String s : corrMap.keySet())
                     System.err.println(s);
             }
         }
 
-        //sRNA locus tags if available
+        // sRNA locus tags if available
         Map<String, Set<String>> sRNAnameMap = new HashMap<String, Set<String>>();
         for (String id : ids) {
             sRNAnameMap.put(id, new HashSet<String>());
@@ -289,7 +281,7 @@ public class Main {
                 sRNAnameMap.put(id, NameListReader.readNameList(Config.getString("sRNA-annotation_" + id)));
         }
 
-        //asRNA locus tags if available
+        // asRNA locus tags if available
         Map<String, Set<String>> asRNAnameMap = new HashMap<String, Set<String>>();
         for (String id : ids) {
             asRNAnameMap.put(id, new HashSet<String>());
@@ -297,7 +289,7 @@ public class Main {
                 asRNAnameMap.put(id, NameListReader.readNameList(Config.getString("asRNA-annotation_" + id)));
         }
 
-        ////Graph files
+        // Graph files
         System.out.println("Reading Graph files...");
         double[][] tmpGraphs;
 
@@ -307,7 +299,7 @@ public class Main {
             System.out.println("\tusing cached data");
         }
 
-        //FivePrime fow
+        // FivePrime fow
         if (!alreadyCached) {
             System.out.print("\tfivePrimePlus");
             fivePrimePlusMap = new HashMap<String, double[][]>();
@@ -315,14 +307,12 @@ public class Main {
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
                 tmpGraphs = new double[Parameters.numReplicates][];
                 for (int i = 0; i < Parameters.numReplicates; i++) {
-                    //currentHandler.setAndParseWiggleFileNew(Config.getString("fivePrimePlus_"+id+repIDs[i]), DEFAULT_SEQUENCE_IDENTIFIER.get(id));
-                    currentHandler.setAndParseWiggleFileNew(Config.getString("fivePrimePlus_" + id + repIDs[i]), ""); //string is not used in the functions, currently used as placeholder
-                    //System.out.println("looooo");
-                    //System.out.println("identifier: " + DEFAULT_SEQUENCE_IDENTIFIER);
-                    tmpGraphs[i] = currentHandler.setAndParseWiggleFileNew(Config.getString("fivePrimePlus_" + id + repIDs[i]), "").makeSuperContig(true).getSuperWiggle();
+                    currentHandler.setAndParseWiggleFileNew(Config.getString("fivePrimePlus_" + id + repIDs[i]), "");
+                    tmpGraphs[i] = currentHandler
+                            .setAndParseWiggleFileNew(Config.getString("fivePrimePlus_" + id + repIDs[i]), "")
+                            .makeSuperContig(true).getSuperWiggle();
                     tmpGraphs[i][0] = 1;
                     currentHandler.clearWiggleMerger();
-                    //tmpGraphs[i] = XYio.readXYfile(Config.getString("fivePrimePlus_"+id+repIDs[i]), genomeMap.get(id).length(), 1);
                     System.out.print(".");
                 }
                 fivePrimePlusMap.put(id, tmpGraphs);
@@ -330,7 +320,7 @@ public class Main {
             System.out.print("\n");
         }
 
-        //Normal fow
+        // Normal fow
         if (!alreadyCached) {
             System.out.print("\tnormalPlus");
             normalPlusMap = new HashMap<String, double[][]>();
@@ -338,34 +328,33 @@ public class Main {
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
                 tmpGraphs = new double[Parameters.numReplicates][];
                 for (int i = 0; i < Parameters.numReplicates; i++) {
-                    tmpGraphs[i] = currentHandler.setAndParseWiggleFileNew(Config.getString("normalPlus_" + id + repIDs[i]), DEFAULT_SEQUENCE_IDENTIFIER.get(id)).makeSuperContig(true).getSuperWiggle();
-                    //System.out.println("laaa");
-                    //System.out.println("identifier: " + DEFAULT_SEQUENCE_IDENTIFIER);
+                    tmpGraphs[i] = currentHandler
+                            .setAndParseWiggleFileNew(Config.getString("normalPlus_" + id + repIDs[i]),
+                                    DEFAULT_SEQUENCE_IDENTIFIER.get(id))
+                            .makeSuperContig(true).getSuperWiggle();
                     tmpGraphs[i][0] = 1;
                     currentHandler.clearWiggleMerger();
-                    //tmpGraphs[i] = XYio.readXYfile(Config.getString("normalPlus_"+id+repIDs[i]), genomeMap.get(id).length(), 1);
                     System.out.print(".");
                 }
                 normalPlusMap.put(id, tmpGraphs);
             }
-           System.out.print("\n");
+            System.out.print("\n");
         }
 
-        //FivePrime rev
+        // FivePrime rev
         if (!alreadyCached) {
             System.out.print("\tfivePrimeMinus");
             fivePrimeMinusMap = new HashMap<String, double[][]>();
             for (String id : ids) {
-                //System.out.println("id: "+ id);
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
                 tmpGraphs = new double[Parameters.numReplicates][];
                 for (int i = 0; i < Parameters.numReplicates; i++) {
-                    tmpGraphs[i] = currentHandler.setAndParseWiggleFileNew(Config.getString("fivePrimeMinus_" + id + repIDs[i]), DEFAULT_SEQUENCE_IDENTIFIER.get(id)).makeSuperContig(true).getSuperWiggle();
-                    //System.out.println("leee");
-                    //System.out.println("identifier: " + DEFAULT_SEQUENCE_IDENTIFIER);
+                    tmpGraphs[i] = currentHandler
+                            .setAndParseWiggleFileNew(Config.getString("fivePrimeMinus_" + id + repIDs[i]),
+                                    DEFAULT_SEQUENCE_IDENTIFIER.get(id))
+                            .makeSuperContig(true).getSuperWiggle();
                     tmpGraphs[i][0] = -1;
                     currentHandler.clearWiggleMerger();
-                    //tmpGraphs[i] = XYio.readXYfile(Config.getString("fivePrimeMinus_"+id+repIDs[i]), genomeMap.get(id).length(), -1);
                     System.out.print(".");
                 }
                 fivePrimeMinusMap.put(id, tmpGraphs);
@@ -373,7 +362,7 @@ public class Main {
             System.out.print("\n");
         }
 
-        //Normal rev
+        // Normal rev
         if (!alreadyCached) {
             System.out.print("\tnormalMinus");
             normalMinusMap = new HashMap<String, double[][]>();
@@ -381,41 +370,32 @@ public class Main {
                 MultiContigHandler currentHandler = contigHandlerMap.get(id);
                 tmpGraphs = new double[Parameters.numReplicates][];
                 for (int i = 0; i < Parameters.numReplicates; i++) {
-                    tmpGraphs[i] = currentHandler.setAndParseWiggleFileNew(Config.getString("normalMinus_" + id + repIDs[i]), DEFAULT_SEQUENCE_IDENTIFIER.get(id)).makeSuperContig(true).getSuperWiggle();
-                    //System.out.println("luu");
-                    //System.out.println("identifier: " + DEFAULT_SEQUENCE_IDENTIFIER);
+                    tmpGraphs[i] = currentHandler
+                            .setAndParseWiggleFileNew(Config.getString("normalMinus_" + id + repIDs[i]),
+                                    DEFAULT_SEQUENCE_IDENTIFIER.get(id))
+                            .makeSuperContig(true).getSuperWiggle();
                     tmpGraphs[i][0] = -1;
                     currentHandler.clearWiggleMerger();
-                    //tmpGraphs[i] = XYio.readXYfile(Config.getString("normalMinus_"+id+repIDs[i]), genomeMap.get(id).length(), -1);
-                   System.out.print(".");
+                    System.out.print(".");
                 }
                 normalMinusMap.put(id, tmpGraphs);
             }
             System.out.print("\n");
         }
 
-
-        ////normalize
+        // normalize
         if (!alreadyCached && Parameters.normPercentile > 0) {
             System.out.println("Normalizing Graph files...");
-//			/*
             for (String id : ids)
                 for (int i = 0; i < Parameters.numReplicates; i++)
-                    XYnorm.percentileNormalize5primeAndNormalXYplusAndMinus(fivePrimePlusMap.get(id)[i], fivePrimeMinusMap.get(id)[i], normalPlusMap.get(id)[i], normalMinusMap.get(id)[i], Parameters.normPercentile);
-            //*/
-
-			/*
-			for(String id : ids)
-			{
-				XYnorm.percentileNormalizeXYplusAndMinus(fivePrimePlusMap.get(id), fivePrimeMinusMap.get(id), Parameters.normPercentile);
-				XYnorm.percentileNormalizeXYplusAndMinus(normalPlusMap.get(id), normalMinusMap.get(id), Parameters.normPercentile);
-			}//*/
-            // out.println("\t--");
+                    XYnorm.percentileNormalize5primeAndNormalXYplusAndMinus(fivePrimePlusMap.get(id)[i],
+                            fivePrimeMinusMap.get(id)[i], normalPlusMap.get(id)[i], normalMinusMap.get(id)[i],
+                            Parameters.normPercentile);
         }
 
-        ////normalize TEX
+        // normalize TEX
 
-        //calculate enrichment percentiles
+        // calculate enrichment percentiles
         if (!alreadyCached && Parameters.texNormPercentile > 0) {
 
             Map<String, double[]> enrichPercMap = new HashMap<String, double[]>();
@@ -424,17 +404,19 @@ public class Main {
             }
             for (String id : ids) {
                 for (int i = 0; i < Parameters.numReplicates; i++) {
-                    enrichPercMap.get(id)[i] = XYnorm.getEnrichmentFactorPercentile(fivePrimePlusMap.get(id)[i], normalPlusMap.get(id)[i], fivePrimeMinusMap.get(id)[i], normalMinusMap.get(id)[i], Parameters.texNormPercentile);
+                    enrichPercMap.get(id)[i] = XYnorm.getEnrichmentFactorPercentile(fivePrimePlusMap.get(id)[i],
+                            normalPlusMap.get(id)[i], fivePrimeMinusMap.get(id)[i], normalMinusMap.get(id)[i],
+                            Parameters.texNormPercentile);
                 }
             }
-            //maximum
+            // maximum
             double maxFactor = 0;
             for (String id : ids) {
                 for (int i = 0; i < Parameters.numReplicates; i++)
                     maxFactor = Math.max(maxFactor, enrichPercMap.get(id)[i]);
             }
 
-            //normalize
+            // normalize
             for (String id : ids) {
                 for (int i = 0; i < Parameters.numReplicates; i++) {
                     // out.println("\tEnrichfactor " + enrichPercMap.get(id)[i] / maxFactor);
@@ -444,60 +426,86 @@ public class Main {
             }
         }
 
-        ////write Graphs
-        if (Config.getBoolean("writeGraphs")) {
+        System.out.println("Writing average Graph files...");
+        for (String id : ids) {
+            double[][] collectFivePrimePlus = new double[Parameters.numReplicates][];
+            double[][] collectNormalPlus = new double[Parameters.numReplicates][];
+            double[][] collectFivePrimeMinus = new double[Parameters.numReplicates][];
+            double[][] collectNormalMinus = new double[Parameters.numReplicates][];
+            System.out.println("Output Graphs for: " + Config.getString("outputPrefix_" + id));
+            for (int i = 0; i < Parameters.numReplicates; i++) {
+                System.out.println(
+                        "Output Graphs for replicate: " + Config.getString("outputPrefix_" + id) + " " + repIDs[i]);
+                // Define the output file for the superGenomified data
+                String prefixOutput = outDir + Config.getString("outputPrefix_" + id) + repIDs[i];
+                // FivePrime Forward
+                // Get the superGenomified data
+                double[] superFivePrimePlus = superG.superGenomifyXYtrack2trackMode(id, fivePrimePlusMap.get(id)[i],
+                        fivePrimeMinusMap.get(id)[i]);
+                double[] superNormalPlus = superG.superGenomifyXYtrack2trackMode(id, normalPlusMap.get(id)[i],
+                        normalMinusMap.get(id)[i]);
+                double[] superFivePrimeMinus = superG.superGenomifyXYtrack2trackMode(id,
+                        fivePrimeMinusMap.get(id)[i], fivePrimePlusMap.get(id)[i]);
+                double[] superNormalMinus = superG.superGenomifyXYtrack2trackMode(id, normalMinusMap.get(id)[i],
+                        normalPlusMap.get(id)[i]);
 
-             System.out.println("Writing Graph files...");
+                // Append the superGenomified data to the collect arrays
+                collectFivePrimePlus[i] = superFivePrimePlus;
+                collectNormalPlus[i] = superNormalPlus;
+                collectFivePrimeMinus[i] = superFivePrimeMinus;
+                collectNormalMinus[i] = superNormalMinus;
+                if (Config.getBoolean("writeGraphs")) {
+                    System.out.println("Writing all normalized Graph files...");
 
-            //FivePrime fow
-            System.out.println("\tfivePrimePlus");
-            for (String id : ids) {
-                for (int i = 0; i < Parameters.numReplicates; i++) {
-                    XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, fivePrimePlusMap.get(id)[i], fivePrimeMinusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superFivePrimePlus.gr", "super");
-                    XYio.writeXYfile(fivePrimePlusMap.get(id)[i], outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_genomeFivePrimePlus.gr", Config.getString("outputPrefix_" + id));
+                    // Write the superGenomified data to a file
+                    XYio.writeXYfile(superFivePrimePlus, prefixOutput + "_superFivePrimePlus.gr", "super");
+                    XYio.writeXYfile(fivePrimePlusMap.get(id)[i], prefixOutput + "_genomeFivePrimePlus.gr",
+                            Config.getString("outputPrefix_" + id));
+                    // Normal Forward
+                    XYio.writeXYfile(superNormalPlus, prefixOutput + "_superNormalPlus.gr", "super");
+                    XYio.writeXYfile(normalPlusMap.get(id)[i], prefixOutput + "_genomeNormalPlus.gr",
+                            Config.getString("outputPrefix_" + id));
+                    // FivePrime Reverse
+                    XYio.writeXYfile(superFivePrimeMinus, prefixOutput + "_superFivePrimeMinus.gr", "super");
+                    XYio.writeXYfile(fivePrimeMinusMap.get(id)[i], prefixOutput + "_genomeFivePrimeMinus.gr",
+                            Config.getString("outputPrefix_" + id));
+                    // Normal Reverse
+                    XYio.writeXYfile(superNormalMinus, prefixOutput + "_superNormalMinus.gr", "super");
+                    XYio.writeXYfile(normalMinusMap.get(id)[i], prefixOutput + "_genomeNormalMinus.gr",
+                            Config.getString("outputPrefix_" + id));
                 }
             }
-
-
-            //Normal fow
-            System.out.println("\tnormalPlus");
-            for (String id : ids)
-                for (int i = 0; i < Parameters.numReplicates; i++) {
-                    XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, normalPlusMap.get(id)[i], normalMinusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superNormalPlus.gr", "super");
-                    XYio.writeXYfile(normalPlusMap.get(id)[i], outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_genomeNormalPlus.gr", Config.getString("outputPrefix_" + id));
-                }
-
-            //FivePrime revERROR_MESSAGE
-            System.out.println("\tfivePrimeMinus");
-            for (String id : ids)
-                for (int i = 0; i < Parameters.numReplicates; i++) {
-                    XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, fivePrimeMinusMap.get(id)[i], fivePrimePlusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superFivePrimeMinus.gr", "super");
-                    XYio.writeXYfile(fivePrimeMinusMap.get(id)[i], outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_genomeFivePrimeMinus.gr", Config.getString("outputPrefix_" + id));
-                }
-
-            //Normal rev
-            System.out.println("\tnormalMinus");
-            for (String id : ids)
-                for (int i = 0; i < Parameters.numReplicates; i++) {
-                    XYio.writeXYfile(superG.superGenomifyXYtrack2trackMode(id, normalMinusMap.get(id)[i], normalPlusMap.get(id)[i]), outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_superNormalMinus.gr", "super");
-                    XYio.writeXYfile(normalMinusMap.get(id)[i], outDir + Config.getString("outputPrefix_" + id) + repIDs[i] + "_genomeNormalMinus.gr", Config.getString("outputPrefix_" + id));
-                }
+            // aggregate the superGenomified data
+            double[] aggregatedFivePrimePlus = XYtools.aggregateWiggles(collectFivePrimePlus);
+            double[] aggregatedNormalPlus = XYtools.aggregateWiggles(collectNormalPlus);
+            double[] aggregatedFivePrimeMinus = XYtools.aggregateWiggles(collectFivePrimeMinus);
+            double[] aggregatedNormalMinus = XYtools.aggregateWiggles(collectNormalMinus);
+            // Write the aggregated superGenomified data to a file
+            XYio.writeXYfile(aggregatedFivePrimePlus,
+                    outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimePlus_avg.gr", "super");
+            XYio.writeXYfile(aggregatedNormalPlus,
+                    outDir + Config.getString("outputPrefix_" + id) + "_superNormalPlus_avg.gr", "super");
+            XYio.writeXYfile(aggregatedFivePrimeMinus,
+                    outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimeMinus_avg.gr", "super");
+            XYio.writeXYfile(aggregatedNormalMinus,
+                    outDir + Config.getString("outputPrefix_" + id) + "_superNormalMinus_avg.gr", "super");
 
         }
-        ////write SuperGenomified annotations
+
+        // write SuperGenomified annotations
+
         System.out.println("Writing SuperGenome annotations...");
 
         for (String id : ids) {
-            //System.out.println("annoMap:" + annotationMap.get(id));
-            GFFio.writeGFF(superG.superGenomifyGenes(id, annotationMap.get(id), true), outDir + Config.getString("outputPrefix_" + id) + "_super.gff");
+            GFFio.writeGFF(superG.superGenomifyGenes(id, annotationMap.get(id), true),
+                    outDir + Config.getString("outputPrefix_" + id) + "_super.gff");
         }
         ///
 
         BufferedWriter bw;
 
-        ////write SuperGenome coordinate mapping
+        //// write SuperGenome coordinate mapping
         if (Config.entryExists("writeCoordinateMapping") && Config.getBoolean("writeCoordinateMapping")) {
-            // out.println("Writing SuperGenome coordinate mapping...");
             bw = new BufferedWriter(new FileWriter(outDir + "superCoordinates.tsv"));
             bw.append("SuperPos");
             for (String id : ids) {
@@ -517,8 +525,7 @@ public class Main {
 
         }
 
-
-        ////write aligned genome fasta
+        //// write aligned genome fasta
         System.out.println("Writing SuperGenome Sequences...");
 
         for (String id : ids) {
@@ -531,23 +538,18 @@ public class Main {
         FASTAWriter.write(bw, "super", superG.superGenomeConsensus(genomeMap));
         bw.close();
 
-        ////TSS prediction
+        //// TSS prediction
         System.out.println("Predicting TSS...");
 
         Map<String, List<TSS>> tssMap = new HashMap<String, List<TSS>>();
         List<TSS> tmpTssList;
         List<TSS>[] tmpRepLists = new List[Parameters.numReplicates];
 
-
         for (String id : ids) {
-            //String fastaNames = contigHandlerMap.get(id).getFASTAentries().keySet().iterator().next();
-
-            //String faID = contigHandlerMap.get(id).getFASTAentries().get(fastaNames);
-
-            //System.out.println(fastaNames);
             for (int i = 0; i < Parameters.numReplicates; i++) {
                 tmpRepLists[i] = TSSpredictor.predictTSS(fivePrimePlusMap.get(id)[i], normalPlusMap.get(id)[i], false);
-                tmpRepLists[i].addAll(TSSpredictor.predictTSS(fivePrimeMinusMap.get(id)[i], normalMinusMap.get(id)[i], false));
+                tmpRepLists[i].addAll(
+                        TSSpredictor.predictTSS(fivePrimeMinusMap.get(id)[i], normalMinusMap.get(id)[i], false));
                 Collections.sort(tmpRepLists[i]);
             }
             tmpTssList = TSSsetComparator.compareReplicates(tmpRepLists);
@@ -556,13 +558,15 @@ public class Main {
 
         List<TSS> superTSS = TSSsetComparator.compareDataSets(tssMap, superG);
 
-        //write superTSS
+        // write superTSS
         bw = new BufferedWriter(new FileWriter(outDir + "superTSS.gff"));
 
         bw.append("##gff-version 3\n");
         bw.append("##source-version TSS prediction\n");
+
         Date date = new Date();
-        bw.write("##date " + date.toGMTString() + "\n");
+
+        bw.write("##date " + dateFormat.format(date) + "\n");
         bw.write("##parameters " + TSSpredictor.getParameterString() + "\n");
 
         for (TSS tss : superTSS) {
@@ -571,13 +575,13 @@ public class Main {
         }
         bw.close();
 
-        //track-wise
+        // track-wise
         bw = new BufferedWriter(new FileWriter(outDir + "superTSStracks.gff"));
 
         bw.append("##gff-version 3\n");
         bw.append("##source-version TSS prediction\n");
         date = new Date();
-        bw.write("##date " + date.toGMTString() + "\n");
+        bw.write("##date " + dateFormat.format(date) + "\n");
         bw.write("##parameters " + TSSpredictor.getParameterString() + "\n");
 
         for (TSS tss : superTSS) {
@@ -590,12 +594,12 @@ public class Main {
         }
         bw.close();
 
-        /////classify TSS
+        ///// classify TSS
         System.out.println("Classifying TSS...");
 
         bw = new BufferedWriter(new FileWriter(outDir + "MasterTable.tsv"));
 
-        //map superTSS back to the different genomes
+        // map superTSS back to the different genomes
         for (String id : ids) {
             tmpTssList = superG.genomifySuperTSS(id, superTSS);
             TSSclassifier.classifyTSS(tmpTssList, annotationMap.get(id));
@@ -608,11 +612,13 @@ public class Main {
         }
 
         if (printRepStats)
-            bw.append("SuperPos\tSuperStrand\tmapCount\tdetCount\t").append(genomeCol).append("\tdetected\tenriched\tstepHeight\trepStepHeights\tstepFactor\trepStepFactors\tenrichmentFactor\trepEnrichmentFactors\tclassCount\tPos\tStrand\tLocus_tag\tsRNA/asRNA\tProduct\tUTRlength\tGeneLength\tPrimary\tSecondary\tInternal\tAntisense\tAntisenseOrientation\tAutomated\tManual\tPutative sRNA\tPutative asRNA\tComment\tSequence -50 nt upstream + TSS (51nt)\tcontigPos\tcontigID\n");
+            bw.append("SuperPos\tSuperStrand\tmapCount\tdetCount\t").append(genomeCol).append(
+                    "\tdetected\tenriched\tstepHeight\trepStepHeights\tstepFactor\trepStepFactors\tenrichmentFactor\trepEnrichmentFactors\tclassCount\tPos\tStrand\tLocus_tag\tsRNA/asRNA\tProduct\tUTRlength\tGeneLength\tPrimary\tSecondary\tInternal\tAntisense\tAntisenseOrientation\tAutomated\tManual\tPutative sRNA\tPutative asRNA\tComment\tSequence -50 nt upstream + TSS (51nt)\tcontigPos\tcontigID\n");
         else
-            bw.append("SuperPos\tSuperStrand\tmapCount\tdetCount\t").append(genomeCol).append("\tdetected\tenriched\tstepHeight\tstepFactor\tenrichmentFactor\tclassCount\tPos\tStrand\tLocus_tag\tsRNA/asRNA\tProduct\tUTRlength\tGeneLength\tPrimary\tSecondary\tInternal\tAntisense\tAntisenseOrientation\tAutomated\tManual\tPutative sRNA\tPutative asRNA\tComment\tSequence -50 nt upstream + TSS (51nt)\tcontigPos\tcontigID\n");
+            bw.append("SuperPos\tSuperStrand\tmapCount\tdetCount\t").append(genomeCol).append(
+                    "\tdetected\tenriched\tstepHeight\tstepFactor\tenrichmentFactor\tclassCount\tPos\tStrand\tLocus_tag\tsRNA/asRNA\tProduct\tUTRlength\tGeneLength\tPrimary\tSecondary\tInternal\tAntisense\tAntisenseOrientation\tAutomated\tManual\tPutative sRNA\tPutative asRNA\tComment\tSequence -50 nt upstream + TSS (51nt)\tcontigPos\tcontigID\n");
 
-        //write very big classification table
+        // write very big classification table
         TSS gTSS;
         TSS tmpTSS;
         String superProps;
@@ -623,7 +629,7 @@ public class Main {
         String tmpCFactor;
         String tmpEFactor;
 
-        //replicate specific stats
+        // replicate specific stats
         String tmpRepHeights = "";
         String tmpRepCFactors = "";
         String tmpRepEFactors = "";
@@ -633,20 +639,21 @@ public class Main {
             scale = XYnorm.minNormValue;
 
         for (TSS suTSS : superTSS) {
-            //for each genome...
+            // for each genome...
             for (String id : ids) {
-                /* Before retrieving the index from the fastaEntries,
-                   we have to make sure, that the order of the fasta entries remain
-                   conservered while iterating. As the return value of HashMap keyValues() is
-                   a Set, this can not be guaranteed. So we iterate through the FASTA entries
-                   hashmap, which is a order preserving LinkedHashMap and save the entries in
-                   an ArrayList, where order is conserved.*/
+                /*
+                 * Before retrieving the index from the fastaEntries,
+                 * we have to make sure, that the order of the fasta entries remain
+                 * conservered while iterating. As the return value of HashMap keyValues() is
+                 * a Set, this can not be guaranteed. So we iterate through the FASTA entries
+                 * hashmap, which is a order preserving LinkedHashMap and save the entries in
+                 * an ArrayList, where order is conserved.
+                 */
                 ArrayList<String> fastaIDList = new ArrayList<>();
-                contigHandlerMap.get(id).getFASTAentries().forEach((String fastaID, String sequence) ->
-                        fastaIDList.add(fastaID));
+                contigHandlerMap.get(id).getFASTAentries()
+                        .forEach((String fastaID, String sequence) -> fastaIDList.add(fastaID));
 
-
-                //get genome TSS for superTSS
+                // get genome TSS for superTSS
                 gTSS = null;
                 tmpTSS = superG.genomifySuperTSS(id, suTSS);
                 if (tmpTSS == null)
@@ -658,19 +665,20 @@ public class Main {
                     }
                 }
 
-                //if a detected TSS is not mappable
+                // if a detected TSS is not mappable
                 if (suTSS.isDetected(id) && gTSS == null) {
-                   // System.out.println(suTSS.getPosHashString() + id);
+                    // System.out.println(suTSS.getPosHashString() + id);
                     gTSS = suTSS.getGenomicTSS(id);
                     TSSclassifier.classifyTSS(gTSS, annotationMap.get(id));
                 }
 
-                //no mapping?
+                // no mapping?
                 if (gTSS == null)
                     continue;
 
-                //get properties
-                superProps = suTSS.getPos() + "\t" + suTSS.getStrand() + "\t" + suTSS.getMappingSet().size() + "\t" + suTSS.getNumOfNotProcessedDetections() + "\t";
+                // get properties
+                superProps = suTSS.getPos() + "\t" + suTSS.getStrand() + "\t" + suTSS.getMappingSet().size() + "\t"
+                        + suTSS.getNumOfNotProcessedDetections() + "\t";
 
                 if (suTSS.isDetected(id)) {
                     tmpHeight = Double.toString(Math.round(suTSS.getGenomicTSS(id).getHeight() * scale * 100) / 100d);
@@ -683,49 +691,51 @@ public class Main {
                     if (suTSS.getGenomicTSS(id).getEnrichFactor() > 100)
                         tmpEFactor = ">100";
                     else
-                        tmpEFactor = Double.toString(Math.round(suTSS.getGenomicTSS(id).getEnrichFactor() * 100) / 100d);
+                        tmpEFactor = Double
+                                .toString(Math.round(suTSS.getGenomicTSS(id).getEnrichFactor() * 100) / 100d);
 
-                    //replicate specific stats
+                    // replicate specific stats
                     if (printRepStats) {
                         tmpRepHeights = "\t";
 
                         double tmpNum = suTSS.getGenomicTSS(id).repHeights[0] * scale;
-                        if(!Double.isInfinite(tmpNum)) {
+                        if (!Double.isInfinite(tmpNum)) {
                             tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
                         }
-                        tmpRepHeights =  tmpRepHeights + tmpNum;//(suTSS.getGenomicTSS(id).repHeights[0] * scale);
+                        tmpRepHeights = tmpRepHeights + tmpNum;// (suTSS.getGenomicTSS(id).repHeights[0] * scale);
                         for (int i = 1; i < Parameters.numReplicates; i++) {
                             tmpNum = (suTSS.getGenomicTSS(id).repHeights[i] * scale);
-                            if(!Double.isInfinite(tmpNum)) {
+                            if (!Double.isInfinite(tmpNum)) {
                                 tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
                             }
-                            tmpRepHeights = tmpRepHeights + "/" + tmpNum;//(suTSS.getGenomicTSS(id).repHeights[i] * scale);
+                            tmpRepHeights = tmpRepHeights + "/" + tmpNum;// (suTSS.getGenomicTSS(id).repHeights[i] *
+                                                                         // scale);
                         }
                         tmpRepCFactors = "\t";
                         tmpNum = suTSS.getGenomicTSS(id).repStepFactors[0];
-                        if(!Double.isInfinite(tmpNum)) {
+                        if (!Double.isInfinite(tmpNum)) {
                             tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
                         }
-                        tmpRepCFactors = tmpRepCFactors + tmpNum; //suTSS.getGenomicTSS(id).repStepFactors[0];
+                        tmpRepCFactors = tmpRepCFactors + tmpNum; // suTSS.getGenomicTSS(id).repStepFactors[0];
                         for (int i = 1; i < Parameters.numReplicates; i++) {
                             tmpNum = suTSS.getGenomicTSS(id).repStepFactors[i];
-                            if(!Double.isInfinite(tmpNum)) {
+                            if (!Double.isInfinite(tmpNum)) {
                                 tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
                             }
-                            tmpRepCFactors = tmpRepCFactors + "/" + tmpNum;//suTSS.getGenomicTSS(id).repStepFactors[i];
+                            tmpRepCFactors = tmpRepCFactors + "/" + tmpNum;// suTSS.getGenomicTSS(id).repStepFactors[i];
                         }
                         tmpRepEFactors = "\t";
                         tmpNum = suTSS.getGenomicTSS(id).repEnrich[0];
-                        if(!Double.isInfinite(tmpNum)) {
+                        if (!Double.isInfinite(tmpNum)) {
                             tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
                         }
-                        tmpRepEFactors = tmpRepEFactors + tmpNum;//suTSS.getGenomicTSS(id).repEnrich[0];
+                        tmpRepEFactors = tmpRepEFactors + tmpNum;// suTSS.getGenomicTSS(id).repEnrich[0];
                         for (int i = 1; i < Parameters.numReplicates; i++) {
                             tmpNum = suTSS.getGenomicTSS(id).repEnrich[i];
-                            if(!Double.isInfinite(tmpNum)) {
+                            if (!Double.isInfinite(tmpNum)) {
                                 tmpNum = Math.round(tmpNum * 1000.0) / 1000.0;
                             }
-                            tmpRepEFactors = tmpRepEFactors + "/" + tmpNum;//suTSS.getGenomicTSS(id).repEnrich[i];
+                            tmpRepEFactors = tmpRepEFactors + "/" + tmpNum;// suTSS.getGenomicTSS(id).repEnrich[i];
                         }
 
                         tmpHeight = tmpHeight + tmpRepHeights;
@@ -733,71 +743,99 @@ public class Main {
                         tmpEFactor = tmpEFactor + tmpRepEFactors;
                     }
                 } else {
-                    tmpHeight = "NA";//Double.toString(Double.NaN);
-                    tmpCFactor = "NA";//Double.toString(Double.NaN);
-                    tmpEFactor = "NA";//Double.toString(Double.NaN);
+                    tmpHeight = "NA";// Double.toString(Double.NaN);
+                    tmpCFactor = "NA";// Double.toString(Double.NaN);
+                    tmpEFactor = "NA";// Double.toString(Double.NaN);
 
-                    //replicate specific stats
+                    // replicate specific stats
                     if (printRepStats) {
-                        tmpHeight = "NA\t";//Double.toString(Double.NaN);
-                        tmpCFactor = "NA\t";//Double.toString(Double.NaN);
-                        tmpEFactor = "NA\t";//Double.toString(Double.NaN);
+                        tmpHeight = "NA\t";// Double.toString(Double.NaN);
+                        tmpCFactor = "NA\t";// Double.toString(Double.NaN);
+                        tmpEFactor = "NA\t";// Double.toString(Double.NaN);
                     }
 
                 }
-                genomeProps = Config.getString("outputPrefix_" + id) + "\t" + i(suTSS.isDetected(id) && !suTSS.isProcessed(id)) + "\t" + i(suTSS.isEnriched(id)) + "\t" + tmpHeight + "\t" + tmpCFactor + "\t" + tmpEFactor + "\t" + gTSS.getNumClasses() + "\t" + gTSS.getPos() + "\t" + gTSS.getStrand() + "\t";
-                moreProps = "1\t0\t0\t" + i(gTSS.isAntisense()) + "\t \t" + gTSS.getSequence(genomeMap.get(id), 50, 0) + "\t";
+                genomeProps = Config.getString("outputPrefix_" + id) + "\t"
+                        + i(suTSS.isDetected(id) && !suTSS.isProcessed(id)) + "\t" + i(suTSS.isEnriched(id)) + "\t"
+                        + tmpHeight + "\t" + tmpCFactor + "\t" + tmpEFactor + "\t" + gTSS.getNumClasses() + "\t"
+                        + gTSS.getPos() + "\t" + gTSS.getStrand() + "\t";
+                moreProps = "1\t0\t0\t" + i(gTSS.isAntisense()) + "\t \t" + gTSS.getSequence(genomeMap.get(id), 50, 0)
+                        + "\t";
 
-
-				/*
-				Map the position back to the respective contig
-				position and contigID and print both in the MasterTable.tsv
-				 */
+                /*
+                 * Map the position back to the respective contig
+                 * position and contigID and print both in the MasterTable.tsv
+                 */
                 // Get the contig position
                 int contigPosition = contigHandlerMap.get(id).getSuperContigMap().get((gTSS.getPos() - 1) * 2);
                 // Get the contig ID index
                 int contigIDindex = contigHandlerMap.get(id).getSuperContigMap().get((gTSS.getPos() - 1) * 2 + 1);
 
-                // Now we can request the FASTA ID from the list, via the index in the SuperContigMap.
+                // Now we can request the FASTA ID from the list, via the index in the
+                // SuperContigMap.
                 String contigID = fastaIDList.get(contigIDindex);
-                //String contigInfo = String.format("%s\t%s|%s\n", contigPosition, DEFAULT_SEQUENCE_IDENTIFIER.toString().toLowerCase() ,contigID);
-                String contigInfo = String.format("%s\t%s|%s\n", contigPosition, DEFAULT_SEQUENCE_IDENTIFIER.get(id), contigID);
-                //System.out.println("contigID" + contigID);
+                // String contigInfo = String.format("%s\t%s|%s\n", contigPosition,
+                // DEFAULT_SEQUENCE_IDENTIFIER.toString().toLowerCase() ,contigID);
+                String contigInfo = String.format("%s\t%s|%s\n", contigPosition, DEFAULT_SEQUENCE_IDENTIFIER.get(id),
+                        contigID);
+                // System.out.println("contigID" + contigID);
 
-                //tss classes
+                // tss classes
 
-                //UTR?
+                // UTR?
                 if (gTSS.isPrimary() &&
-                        gTSS.getPrimaryOrSecondaryState().closestGeneOnSameContig(fastaIDList, contigHandlerMap.get(id)))
-                    bw.append(superProps + genomeProps + gTSS.getUTRgene().getId() + "\t" + gTSS.getUTRgene().get_sRNA_asRNA_labelIfContainedInSet(sRNAnameMap.get(id), asRNAnameMap.get(id)) + "\t" + gTSS.getUTRgene().getDescription() + "\t" + gTSS.utrDistanceTo(gTSS.getUTRgene()) + "\t" + gTSS.getUTRgene().getLength() + "\t" + "1\t0\t0\t0\t" + "NA\t" + moreProps + contigInfo);
+                        gTSS.getPrimaryOrSecondaryState().closestGeneOnSameContig(fastaIDList,
+                                contigHandlerMap.get(id)))
+                    bw.append(superProps + genomeProps + gTSS.getUTRgene().getId() + "\t"
+                            + gTSS.getUTRgene().get_sRNA_asRNA_labelIfContainedInSet(sRNAnameMap.get(id),
+                                    asRNAnameMap.get(id))
+                            + "\t" + gTSS.getUTRgene().getDescription() + "\t" + gTSS.utrDistanceTo(gTSS.getUTRgene())
+                            + "\t" + gTSS.getUTRgene().getLength() + "\t" + "1\t0\t0\t0\t" + "NA\t" + moreProps
+                            + contigInfo);
 
                 if (gTSS.isSecondary() &&
-                        gTSS.getPrimaryOrSecondaryState().closestGeneOnSameContig(fastaIDList, contigHandlerMap.get(id)))
-                    bw.append(superProps + genomeProps + gTSS.getUTRgene().getId() + "\t" + gTSS.getUTRgene().get_sRNA_asRNA_labelIfContainedInSet(sRNAnameMap.get(id), asRNAnameMap.get(id)) + "\t" + gTSS.getUTRgene().getDescription() + "\t" + gTSS.utrDistanceTo(gTSS.getUTRgene()) + "\t" + gTSS.getUTRgene().getLength() + "\t" + "0\t1\t0\t0\t" + "NA\t" + moreProps + contigInfo);
+                        gTSS.getPrimaryOrSecondaryState().closestGeneOnSameContig(fastaIDList,
+                                contigHandlerMap.get(id)))
+                    bw.append(superProps + genomeProps + gTSS.getUTRgene().getId() + "\t"
+                            + gTSS.getUTRgene().get_sRNA_asRNA_labelIfContainedInSet(sRNAnameMap.get(id),
+                                    asRNAnameMap.get(id))
+                            + "\t" + gTSS.getUTRgene().getDescription() + "\t" + gTSS.utrDistanceTo(gTSS.getUTRgene())
+                            + "\t" + gTSS.getUTRgene().getLength() + "\t" + "0\t1\t0\t0\t" + "NA\t" + moreProps
+                            + contigInfo);
 
-                //internal
+                // internal
                 if (gTSS.isInternal())
                     for (Gene g : gTSS.getInternalGenes())
-                        bw.append(superProps + genomeProps + g.getId() + "\t" + g.get_sRNA_asRNA_labelIfContainedInSet(sRNAnameMap.get(id), asRNAnameMap.get(id)) + "\t" + g.getDescription() + "\t" + "NA" + "\t" + g.getLength() + "\t" + "0\t0\t1\t0\t" + "NA\t" + moreProps + contigInfo);
+                        bw.append(
+                                superProps + genomeProps + g.getId() + "\t"
+                                        + g.get_sRNA_asRNA_labelIfContainedInSet(sRNAnameMap.get(id),
+                                                asRNAnameMap.get(id))
+                                        + "\t" + g.getDescription() + "\t" + "NA" + "\t" + g.getLength() + "\t"
+                                        + "0\t0\t1\t0\t" + "NA\t" + moreProps + contigInfo);
 
-                //antisense
+                // antisense
                 if (gTSS.isAntisense()) {
                     int antisenseGeneIndex = 0;
                     for (Gene g : gTSS.getAntisenseGenes()) {
-                        if (gTSS.getAntisenseState().closestGeneOnSameContig(fastaIDList, contigHandlerMap.get(id), antisenseGeneIndex)) {
-                            bw.append(superProps + genomeProps + g.getId() + "\t" + g.get_sRNA_asRNA_labelIfContainedInSet(sRNAnameMap.get(id), asRNAnameMap.get(id)) + "\t" + g.getDescription() + "\t" + "NA" + "\t" + g.getLength() + "\t" + "0\t0\t0\t1\t" + gTSS.getAntisenseOrientation() + "\t" + moreProps + contigInfo);
+                        if (gTSS.getAntisenseState().closestGeneOnSameContig(fastaIDList, contigHandlerMap.get(id),
+                                antisenseGeneIndex)) {
+                            bw.append(superProps + genomeProps + g.getId() + "\t"
+                                    + g.get_sRNA_asRNA_labelIfContainedInSet(sRNAnameMap.get(id), asRNAnameMap.get(id))
+                                    + "\t" + g.getDescription() + "\t" + "NA" + "\t" + g.getLength() + "\t"
+                                    + "0\t0\t0\t1\t" + gTSS.getAntisenseOrientation() + "\t" + moreProps + contigInfo);
                         }
                     }
                 }
 
                 if (!(gTSS.isPrimary() || gTSS.isSecondary() || gTSS.isInternal() || gTSS.isAntisense()))
-                    bw.append(superProps + genomeProps + "orphan" + "\t" + "\t" + "orphan" + "\t" + "NA" + "\t" + "NA" + "\t" + "0\t0\t0\t0\t" + gTSS.getAntisenseOrientation() + "\t" + moreProps + contigInfo);
+                    bw.append(superProps + genomeProps + "orphan" + "\t" + "\t" + "orphan" + "\t" + "NA" + "\t" + "NA"
+                            + "\t" + "0\t0\t0\t0\t" + gTSS.getAntisenseOrientation() + "\t" + moreProps + contigInfo);
             }
         }
 
         bw.close();
 
-        //write genomeTSS.gff
+        // write genomeTSS.gff
         System.out.println("Writing genome-wise TSS results...");
 
         for (String id : ids) {
@@ -805,13 +843,12 @@ public class Main {
             bw.append("##gff-version 3\n");
             bw.append("##source-version TSS prediction\n");
             date = new Date();
-            bw.write("##date " + date.toGMTString() + "\n");
+            bw.write("##date " + dateFormat.format(date) + "\n");
             bw.write("##parameters " + TSSpredictor.getParameterString() + "\n");
 
-
             ArrayList<String> fastaIDList = new ArrayList<>();
-            contigHandlerMap.get(id).getFASTAentries().forEach((String fastaID, String sequence) ->
-                    fastaIDList.add(fastaID));
+            contigHandlerMap.get(id).getFASTAentries()
+                    .forEach((String fastaID, String sequence) -> fastaIDList.add(fastaID));
 
             for (TSS tss : superTSS) {
                 if (tss.isMapped(id) && tss.isDetected(id) && tss.isEnriched(id)) {
@@ -822,10 +859,11 @@ public class Main {
                     // Get the contig ID index
                     int contigIDindex = contigHandlerMap.get(id).getSuperContigMap().get((gTSS.getPos() - 1) * 2 + 1);
 
-                    // Now we can request the FASTA ID from the list, via the index in the SuperContigMap.
+                    // Now we can request the FASTA ID from the list, via the index in the
+                    // SuperContigMap.
                     String contigID = fastaIDList.get(contigIDindex);
 
-                    //System.out.println("contigID: " + contigID);
+                    // System.out.println("contigID: " + contigID);
 
                     bw.append(gTSS.toGFFString(contigID));
 
@@ -835,8 +873,7 @@ public class Main {
             bw.close();
         }
 
-
-        /////statistics
+        ///// statistics
         System.out.println("Calculating statistics...");
 
         bw = new BufferedWriter(new FileWriter(outDir + "TSSstatistics.tsv"));
@@ -866,7 +903,7 @@ public class Main {
         for (String id : ids)
             missingInGenomeCountMap.put(id, new int[6]);
 
-        //count!
+        // count!
 
         for (TSS suTSS : superTSS) {
             countPrime = false;
@@ -875,9 +912,9 @@ public class Main {
             countAS = false;
             countOrphan = false;
 
-            //for each genome...
+            // for each genome...
             for (String id : ids) {
-                //get genome TSS for superTSS
+                // get genome TSS for superTSS
                 gTSS = null;
                 tmpTSS = superG.genomifySuperTSS(id, suTSS);
                 if (tmpTSS == null)
@@ -889,75 +926,75 @@ public class Main {
                     }
                 }
 
-                //if a detected TSS is not mappable
+                // if a detected TSS is not mappable
                 if (suTSS.isDetected(id) && gTSS == null) {
                     gTSS = suTSS.getGenomicTSS(id);
                     TSSclassifier.classifyTSS(gTSS, annotationMap.get(id));
                 }
 
-                //no mapping?
+                // no mapping?
                 if (gTSS == null)
                     continue;
 
-                //detected in this genome?
+                // detected in this genome?
                 if (suTSS.isDetected(id) && !suTSS.isProcessed(id))
                     inGenomeCountMap.get(id)[0]++;
                 else
                     continue;
 
-                //only in this genome?
+                // only in this genome?
                 if (suTSS.isDetected(id) && !suTSS.isProcessed(id) && suTSS.getNumOfNotProcessedDetections() == 1)
                     onlyInGenomeCountMap.get(id)[0]++;
 
-                //Primary
+                // Primary
                 if (gTSS.isPrimary()) {
                     countPrime = true;
 
-                    //genome specific:
+                    // genome specific:
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id))
                         inGenomeCountMap.get(id)[1]++;
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id) && suTSS.getNumOfNotProcessedDetections() == 1)
                         onlyInGenomeCountMap.get(id)[1]++;
                 }
 
-                //Secondary
+                // Secondary
                 if (gTSS.isSecondary()) {
                     countSec = true;
 
-                    //genome specific:
+                    // genome specific:
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id))
                         inGenomeCountMap.get(id)[2]++;
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id) && suTSS.getNumOfNotProcessedDetections() == 1)
                         onlyInGenomeCountMap.get(id)[2]++;
                 }
 
-                //internal
+                // internal
                 if (gTSS.isInternal()) {
                     countInternal = true;
 
-                    //genome specific:
+                    // genome specific:
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id))
                         inGenomeCountMap.get(id)[3]++;
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id) && suTSS.getNumOfNotProcessedDetections() == 1)
                         onlyInGenomeCountMap.get(id)[3]++;
                 }
 
-                //antisense
+                // antisense
                 if (gTSS.isAntisense()) {
                     countAS = true;
 
-                    //genome specific:
+                    // genome specific:
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id))
                         inGenomeCountMap.get(id)[4]++;
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id) && suTSS.getNumOfNotProcessedDetections() == 1)
                         onlyInGenomeCountMap.get(id)[4]++;
                 }
 
-                //orphan
+                // orphan
                 if (!(gTSS.isPrimary() || gTSS.isSecondary() || gTSS.isInternal() || gTSS.isAntisense())) {
                     countOrphan = true;
 
-                    //genome specific:
+                    // genome specific:
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id))
                         inGenomeCountMap.get(id)[5]++;
                     if (suTSS.isDetected(id) && !suTSS.isProcessed(id) && suTSS.getNumOfNotProcessedDetections() == 1)
@@ -965,14 +1002,18 @@ public class Main {
                 }
             }
 
-
             for (int c = 0; c < 6; c++) {
-                //always process if c=0
-                if (c == 1 && !countPrime) continue;
-                if (c == 2 && !countSec) continue;
-                if (c == 3 && !countInternal) continue;
-                if (c == 4 && !countAS) continue;
-                if (c == 5 && !countOrphan) continue;
+                // always process if c=0
+                if (c == 1 && !countPrime)
+                    continue;
+                if (c == 2 && !countSec)
+                    continue;
+                if (c == 3 && !countInternal)
+                    continue;
+                if (c == 4 && !countAS)
+                    continue;
+                if (c == 5 && !countOrphan)
+                    continue;
 
                 generalCountMap.get("all")[c]++;
                 if (suTSS.getNumOfNotProcessedDetections() == ids.length)
@@ -980,13 +1021,14 @@ public class Main {
                 if (suTSS.getNumOfNotProcessedDetections() > 1 && suTSS.getNumOfNotProcessedDetections() < ids.length)
                     generalCountMap.get("inSome")[c]++;
                 for (String id : ids) {
-                    if (!(suTSS.isDetected(id) && !suTSS.isProcessed(id)) && suTSS.getNumOfNotProcessedDetections() == ids.length - 1)
+                    if (!(suTSS.isDetected(id) && !suTSS.isProcessed(id))
+                            && suTSS.getNumOfNotProcessedDetections() == ids.length - 1)
                         missingInGenomeCountMap.get(id)[c]++;
                 }
             }
         }
 
-        //write statistics
+        // write statistics
         int[] tmp;
 
         bw = new BufferedWriter(new FileWriter(outDir + "TSSstatistics.tsv"));
@@ -1044,11 +1086,9 @@ public class Main {
         }
         bw.newLine();
 
-
         bw.close();
 
-
-        //alignment statistics
+        // alignment statistics
         bw = new BufferedWriter(new FileWriter(outDir + "AlignmentStatistics.tsv"));
         bw.append("Alignment statistics:\n\n");
         bw.append("Alignment length:\t\t" + superG.getAlignmentLength() + " columns\n");
@@ -1056,18 +1096,19 @@ public class Main {
 
         bw.append("Strain\tInsertions(nt)\tDeletions(nt)\n");
         for (String id : ids)
-            bw.append(Config.getString("outputPrefix_" + id) + "\t" + superG.getInsCountMap().get(id) + "\t" + superG.getDelCountMap().get(id) + "\n");
+            bw.append(Config.getString("outputPrefix_" + id) + "\t" + superG.getInsCountMap().get(id) + "\t"
+                    + superG.getDelCountMap().get(id) + "\n");
 
         bw.close();
 
-
-        //nocoRNAc - TSS as siddSites
+        // nocoRNAc - TSS as siddSites
         if (Parameters.writeNocornacFiles) {
             for (String id : ids) {
-                bw = new BufferedWriter(new FileWriter(outDir + Config.getString("outputPrefix_" + id) + "_as-siddSites.out"));
+                bw = new BufferedWriter(
+                        new FileWriter(outDir + Config.getString("outputPrefix_" + id) + "_as-siddSites.out"));
 
                 date = new Date();
-                bw.write("##date " + date.toGMTString() + "\n");
+                bw.write("##date " + dateFormat.format(date) + "\n");
                 bw.write("##parameters " + TSSpredictor.getParameterString() + "\n");
 
                 gTSS = null;
@@ -1078,38 +1119,40 @@ public class Main {
                     if (gTSS == null)
                         gTSS = tss.getGenomicTSS(id);
 
-                    bw.write("TSS" + tss.getPos() + "\t" + gTSS.getPos() + "\t" + gTSS.getPos() + "\t" + gTSS.getStrand() + "\t" + "-10.0");
+                    bw.write("TSS" + tss.getPos() + "\t" + gTSS.getPos() + "\t" + gTSS.getPos() + "\t"
+                            + gTSS.getStrand() + "\t" + "-10.0");
                     bw.newLine();
                 }
 
                 bw.close();
             }
 
-            //also for SuperGenome
+            // also for SuperGenome
             bw = new BufferedWriter(new FileWriter(outDir + "superTSS" + "_as-siddSites.out"));
 
             date = new Date();
-            bw.write("##date " + date.toGMTString() + "\n");
+            bw.write("##date " + dateFormat.format(date) + "\n");
             bw.write("##parameters " + TSSpredictor.getParameterString() + "\n");
 
             for (TSS tss : superTSS) {
-                bw.write("TSS" + tss.getPos() + "\t" + tss.getPos() + "\t" + tss.getPos() + "\t" + tss.getStrand() + "\t" + "-10.0");
+                bw.write("TSS" + tss.getPos() + "\t" + tss.getPos() + "\t" + tss.getPos() + "\t" + tss.getStrand()
+                        + "\t" + "-10.0");
                 bw.newLine();
             }
 
             bw.close();
 
-
-            //nocoRNAc - TSS as loci
+            // nocoRNAc - TSS as loci
             int regionLength = 100;
 
             for (String id : ids) {
-                bw = new BufferedWriter(new FileWriter(outDir + Config.getString("outputPrefix_" + id) + "_as-ncRNA-loci.gff"));
+                bw = new BufferedWriter(
+                        new FileWriter(outDir + Config.getString("outputPrefix_" + id) + "_as-ncRNA-loci.gff"));
 
                 bw.append("##gff-version 3\n");
                 bw.append("##source-version TSS prediction\n");
                 date = new Date();
-                bw.write("##date " + date.toGMTString() + "\n");
+                bw.write("##date " + dateFormat.format(date) + "\n");
                 bw.write("##parameters " + TSSpredictor.getParameterString() + "\n");
 
                 String posstring;
@@ -1126,20 +1169,21 @@ public class Main {
                     else
                         posstring = gTSS.getPos() + "\t" + (gTSS.getPos() + regionLength - 1);
 
-                    bw.write(Config.getString("outputPrefix_" + id) + "\ttssprediction\tTSS\t" + posstring + "\t.\t" + gTSS.getStrand() + "\t." + "\t" + "ID=" + "TSS" + tss.getPosHashString());
+                    bw.write(Config.getString("outputPrefix_" + id) + "\ttssprediction\tTSS\t" + posstring + "\t.\t"
+                            + gTSS.getStrand() + "\t." + "\t" + "ID=" + "TSS" + tss.getPosHashString());
                     bw.newLine();
                 }
 
                 bw.close();
             }
 
-            //also for SuperGenome
+            // also for SuperGenome
             bw = new BufferedWriter(new FileWriter(outDir + "superTSS" + "_as-ncRNA-loci.gff"));
 
             bw.append("##gff-version 3\n");
             bw.append("##source-version TSS prediction\n");
             date = new Date();
-            bw.write("##date " + date.toGMTString() + "\n");
+            bw.write("##date " + dateFormat.format(date) + "\n");
             bw.write("##parameters " + TSSpredictor.getParameterString() + "\n");
 
             String posstring;
@@ -1149,28 +1193,26 @@ public class Main {
                 else
                     posstring = tss.getPos() + "\t" + (tss.getPos() + regionLength - 1);
 
-                bw.write("super" + "\ttssprediction\tTSS\t" + posstring + "\t.\t" + tss.getStrand() + "\t." + "\t" + "ID=" + "TSS" + tss.getPosHashString());
+                bw.write("super" + "\ttssprediction\tTSS\t" + posstring + "\t.\t" + tss.getStrand() + "\t." + "\t"
+                        + "ID=" + "TSS" + tss.getPosHashString());
                 bw.newLine();
             }
 
             bw.close();
         }
 
-
-
-        //generate Expression Matrix using SuperGenes
+        // generate Expression Matrix using SuperGenes
         List<SuperGene> suGenes;
         Map<String, Gene> regions;
         Gene tmpRegion;
 
-
-        //generate Expression Matrix using ortholog mapping
+        // generate Expression Matrix using ortholog mapping
         if (Config.entryExists("orthologMapping")) {
             System.out.println("Calculating Expression Matrix from Orthologs...");
 
             bw = new BufferedWriter(new FileWriter(outDir + "expression_orthologs.tsv"));
 
-            //header
+            // header
             for (String id : ids) {
                 for (int i = 0; i < Parameters.numReplicates; i++)
                     bw.write(Config.getString("outputPrefix_" + id) + "_" + repIDs[i] + "\t");
@@ -1187,24 +1229,25 @@ public class Main {
 
             bw.newLine();
 
-            //get SuperGenes
-            suGenes = SuperGeneFactory.createSuperGenesFromKonradsOrthologMapping(annotationMap, superG, Config.getString("orthologMapping"));
+            // get SuperGenes
+            suGenes = SuperGeneFactory.createSuperGenesFromKonradsOrthologMapping(annotationMap, superG,
+                    Config.getString("orthologMapping"));
 
             Collections.sort(suGenes);
 
             for (SuperGene suG : suGenes) {
                 regions = suG.getInterrogatableRegions();
 
-                //no regions in this SuperGene?
+                // no regions in this SuperGene?
                 if (regions == null) {
-                    //System.err.println("Warning: No interrogatable regions in a SuperGene!");
+                    // System.err.println("Warning: No interrogatable regions in a SuperGene!");
                     continue;
                 }
 
-                //ID
+                // ID
                 bw.append(suG.getContentHashString() + "\t");
 
-                //write expression
+                // write expression
                 for (String id : ids) {
                     tmpRegion = regions.get(id);
 
@@ -1214,13 +1257,15 @@ public class Main {
                             continue;
                         }
                         if (tmpRegion.getStrand() == '+')
-                            bw.append(XYtools.getRegionMean(tmpRegion.getStart(), tmpRegion.getEnd(), normalPlusMap.get(id)[i]) + "\t");
+                            bw.append(XYtools.getRegionMean(tmpRegion.getStart(), tmpRegion.getEnd(),
+                                    normalPlusMap.get(id)[i]) + "\t");
                         else
-                            bw.append(XYtools.getRegionMean(tmpRegion.getStart(), tmpRegion.getEnd(), normalMinusMap.get(id)[i]) + "\t");
+                            bw.append(XYtools.getRegionMean(tmpRegion.getStart(), tmpRegion.getEnd(),
+                                    normalMinusMap.get(id)[i]) + "\t");
                     }
                 }
 
-                //write locus tags
+                // write locus tags
                 for (String id : ids) {
                     tmpRegion = regions.get(id);
                     if (tmpRegion != null)
@@ -1231,7 +1276,7 @@ public class Main {
                     bw.append("\t");
                 }
 
-                //write products
+                // write products
                 for (String id : ids) {
                     tmpRegion = regions.get(id);
                     if (tmpRegion != null)
@@ -1242,10 +1287,10 @@ public class Main {
                     bw.append("\t");
                 }
 
-                //detCount
+                // detCount
                 bw.append(Integer.toString(regions.size()) + "\t");
 
-                //lengthProblem
+                // lengthProblem
                 bw.append(Integer.toString(i(suG.hasLengthProblem())));
 
                 bw.newLine();
@@ -1259,27 +1304,26 @@ public class Main {
     }
 
     public static void ringMode() throws Exception {
-        //IDs
+        // IDs
         String[] ids = Config.getString("idList").split(",");
 
         if (ids.length != Config.getInt("numberOfDatasets"))
             throw new Error("numberOfDatasets does not match length of idList!");
 
-        //output
+        // output
         String outDir = Config.getString("outputDirectory");
 
-        //read alignment
-        //System.out.println("Reading alignment blocks...");
+        // read alignment
+        // System.out.println("Reading alignment blocks...");
         List<XmfaBlock> alignmentBlocks = XmfaParser.parseXmfa(Config.getString("xmfa"));
 
-        //SuperGenome
-        //System.out.println("Building SuperGenome...");
+        // SuperGenome
+        // System.out.println("Building SuperGenome...");
         SuperGenome superG = new SuperGenome(alignmentBlocks, ids);
-
 
         GenomeRingBlocker grb = new GenomeRingBlocker(superG.getRefBlocks(), ids);
 
-        //BlockMap
+        // BlockMap
         BufferedWriter bw = new BufferedWriter(new FileWriter(outDir + "blocks.out"));
 
         List<int[]> blockPositions = new LinkedList<int[]>();
@@ -1322,12 +1366,12 @@ public class Main {
                 else
                     bw.append(",");
 
-                bw.append(Integer.toString(i) + ":" + Math.abs(superG.getNextMappingPosInGenome(id, blockPositions.get(Math.abs(i) - 1)[0])) + "-" + Math.abs(superG.getNextMappingPosInGenome(id, blockPositions.get(Math.abs(i) - 1)[1])));
+                bw.append(Integer.toString(i) + ":"
+                        + Math.abs(superG.getNextMappingPosInGenome(id, blockPositions.get(Math.abs(i) - 1)[0])) + "-"
+                        + Math.abs(superG.getNextMappingPosInGenome(id, blockPositions.get(Math.abs(i) - 1)[1])));
             }
             bw.newLine();
         }
-
-        //System.out.println(lengthCount + " of " + superG.getAlignmentLength() + " alignment positions covered (~" + Math.round(((double) lengthCount * 100) / superG.getAlignmentLength()) + "%).");
 
         bw.close();
     }
@@ -1352,16 +1396,17 @@ public class Main {
                 if (line.length() == 0)
                     continue;
 
-                //header finished
+                // header finished
                 if (line.startsWith(">"))
                     break;
 
-                //entry
+                // entry
                 if (line.startsWith("#Sequence" + i + "File")) {
                     fields = line.split("\t");
 
                     if (fields.length < 2) {
-                        System.err.println("The header of the alignment file is missing or not in proper format (Mauve xmfa format).\nGenome names and alignment IDs cannot be parsed from the file.\nPlease set them manually.");
+                        System.err.println(
+                                "The header of the alignment file is missing or not in proper format (Mauve xmfa format).\nGenome names and alignment IDs cannot be parsed from the file.\nPlease set them manually.");
                     }
 
                     fields = fields[1].split("/|\\\\");
@@ -1371,16 +1416,16 @@ public class Main {
 
             br.close();
 
-            //no entries
+            // no entries
             if (nameMap.size() == 0) {
                 return "The header of the alignment file is missing or not in proper format (Mauve xmfa format).\nGenome names and alignment IDs cannot be parsed from the file.\nPlease set them manually.";
             }
 
-            //set values
+            // set values
             String jsonString = "{";
             for (int j = 0; j < nameMap.size(); j++) {
-                jsonString += "\"genome_" + (j+1) + "\": \"" + nameMap.get(Integer.toString(j + 1)) + "\",";
-                jsonString += "\"id_" + (j+1) + "\": \"" + Integer.toString(j+1) + "\",";
+                jsonString += "\"genome_" + (j + 1) + "\": \"" + nameMap.get(Integer.toString(j + 1)) + "\",";
+                jsonString += "\"id_" + (j + 1) + "\": \"" + Integer.toString(j + 1) + "\",";
             }
 
             jsonString = jsonString.substring(0, jsonString.length() - 1);

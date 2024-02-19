@@ -76,6 +76,7 @@ def helperAsyncPredator(self, *args ):
     # [request, jsonString, resultDir, inputDir, annotationDir, projectName] = args
     [request, inputDir, annotationDir] = args
     jsonObject = json.loads(request)
+    jsonObject['rnaGraph'] = "true" if jsonObject['rnaGraph'] else "false"
     resultDir = tempfile.mkdtemp(prefix='tmpPredResultFolder').replace('\\', '/')
 
     try:
@@ -86,7 +87,7 @@ def helperAsyncPredator(self, *args ):
         self.update_state(state='RUNNING', meta={'projectName': projectName})
         serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
         # join server Location to find TSSpredator
-        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator2.jar')
         # Run JAR file
         result = subprocess.run(['java', '-jar',tsspredatorLocation, jsonString], 
                                 stdout=subprocess.PIPE, 
@@ -97,6 +98,8 @@ def helperAsyncPredator(self, *args ):
         if len(result.stderr) > 0:
             raise subprocess.CalledProcessError(result.returncode, result.args, stderr=result.stderr, output=result.stdout)
         tmpdirResult = tempfile.mkdtemp(prefix='tmpPredZippedResult')
+        # print files in resultDir
+        print(f"Files in {resultDir}: {os.listdir(resultDir)}")
         make_archive(os.path.join(tmpdirResult,'result'), 'zip', resultDir)
         filePath = os.path.basename(tmpdirResult)
         return {"filePath":filePath, "stderr": result.stderr, "stdout": result.stdout, "inputDir": inputDir, "annotationDir": annotationDir, "tempResultsDir": resultDir, "projectName": projectName}
@@ -549,7 +552,6 @@ def saveConfig():
 
     # save config file
     configFilename = newTmpDir + '/configFile.config'
-
     # write JSON string 
     jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", 'false', 'true', configFilename, multiFasta)
     print(jsonString)

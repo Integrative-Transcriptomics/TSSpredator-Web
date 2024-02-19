@@ -361,6 +361,28 @@ def parseSuperGFF (path):
             
     return data_per_gene, maxValue
     
+def parseRNAGraphs(tmpdir, genomeKey):
+    '''parse RNA graphs and return as JSON'''
+    data_per_type = {}
+    data_per_type['plus'] = {}
+    data_per_type['minus'] = {}
+    for graphType in ['NormalPlus', 'NormalMinus', 'FivePrimePlus', 'FivePrimeMinus']:
+        graphPath = os.path.join(tmpdir, f'{genomeKey}_super{graphType}_avg.gr')
+        justGraphType = graphType.replace('Plus', '').replace('Minus', '')
+        if os.path.exists(graphPath):
+            strand = "plus" if "Plus" in graphType else "minus"
+            data_per_type[strand][justGraphType] = []
+            with open(graphPath, 'r') as f:
+                for line in f:
+                    if line.startswith('variableStep'):
+                        continue
+                    line = line.rstrip().split('\t')
+                    data_per_type[strand][justGraphType].append({
+                        "pos": line[0],
+                        "value": float(line[1]),
+                    })
+    return data_per_type
+
 def aggregateTSS(tssList, maxGenome):
     '''aggregate TSS'''
     aggregatedTSS = {}
@@ -422,7 +444,8 @@ def getTSSViewer(filePath):
                     masterTable[genomeKey]['maxValue'] = maxValue
                     masterTable[genomeKey]['aggregatedTSS'], maxValueTSS = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
                     masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
-                
+                    # masterTable[genomeKey]['RNAGraphs'] = parseRNAGraphs(tmpdir, genomeKey)
+
                 return jsonify({'result': 'success', 'data': masterTable})
         except Exception as e:
             print(e)

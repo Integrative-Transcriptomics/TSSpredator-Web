@@ -21,6 +21,9 @@ import wiggle.ioNew.WiggleParser;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.SimpleTimeZone;
+
+import wiggle.SimplifyArray.Range;
+
 import java.util.*;
 
 public class Main {
@@ -489,6 +492,22 @@ public class Main {
                     outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimeMinus_avg.gr", "super");
             XYio.writeXYfile(aggregatedNormalMinus,
                     outDir + Config.getString("outputPrefix_" + id) + "_superNormalMinus_avg.gr", "super");
+
+            // From Wiggle to BigWig
+            List<Range> fivePrimePlusRanges = XYtools.simplifyArray(aggregatedFivePrimePlus);
+            List<Range> normalPlusRanges = XYtools.simplifyArray(aggregatedNormalPlus);
+            List<Range> fivePrimeMinusRanges = XYtools.simplifyArray(aggregatedFivePrimeMinus);
+            List<Range> normalMinusRanges = XYtools.simplifyArray(aggregatedNormalMinus);
+
+            // Write out the ranges
+            XYio.writeListRangeFile(outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimePlus_avg.bigwig",
+                    fivePrimePlusRanges);
+            XYio.writeListRangeFile(outDir + Config.getString("outputPrefix_" + id) + "_superNormalPlus_avg.bigwig",
+                    normalPlusRanges);
+            XYio.writeListRangeFile(outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimeMinus_avg.bigwig",
+                    fivePrimeMinusRanges);
+            XYio.writeListRangeFile(outDir + Config.getString("outputPrefix_" + id) + "_superNormalMinus_avg.bigwig",
+                    normalMinusRanges);
 
         }
 

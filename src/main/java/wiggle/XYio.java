@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import wiggle.SimplifyArray.Range;
 
 public class XYio {
 
@@ -14,38 +15,15 @@ public class XYio {
         double[] res;
         int length = 0;
 
-        // forward = 1; reverse = -1
-        // unknown = 0: In this case the strand is encoded in the values:
-        // negative = fow; positive = rev
-
-        //int strand = 1;
-		
-		/*/determine length
-		BufferedReader br = new BufferedReader(new FileReader(filepath));
-		String lastline = null;
-		for(String line = br.readLine();line!=null;line=br.readLine())
-		{
-			if(line.trim().length()!=0)
-				lastline=line;
-		}
-		br.close();
-		
-		if(lastline==null)
-			throw new Error(filepath+" is empty!");
-		
-		length = Integer.parseInt(lastline.trim().split("[\\s]+")[0]);
-		
-		//*/
-
         res = new double[genomeLength + 1];
 
-        //do not parse non existing file
+        // do not parse non existing file
         if (filepath == null || filepath.trim().length() == 0) {
             res[0] = strand;
             return res;
         }
 
-        //read
+        // read
         BufferedReader br = new BufferedReader(new FileReader(filepath));
         int index;
         double value;
@@ -61,9 +39,6 @@ public class XYio {
             } catch (NumberFormatException e) {
                 continue;
             }
-
-            //if(value<0)//set strand
-            //strand = -1;
 
             value = Math.abs(value);
 
@@ -96,11 +71,15 @@ public class XYio {
             value = xyTrack[i] * scale;
             if (value == 0)
                 continue;
-
-            //value = Math.round(value*10000)/10000.;
-
             bw.append(i + "\t" + value * strand + "\n");
         }
         bw.close();
+    }
+
+    public static void writeListRangeFile(String filename, java.util.List<Range> list) throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(filename));
+        for (Range r : list) {
+            bw.append(r.toString() + "\n");
+        }
     }
 }

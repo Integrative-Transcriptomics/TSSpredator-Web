@@ -1,4 +1,6 @@
 package wiggle;
+import java.util.List;
+import wiggle.SimplifyArray.Range;
 
 public class XYtools {
 
@@ -39,5 +41,8 @@ public class XYtools {
 		// return the aggregated values
 		return aggregatedWiggles;
 	}
-
+	public static List<Range> simplifyArray(double[] array) {
+		List<Range> result = SimplifyArray.simplifyArray(array);
+		return result;
+	}
 }

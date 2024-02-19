@@ -27,14 +27,24 @@ public class SimplifyArray {
         if (array == null || array.length == 0) {
             return result;
         }
+        double scale = 1;
+        if (XYnorm.minNormValue != Integer.MAX_VALUE) {
+            scale = XYnorm.minNormValue;
+        }
 
-        int start = 0;
-        double currentValue = array[0];
+        double strand = array[0];
 
-        for (int i = 1; i < array.length; i++) {
-            if (array[i] != currentValue) {
+        if (strand == 0) {
+            strand = 1; // keep values as they are
+        }
+
+        int start = 1;
+        double currentValue = array[start]*scale;
+        for (int i = 2; i < array.length - 1; i++) {
+            double value = array[i] * scale;
+            if (value != currentValue) {
                 result.add(new Range(start, i - 1, currentValue));
-                currentValue = array[i];
+                currentValue = value;
                 start = i;
             }
         }

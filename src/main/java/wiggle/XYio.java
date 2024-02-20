@@ -78,6 +78,7 @@ public class XYio {
 
     public static void writeListRangeFile(String filename, java.util.List<Range> list) throws IOException {
         BufferedWriter bw = new BufferedWriter(new FileWriter(filename));
+        bw.append("start\tend\tvalue\n");
         for (Range r : list) {
             bw.append(r.toString() + "\n");
         }

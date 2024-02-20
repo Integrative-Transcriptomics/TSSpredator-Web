@@ -2,7 +2,7 @@ from asyncio.subprocess import PIPE
 from shutil import make_archive, rmtree, unpack_archive
 from time import time
 import traceback
-from flask import Flask, request, send_file, send_from_directory, jsonify, session
+from flask import Flask, request, send_file, send_from_directory, jsonify, session, url_for
 from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
@@ -87,7 +87,7 @@ def helperAsyncPredator(self, *args ):
         self.update_state(state='RUNNING', meta={'projectName': projectName})
         serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
         # join server Location to find TSSpredator
-        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator2.jar')
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredatorBigWig4.jar')
         # Run JAR file
         result = subprocess.run(['java', '-jar',tsspredatorLocation, jsonString], 
                                 stdout=subprocess.PIPE, 
@@ -235,6 +235,7 @@ def parameters():
 @app.route('/api/result/<filePath>/')
 def getFiles(filePath):
     '''send result of TSS prediction to frontend'''
+    print(filePath)
     # get path of zip file
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
     if os.path.exists(completePath):
@@ -363,24 +364,19 @@ def parseSuperGFF (path):
     
 def parseRNAGraphs(tmpdir, genomeKey):
     '''parse RNA graphs and return as JSON'''
+    print(tmpdir)
+    # get only last part of tmpdir
+    lastPart = tmpdir.split('/')[-1]
+    print(lastPart)
     data_per_type = {}
     data_per_type['plus'] = {}
     data_per_type['minus'] = {}
     for graphType in ['NormalPlus', 'NormalMinus', 'FivePrimePlus', 'FivePrimeMinus']:
-        graphPath = os.path.join(tmpdir, f'{genomeKey}_super{graphType}_avg.gr')
+        graphPath = os.path.join(tmpdir, f'{genomeKey}_super{graphType}_avg.bigwig')
         justGraphType = graphType.replace('Plus', '').replace('Minus', '')
+        strand = "plus" if "Plus" in graphType else "minus"
         if os.path.exists(graphPath):
-            strand = "plus" if "Plus" in graphType else "minus"
-            data_per_type[strand][justGraphType] = []
-            with open(graphPath, 'r') as f:
-                for line in f:
-                    if line.startswith('variableStep'):
-                        continue
-                    line = line.rstrip().split('\t')
-                    data_per_type[strand][justGraphType].append({
-                        "pos": line[0],
-                        "value": float(line[1]),
-                    })
+            data_per_type[strand][justGraphType] = {'path': lastPart, 'filename': f'{genomeKey}_super{graphType}_avg.bigwig'}
     return data_per_type
 
 def aggregateTSS(tssList, maxGenome):
@@ -412,15 +408,28 @@ def aggregateTSS(tssList, maxGenome):
                 tempValue['binEnd'] = min(binEnd, maxGenome)
                 expanded_countedTSS.append(tempValue)
             maxBinCount = {"+": max(maxBinCount["+"], binSum["+"]), "-": max(maxBinCount["-"], binSum["-"])}
-            if binSum['+'] ==64:
-                print(expanded_countedTSS)
             aggregatedTSS[binSize].extend(expanded_countedTSS)
         binSizeMax[binSize] = maxBinCount
        
     return aggregatedTSS, binSizeMax
 
 
-    
+@app.route('/api/provideBigWig/<filePath>/<fileName>/')
+def provideBigWig(filePath, fileName):
+    '''provide bigwig file to frontend'''
+    # get path of bigwig file
+    print(filePath)
+    completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/' + fileName
+    print(completePath)
+    if os.path.exists(completePath):
+        return send_file(completePath, mimetype='application/octet-stream')
+    else:
+        resp = Flask.make_response(app, rv="File not found")
+        resp.status_code = 404
+        resp.headers['Error'] = 'File Not found'
+        # if file not found, send error message
+        return resp
+       
 @app.route('/api/TSSViewer/<filePath>/')
 def getTSSViewer(filePath):
     '''send result of TSS prediction to frontend'''
@@ -429,24 +438,24 @@ def getTSSViewer(filePath):
     if os.path.exists(completePath):
          # Unzip MasterTable
         try:
-            with tempfile.TemporaryDirectory(prefix="tmpPredViewer") as tmpdir:
-                unpack_archive(completePath, tmpdir)
-                # get path of MasterTable
-                masterTablePath = tmpdir + '/MasterTable.tsv'
-                # read MasterTable
-                masterTable = readMasterTable(masterTablePath)
-                for genomeKey in masterTable.keys():
-                    masterTable[genomeKey]['TSS'] = list(masterTable[genomeKey]['TSS'].values())
-                    # get path of SuperGFF
-                    superGFFPath = tmpdir + '/' + genomeKey + '_super.gff'
-                    # read SuperGFF
-                    masterTable[genomeKey]['superGFF'], maxValue = parseSuperGFF(superGFFPath)
-                    masterTable[genomeKey]['maxValue'] = maxValue
-                    masterTable[genomeKey]['aggregatedTSS'], maxValueTSS = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
-                    masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
-                    # masterTable[genomeKey]['RNAGraphs'] = parseRNAGraphs(tmpdir, genomeKey)
+            tmpdir = tempfile.mkdtemp(prefix='tmpPredViewer')
+            unpack_archive(completePath, tmpdir)
+            # get path of MasterTable
+            masterTablePath = tmpdir + '/MasterTable.tsv'
+            # read MasterTable
+            masterTable = readMasterTable(masterTablePath)
+            for genomeKey in masterTable.keys():
+                masterTable[genomeKey]['TSS'] = list(masterTable[genomeKey]['TSS'].values())
+                # get path of SuperGFF
+                superGFFPath = tmpdir + '/' + genomeKey + '_super.gff'
+                # read SuperGFF
+                masterTable[genomeKey]['superGFF'], maxValue = parseSuperGFF(superGFFPath)
+                masterTable[genomeKey]['maxValue'] = maxValue
+                masterTable[genomeKey]['aggregatedTSS'], maxValueTSS = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
+                masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
+                masterTable[genomeKey]['RNAGraphs'] = parseRNAGraphs(tmpdir, genomeKey)
 
-                return jsonify({'result': 'success', 'data': masterTable})
+            return jsonify({'result': 'success', 'data': masterTable})
         except Exception as e:
             print(e)
             traceback.print_exc() 

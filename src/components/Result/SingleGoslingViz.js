@@ -16,6 +16,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
     const fetchData = async (dataKey) => {
         const dataPerGenome = await fetch(`/api/TSSViewer/${dataKey}/`);
         const data = await dataPerGenome.json();
+        console.log("Data fetched", data);
         return data;
     };
 
@@ -233,9 +234,9 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
 
                 "tracks": [{
                     "data": {
-                        "values": wiggleData,
-                        "type": "json",
-                        "genomicFields": ["pos"]
+                        "url": `/api/provideBigWig/${wiggleData["FivePrime"]["path"]}/${wiggleData["FivePrime"]["filename"]}`,
+                        "type": "bigwig",
+                        value: "peak"
                     },
                     "mark": "line",
                     "x": { "field": "pos", "type": "genomic", "axis": "none" },
@@ -297,9 +298,8 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
     const createTracks = (data, title, maxGenome) => {
         let geneTracks = createGeneTrack(data["superGFF"]);
         // create dummy wiggle data
-        let dummyWiggleData = Array.from({ length: maxGenome }, (_, i) => ({ "pos": i + 1, "value": 100 }));
-        let TSSTracks_plus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], dummyWiggleData, "+", maxGenome, title);
-        let TSSTracks_minus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], [{ "pos": 1, "value": 200 }], "-", maxGenome);
+        let TSSTracks_plus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], data["RNAGraphs"]["plus"], "+", maxGenome, title);
+        let TSSTracks_minus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], data["RNAGraphs"]["minus"], "-", maxGenome);
         return TSSTracks_plus.concat(geneTracks).concat(TSSTracks_minus);
     }
 

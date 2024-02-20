@@ -39,11 +39,13 @@ public class SimplifyArray {
         }
 
         int start = 1;
-        double currentValue = array[start]*scale;
+        double currentValue = array[start] * scale;
         for (int i = 2; i < array.length - 1; i++) {
             double value = array[i] * scale;
             if (value != currentValue) {
-                result.add(new Range(start, i - 1, currentValue));
+                if (currentValue != 0) {
+                    result.add(new Range(start, i - 1, currentValue));
+                }
                 currentValue = value;
                 start = i;
             }

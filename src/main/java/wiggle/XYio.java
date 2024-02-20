@@ -81,5 +81,6 @@ public class XYio {
         for (Range r : list) {
             bw.append(r.toString() + "\n");
         }
+        bw.close();
     }
 }

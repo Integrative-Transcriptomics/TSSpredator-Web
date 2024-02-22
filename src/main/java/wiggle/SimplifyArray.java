@@ -20,6 +20,10 @@ public class SimplifyArray {
         public String toString() {
             return start + "\t" + end + "\t" + value;
         }
+
+        public String separateRangetoString() {
+            return start + "\t" + value + "\n" + end + "\t" + value + "\n";
+        }
     }
 
     public static List<Range> simplifyArray(double[] array) {

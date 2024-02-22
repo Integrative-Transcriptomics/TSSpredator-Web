@@ -20,7 +20,6 @@ import wiggle.ioNew.WiggleParser;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.SimpleTimeZone;
 
 import wiggle.SimplifyArray.Range;
 
@@ -483,15 +482,6 @@ public class Main {
             double[] aggregatedNormalPlus = XYtools.aggregateWiggles(collectNormalPlus);
             double[] aggregatedFivePrimeMinus = XYtools.aggregateWiggles(collectFivePrimeMinus);
             double[] aggregatedNormalMinus = XYtools.aggregateWiggles(collectNormalMinus);
-            // Write the aggregated superGenomified data to a file
-            XYio.writeXYfile(aggregatedFivePrimePlus,
-                    outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimePlus_avg.gr", "super");
-            XYio.writeXYfile(aggregatedNormalPlus,
-                    outDir + Config.getString("outputPrefix_" + id) + "_superNormalPlus_avg.gr", "super");
-            XYio.writeXYfile(aggregatedFivePrimeMinus,
-                    outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimeMinus_avg.gr", "super");
-            XYio.writeXYfile(aggregatedNormalMinus,
-                    outDir + Config.getString("outputPrefix_" + id) + "_superNormalMinus_avg.gr", "super");
 
             // From Wiggle to BigWig
             List<Range> fivePrimePlusRanges = XYtools.simplifyArray(aggregatedFivePrimePlus);
@@ -500,13 +490,17 @@ public class Main {
             List<Range> normalMinusRanges = XYtools.simplifyArray(aggregatedNormalMinus);
 
             // Write out the ranges
-            XYio.writeListRangeFile(outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimePlus_avg.bigwig",
+            XYio.writeListSeparateRangeFile(
+                    outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimePlus_avg.bigwig",
                     fivePrimePlusRanges);
-            XYio.writeListRangeFile(outDir + Config.getString("outputPrefix_" + id) + "_superNormalPlus_avg.bigwig",
+            XYio.writeListSeparateRangeFile(
+                    outDir + Config.getString("outputPrefix_" + id) + "_superNormalPlus_avg.bigwig",
                     normalPlusRanges);
-            XYio.writeListRangeFile(outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimeMinus_avg.bigwig",
+            XYio.writeListSeparateRangeFile(
+                    outDir + Config.getString("outputPrefix_" + id) + "_superFivePrimeMinus_avg.bigwig",
                     fivePrimeMinusRanges);
-            XYio.writeListRangeFile(outDir + Config.getString("outputPrefix_" + id) + "_superNormalMinus_avg.bigwig",
+            XYio.writeListSeparateRangeFile(
+                    outDir + Config.getString("outputPrefix_" + id) + "_superNormalMinus_avg.bigwig",
                     normalMinusRanges);
 
         }

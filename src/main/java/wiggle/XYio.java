@@ -84,4 +84,13 @@ public class XYio {
         }
         bw.close();
     }
+
+    public static void writeListSeparateRangeFile(String filename, java.util.List<Range> list) throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(filename));
+        bw.append("continious_position\tvalue\n");
+        for (Range r : list) {
+            bw.append(r.separateRangetoString() + "\n");
+        }
+        bw.close();
+    }
 }

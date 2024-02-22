@@ -162,7 +162,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                     "separator": "\t",
                 },
                 "mark": "line",
-                "x": { "field": "start", "type": "genomic" },
+                "x": { "field": "continious_position", "type": "genomic" },
                 "y": { "field": "value", "type": "quantitative" },
                 "color": { "value": "orange" },
                 "visibility": [
@@ -183,7 +183,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                     // "genomicFields": ["pos"],
                 },
                 "mark": "line",
-                "x": { "field": "start", "type": "genomic" },
+                "x": { "field": "continious_position", "type": "genomic" },
                 "y": { "field": "value", "type": "quantitative" },
                 "color": { "value": "gray" },
                 "visibility": [

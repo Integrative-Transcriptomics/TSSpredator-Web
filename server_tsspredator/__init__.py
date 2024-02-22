@@ -88,7 +88,7 @@ def helperAsyncPredator(self, *args ):
         self.update_state(state='RUNNING', meta={'projectName': projectName})
         serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
         # join server Location to find TSSpredator
-        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredatorBigWig.jar')
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
         # Run JAR file
         result = subprocess.run(['java', '-jar',tsspredatorLocation, jsonString], 
                                 stdout=subprocess.PIPE, 
@@ -364,29 +364,6 @@ def parseSuperGFF (path):
             maxValue = max(maxValue, int(line[4]))
             
     return data_per_gene, maxValue
-    
-def fromBigWigToJSON(path):
-    '''parse bigwig file and return as JSON'''
-    data = []
-    with open(path, 'r') as f:
-        for line in f:
-            if line.startswith('start'):
-                continue
-            line = line.rstrip().split(';')
-            data.append(
-            {
-                "start": line[0],
-                "value": float(line[2])
-            }
-            )
-            if line[1] != line[0]:
-                data.append(
-                {
-                    "start": line[1],
-                    "value": float(line[2])
-                }
-                )
-    return data
 
 def parseRNAGraphs(tmpdir, genomeKey):
     '''parse RNA graphs and return as JSON'''
@@ -401,6 +378,7 @@ def parseRNAGraphs(tmpdir, genomeKey):
         justGraphType = graphType.replace('Plus', '').replace('Minus', '')
         strand = "plus" if "Plus" in graphType else "minus"
         if os.path.exists(graphPath):
+            # Save just file name and path, otherwise too much data is sent to frontend
             data_per_type[strand][justGraphType] = {'path': lastPart, 'filename': f'{genomeKey}_super{graphType}_avg.bigwig'}
     return data_per_type
 
@@ -443,14 +421,8 @@ def aggregateTSS(tssList, maxGenome):
 def provideBigWig(filePath, fileName):
     '''provide bigwig file to frontend'''
     # get path of bigwig file
-    #providing bigwig file to frontend
-    print("Provide bigwig file")
-    print(filePath)
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/' + fileName
-    print(completePath)
     if os.path.exists(completePath):
-        #parse bigwig file and return as JSON
-        # return jsonify(fromBigWigToJSON(completePath))
         return send_file(completePath, mimetype='text/plain')
     else:
         resp = Flask.make_response(app, rv="File not found")

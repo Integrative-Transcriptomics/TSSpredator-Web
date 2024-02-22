@@ -22,7 +22,7 @@ public class SimplifyArray {
         }
 
         public String separateRangetoString() {
-            return start + "\t" + value + "\n" + end + "\t" + value + "\n";
+            return start + "\t" + value + "\n" + end + "\t" + value;
         }
     }
 

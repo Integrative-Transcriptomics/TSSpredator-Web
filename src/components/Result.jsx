@@ -9,6 +9,7 @@ import "../css/MasterTable.css";
 import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
 import Header from "./Main/Header";
+import SingleWiggleViz from "./Result/SingleWiggleViz";
 
 /**
  * creates page that displays result of TSS prediction
@@ -268,7 +269,7 @@ function Result() {
     <>
       <Header />
 
-
+      <SingleWiggleViz />
       { // if file not found
         // TODO: improve 404 page
         blob === 404 ? <h2>404: File not found</h2> :

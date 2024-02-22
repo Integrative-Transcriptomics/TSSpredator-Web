@@ -16,7 +16,6 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
     const fetchData = async (dataKey) => {
         const dataPerGenome = await fetch(`/api/TSSViewer/${dataKey}/`);
         const data = await dataPerGenome.json();
-        console.log("Data fetched", data);
         return data;
     };
 
@@ -26,15 +25,18 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
             return data;
         };
 
+
         const fetchDataAndSetSpec = async () => {
             try {
                 const data = await fetchDataPerGenome();
+
+
                 if (data["result"] !== "success") {
                     console.error("Error fetching data:", data);
                     return;
                 }
                 const maxValue = Math.max(...Object.values(data["data"]).map(d => d["maxValue"]));
-                const allViews = getViews(data["data"])
+                const allViews = await getViews(data["data"], data["rnaData"])
                 const distributedViews = [{
                     "arrangement": "vertical",
                     "views": allViews.filter((_, i) => i < allViews.length / 2)
@@ -50,7 +52,6 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                     "spacing": 50,
                     "linkingId": "detail",
                     "zoomLimits": [0, maxValue],
-
                     "views": distributedViews
                 };
                 setSpec(spec);
@@ -151,10 +152,41 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
 
 
     }
+    const createWiggleTracks = async (tempFiles, fileNameEnriched, fileNameNormal) => {
+        let getWiggleData = async (tmpFile, fileName) => {
+            let response = await fetch(`/api/provideBigWig/${tmpFile}/${fileName}/`);
+            let data = await response.json();
+            return data;
+        }
+        let dataArray = await Promise.all([getWiggleData(tempFiles, fileNameEnriched), getWiggleData(tempFiles, fileNameNormal)]);
+        console.log(dataArray)
 
-    const createTSSTrack = (data, aggregatedTSS, binSizes, wiggleData, strand, maxGenome, title = null) => {
-        console.log("Creating TSS track for strand", strand);
-        console.log("Wiggle", wiggleData);
+        return [
+            {
+                "data": {
+                    "values": dataArray[0],
+                    "type": "json",
+                    "genomicFields": ["pos"],
+                },
+                "mark": "line",
+                "x": { "field": "pos", "type": "genomic" },
+                "y": { "field": "value", "type": "quantitative" },
+                "color": { "value": "black" },
+
+            }, {
+                "data": {
+                    "values": dataArray[1],
+                    "type": "json",
+                    "genomicFields": ["pos"],
+                },
+                "mark": "line",
+                "x": { "field": "pos", "type": "genomic" },
+                "y": { "field": "value", "type": "quantitative" },
+                "color": { "value": "black" },
+            }]
+    }
+
+    const createTSSTrack = async (data, aggregatedTSS, binSizes, wiggleData, strand, maxGenome, title = null) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
         let sizesBins = Object.keys(binSizes).sort((a, b) => parseInt(a) - parseInt(b)).map((size, i, arr) => {
             return {
@@ -221,6 +253,9 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                 ]
             }
         });
+        console.log(wiggleData)
+        // let specsWiggle = await createWiggleTracks(wiggleData["Normal"]["path"], wiggleData["FivePrime"]["filename"], wiggleData["Normal"]["filename"])
+        // console.log(specsWiggle)
         return [
             {
 
@@ -232,62 +267,44 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                 },
 
 
-                "tracks": [{
-                    "data": {
-                        "url": `/api/provideBigWig/${wiggleData["FivePrime"]["path"]}/${wiggleData["FivePrime"]["filename"]}`,
-                        "type": "bigwig",
-                        value: "peak"
-                    },
-                    "mark": "line",
-                    "x": { "field": "pos", "type": "genomic", "axis": "none" },
-                    "y": { "field": "value", "type": "quantitative", "axis": "right" },
-                    "color": { "value": "black" },
-                    "size": { "value": 2 },
-                    "visibility": [
-                        {
-                            "operation": "LT",
-                            "measure": "zoomLevel",
-                            "threshold": TSS_DETAIL_LEVEL_ZOOM,
-                            "transitionPadding": 0,
-                            "target": "track"
-                        }
-                    ]
-                },
-                {
-                    "title": title,
-                    "dataTransform": [
-                        { "type": "filter", "field": "superStrand", "oneOf": [strand] }
-                    ],
-                    "x": { "field": "superPos", "type": "genomic", "axis": strand === "+" ? "top" : "none" },
-                    "mark": strand === "+" ? "triangleRight" : "triangleLeft",
-                    "style": { "align": strand === "+" ? "left" : "right" },
-                    "size": { "value": 10, "legend": false, axis: "none" },
-                    "color": {
-                        "field": "mainClass",
-                        "type": "nominal",
-                        "domain": ORDER_TSS_CLASSES,
-                        "range": COLORS_TSS,
-                        "legend": strand === "+"
-                    },
-                    "tooltip": [
-                        { "field": "superPos", "type": "genomic", "alt": "TSS Position" },
-                        {
+                "tracks": [
+                    {
+                        "title": title,
+                        "dataTransform": [
+                            { "type": "filter", "field": "superStrand", "oneOf": [strand] }
+                        ],
+                        "x": { "field": "superPos", "type": "genomic", "axis": strand === "+" ? "top" : "none" },
+                        "mark": strand === "+" ? "triangleRight" : "triangleLeft",
+                        "style": { "align": strand === "+" ? "left" : "right" },
+                        "size": { "value": 10, "legend": false, axis: "none" },
+                        "color": {
                             "field": "mainClass",
                             "type": "nominal",
-                            "alt": "Main TSS class",
+                            "domain": ORDER_TSS_CLASSES,
+                            "range": COLORS_TSS,
+                            "legend": strand === "+"
                         },
-                        { "field": "classesTSS", "alt": "All TSS classes" },
-                    ],
-                    "visibility": [
-                        {
-                            "operation": "LT",
-                            "measure": "zoomLevel",
-                            "threshold": TSS_DETAIL_LEVEL_ZOOM,
-                            "transitionPadding": 0,
-                            "target": "track"
-                        }
-                    ]
-                }, ...binnedViews
+                        "tooltip": [
+                            { "field": "superPos", "type": "genomic", "alt": "TSS Position" },
+                            {
+                                "field": "mainClass",
+                                "type": "nominal",
+                                "alt": "Main TSS class",
+                            },
+                            { "field": "classesTSS", "alt": "All TSS classes" },
+                        ],
+                        "visibility": [
+                            {
+                                "operation": "LT",
+                                "measure": "zoomLevel",
+                                "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                                "transitionPadding": 0,
+                                "target": "track"
+                            }
+                        ]
+                    }, ...binnedViews,
+                    // ...specsWiggle
+
 
                 ]
             }
@@ -295,15 +312,16 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
         ]
     }
 
-    const createTracks = (data, title, maxGenome) => {
+    const createTracks = async (data, rnaData, title, maxGenome) => {
         let geneTracks = createGeneTrack(data["superGFF"]);
         // create dummy wiggle data
-        let TSSTracks_plus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], data["RNAGraphs"]["plus"], "+", maxGenome, title);
-        let TSSTracks_minus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], data["RNAGraphs"]["minus"], "-", maxGenome);
-        return TSSTracks_plus.concat(geneTracks).concat(TSSTracks_minus);
+        let TSSTracks_plus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], rnaData["plus"], "+", maxGenome, title);
+        let TSSTracks_minus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], rnaData["minus"], "-", maxGenome);
+        let TSSTracks = await Promise.all([TSSTracks_plus, TSSTracks_minus]);
+        return [...TSSTracks[0], ...geneTracks, ...TSSTracks[1]];
     }
 
-    const getViews = (data) => {
+    const getViews = async (data, rnaData) => {
         let views = [];
         for (let genome of Object.keys(data)) {
             views.push({
@@ -313,7 +331,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                 "assembly": [["", data[genome]["maxValue"]]],
                 "spacing": 0,
                 "layout": "linear",
-                "tracks": createTracks(data[genome], genome, data[genome]["maxValue"])
+                "tracks": await createTracks(data[genome], rnaData[genome], genome, data[genome]["maxValue"])
             })
         }
         return views;

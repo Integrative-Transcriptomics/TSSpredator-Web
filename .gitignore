@@ -34,3 +34,5 @@ server_tsspredator/exampleData/campylobacter/files.zip
 server_tsspredator/exampleData/pseudomonas/files.zip
 server_tsspredator.egg-info
 .npmrc
+.gradle
+bin

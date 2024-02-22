@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
 import collections
+import codecs
 
 import json
 import tempfile
@@ -87,7 +88,7 @@ def helperAsyncPredator(self, *args ):
         self.update_state(state='RUNNING', meta={'projectName': projectName})
         serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
         # join server Location to find TSSpredator
-        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredatorBigWig4.jar')
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredatorBigWig.jar')
         # Run JAR file
         result = subprocess.run(['java', '-jar',tsspredatorLocation, jsonString], 
                                 stdout=subprocess.PIPE, 
@@ -362,12 +363,41 @@ def parseSuperGFF (path):
             
     return data_per_gene, maxValue
     
+def fromBigWigToJSON(path):
+    '''parse bigwig file and return as JSON'''
+    data = []
+    with open(path, 'r') as f:
+        for line in f:
+            if line.startswith('start'):
+                continue
+            line = line.rstrip().split('\t')
+            data.append(
+            {
+                "start": line[0],
+                "value": float(line[2])
+            }
+            )
+            if line[1] != line[0]:
+                data.append(
+                {
+                    "start": line[1],
+                    "value": float(line[2])
+                }
+                )
+    return data
+@app.route('/getFile/parsetest/<filePath>/')
+def testFile(filePath):
+    '''test if file exists'''
+    path= "/var/folders/1n/xbwg0k_91bs2lc1hp8gksr1m0000gn/T/tmpPredViewerq11_qxz8/NC_009839_superFivePrimePlus_avg.bigwig"
+    print("API ACCESSED")
+    # return '10\t10\t10000\n\n100000\t100s000\t10000'
+    return send_file(path, mimetype='text/plain')
+
 def parseRNAGraphs(tmpdir, genomeKey):
     '''parse RNA graphs and return as JSON'''
     print(tmpdir)
     # get only last part of tmpdir
     lastPart = tmpdir.split('/')[-1]
-    print(lastPart)
     data_per_type = {}
     data_per_type['plus'] = {}
     data_per_type['minus'] = {}
@@ -418,11 +448,15 @@ def aggregateTSS(tssList, maxGenome):
 def provideBigWig(filePath, fileName):
     '''provide bigwig file to frontend'''
     # get path of bigwig file
+    #providing bigwig file to frontend
+    print("Provide bigwig file")
     print(filePath)
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/' + fileName
     print(completePath)
     if os.path.exists(completePath):
-        return send_file(completePath, mimetype='application/octet-stream')
+        #parse bigwig file and return as JSON
+        return jsonify(fromBigWigToJSON(completePath))
+        return send_file(completePath, mimetype='text/plain')
     else:
         resp = Flask.make_response(app, rv="File not found")
         resp.status_code = 404
@@ -437,6 +471,7 @@ def getTSSViewer(filePath):
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
     if os.path.exists(completePath):
          # Unzip MasterTable
+        rnaData = {}
         try:
             tmpdir = tempfile.mkdtemp(prefix='tmpPredViewer')
             unpack_archive(completePath, tmpdir)
@@ -453,9 +488,10 @@ def getTSSViewer(filePath):
                 masterTable[genomeKey]['maxValue'] = maxValue
                 masterTable[genomeKey]['aggregatedTSS'], maxValueTSS = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
                 masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
-                masterTable[genomeKey]['RNAGraphs'] = parseRNAGraphs(tmpdir, genomeKey)
-
-            return jsonify({'result': 'success', 'data': masterTable})
+                rnaData[genomeKey] = {}
+                rnaData[genomeKey] = parseRNAGraphs(tmpdir, genomeKey)
+            test = jsonify({'result': 'success', 'data': masterTable, 'rnaData': rnaData})
+            return test
         except Exception as e:
             print(e)
             traceback.print_exc() 

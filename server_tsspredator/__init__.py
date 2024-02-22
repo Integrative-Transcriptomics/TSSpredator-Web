@@ -3,7 +3,6 @@ from shutil import make_archive, rmtree, unpack_archive
 from time import time
 import traceback
 from flask import Flask, request, send_file, send_from_directory, jsonify, session
-from flask_cors import CORS, cross_origin
 from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
@@ -37,7 +36,6 @@ def celery_init_app(app: Flask) -> Celery:
 
 app = Flask(__name__, static_folder='../build', static_url_path='/')
 app.secret_key = os.getenv('SECRET_KEY_TSSPREDATOR', "BAD_SECRET_KEY")
-CORS(app)
 
 
 host_redis = os.getenv('TSSPREDATOR_REDIS_HOST', 'localhost')
@@ -389,24 +387,6 @@ def fromBigWigToJSON(path):
                 }
                 )
     return data
-@app.route('/api/getFile/parsetest/<filePath>/')
-@cross_origin()
-def testFile(filePath):
-    '''test if file exists'''
-    path= "/var/folders/1n/xbwg0k_91bs2lc1hp8gksr1m0000gn/T/tmpPredViewerq11_qxz8/NC_009839_superFivePrimePlus_avg.bigwig"
-    print("API ACCESSED")
-    response = send_file(path, mimetype='text/plain')
-    return response
-
-@app.route('/api/getFile/parsejson/<filePath>/')
-@cross_origin()
-def testJSON(filePath):
-    '''test if file exists'''
-    path= "/var/folders/1n/xbwg0k_91bs2lc1hp8gksr1m0000gn/T/tmpPredViewerq11_qxz8/NC_009839_superFivePrimePlus_avg.bigwig"
-    readAsJSON = fromBigWigToJSON(path)
-    print("API JSON ACCESSED")
-    
-    return jsonify(readAsJSON)
 
 def parseRNAGraphs(tmpdir, genomeKey):
     '''parse RNA graphs and return as JSON'''
@@ -470,7 +450,7 @@ def provideBigWig(filePath, fileName):
     print(completePath)
     if os.path.exists(completePath):
         #parse bigwig file and return as JSON
-        return jsonify(fromBigWigToJSON(completePath))
+        # return jsonify(fromBigWigToJSON(completePath))
         return send_file(completePath, mimetype='text/plain')
     else:
         resp = Flask.make_response(app, rv="File not found")

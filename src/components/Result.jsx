@@ -268,8 +268,6 @@ function Result() {
   return (
     <>
       <Header />
-
-      <SingleWiggleViz />
       { // if file not found
         // TODO: improve 404 page
         blob === 404 ? <h2>404: File not found</h2> :

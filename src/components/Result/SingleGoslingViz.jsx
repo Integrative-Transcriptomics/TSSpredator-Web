@@ -152,37 +152,49 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
 
 
     }
-    const createWiggleTracks = async (tempFiles, fileNameEnriched, fileNameNormal) => {
-        let getWiggleData = async (tmpFile, fileName) => {
-            let response = await fetch(`/api/provideBigWig/${tmpFile}/${fileName}/`);
-            let data = await response.json();
-            return data;
-        }
-        let dataArray = await Promise.all([getWiggleData(tempFiles, fileNameEnriched), getWiggleData(tempFiles, fileNameNormal)]);
-        console.log(dataArray)
+    const createWiggleTracks = (tempFiles, fileNameEnriched, fileNameNormal, TSS_DETAIL_LEVEL_ZOOM) => {
 
         return [
             {
                 "data": {
-                    "values": dataArray[0],
-                    "type": "json",
-                    "genomicFields": ["pos"],
+                    "url": `/api/provideBigWig/${tempFiles}/${fileNameEnriched}/`,
+                    "type": "csv",
+                    "separator": "\t",
                 },
                 "mark": "line",
-                "x": { "field": "pos", "type": "genomic" },
+                "x": { "field": "start", "type": "genomic" },
                 "y": { "field": "value", "type": "quantitative" },
-                "color": { "value": "black" },
+                "color": { "value": "orange" },
+                "visibility": [
+                    {
+                        "operation": "LT",
+                        "measure": "zoomLevel",
+                        "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                        "transitionPadding": 0,
+                        "target": "track"
+                    }
+                ]
 
             }, {
                 "data": {
-                    "values": dataArray[1],
-                    "type": "json",
-                    "genomicFields": ["pos"],
+                    "url": `/api/provideBigWig/${tempFiles}/${fileNameNormal}/`,
+                    "type": "csv",
+                    "separator": "\t",
+                    // "genomicFields": ["pos"],
                 },
                 "mark": "line",
-                "x": { "field": "pos", "type": "genomic" },
+                "x": { "field": "start", "type": "genomic" },
                 "y": { "field": "value", "type": "quantitative" },
-                "color": { "value": "black" },
+                "color": { "value": "gray" },
+                "visibility": [
+                    {
+                        "operation": "LT",
+                        "measure": "zoomLevel",
+                        "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                        "transitionPadding": 0,
+                        "target": "track"
+                    }
+                ]
             }]
     }
 
@@ -254,7 +266,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
             }
         });
         console.log(wiggleData)
-        // let specsWiggle = await createWiggleTracks(wiggleData["Normal"]["path"], wiggleData["FivePrime"]["filename"], wiggleData["Normal"]["filename"])
+        let specsWiggle = createWiggleTracks(wiggleData["Normal"]["path"], wiggleData["FivePrime"]["filename"], wiggleData["Normal"]["filename"], TSS_DETAIL_LEVEL_ZOOM)
         // console.log(specsWiggle)
         return [
             {
@@ -303,7 +315,7 @@ function GoslingGenomeViz({ dataKey, showPlot, filter }) {
                             }
                         ]
                     }, ...binnedViews,
-                    // ...specsWiggle
+                    ...specsWiggle
 
 
                 ]

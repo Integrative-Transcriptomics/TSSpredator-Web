@@ -13,7 +13,6 @@ export default defineConfig({
         proxy: {
             // this proxies requests to /api to http://localhost:8080
             '/api': 'http://127.0.0.1:5000',
-            '/getFile': 'http://127.0.0.1:5000'
         }
     },
 })

@@ -9,7 +9,6 @@ import "../css/MasterTable.css";
 import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
 import Header from "./Main/Header";
-import SingleWiggleViz from "./Result/SingleWiggleViz";
 
 /**
  * creates page that displays result of TSS prediction

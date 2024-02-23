@@ -7,7 +7,6 @@ from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
 import collections
-import codecs
 
 import json
 import tempfile
@@ -238,7 +237,6 @@ def parameters():
 @app.route('/api/result/<filePath>/')
 def getFiles(filePath):
     '''send result of TSS prediction to frontend'''
-    print(filePath)
     # get path of zip file
     completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
     if os.path.exists(completePath):
@@ -364,9 +362,9 @@ def parseSuperGFF (path):
             maxValue = max(maxValue, int(line[4]))
             
     return data_per_gene, maxValue
-
+    
 def parseRNAGraphs(tmpdir, genomeKey):
-    '''parse RNA graphs and return as JSON'''
+    '''parse RNA graphs and return path as json. Only send path, not the whole file.'''
     print(tmpdir)
     # get only last part of tmpdir
     lastPart = tmpdir.split('/')[-1]
@@ -379,7 +377,10 @@ def parseRNAGraphs(tmpdir, genomeKey):
         strand = "plus" if "Plus" in graphType else "minus"
         if os.path.exists(graphPath):
             # Save just file name and path, otherwise too much data is sent to frontend
-            data_per_type[strand][justGraphType] = {'path': lastPart, 'filename': f'{genomeKey}_super{graphType}_avg.bigwig'}
+            data_per_type[strand][justGraphType] = {
+                'path': lastPart, 
+                'filename': f'{genomeKey}_super{graphType}_avg.bigwig'
+                }
     return data_per_type
 
 def aggregateTSS(tssList, maxGenome):

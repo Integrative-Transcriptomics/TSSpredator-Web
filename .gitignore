@@ -5,6 +5,7 @@ node_modules
 /.pnp
 .pnp.js
 env
+/.vite
 
 # testing
 /coverage
@@ -12,6 +13,7 @@ env
 # production
 /build
 /data
+/dist
 
 # misc
 .DS_Store

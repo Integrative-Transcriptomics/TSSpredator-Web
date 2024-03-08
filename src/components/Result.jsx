@@ -32,6 +32,7 @@ function Result() {
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(true);
   const [filterForPlots, setFilterForPlots] = useState("enriched");
+  const [dataGosling, setDataGosling] = useState(null);
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
@@ -43,6 +44,11 @@ function Result() {
   // Genome Viewer
   const [showGFFViewer, setGFFViewer] = useState(false);
 
+  const fetchDataGosling = async (filePath) => {
+    const dataPerGenome = await fetch(`/api/TSSViewer/${filePath}/`);
+    const data = await dataPerGenome.json();
+    return data;
+  };
 
   /**
    * get all files from TSS prediction as .zip from server
@@ -129,7 +135,13 @@ function Result() {
             console.log("Error loading MasterTable file:", error);
           });
       });
-  }, [filePath]);
+    const dataGosling = fetchDataGosling(filePath);
+    dataGosling.then((data) => {
+      setDataGosling(data);
+    });
+
+
+  }, []);
 
   /**
    * download files action, after clicking on link
@@ -313,7 +325,8 @@ function Result() {
               {processedMasterTable ? (
                 <GoslingGenomeViz
                   showPlot={showGFFViewer}
-                  dataKey={filePath}
+                  dataGosling={dataGosling}
+                  filePath={filePath}
                   filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]} />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />

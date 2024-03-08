@@ -13,10 +13,12 @@ import tempfile
 import subprocess
 import os
 import glob
+import pandas as pd
 
 
 import server_tsspredator.parameter as parameter
 import server_tsspredator.server_handle_files as sf
+import server_tsspredator.server_visualization_processing as server_viz
 from celery import Celery, Task, shared_task
 
 tempfile.tempdir = os.getenv('TSSPREDATOR_TEMPDATA', tempfile.gettempdir())
@@ -73,7 +75,6 @@ def delete_temp_files(prefix):
 @shared_task(ignore_result=False, track_started=True, bind=True, name='helperAsyncPredator')
 def helperAsyncPredator(self, *args ):
     '''call jar file for TSS prediction and zip files'''
-    # [request, jsonString, resultDir, inputDir, annotationDir, projectName] = args
     [request, inputDir, annotationDir] = args
     jsonObject = json.loads(request)
     jsonObject['rnaGraph'] = "true" if jsonObject['rnaGraph'] else "false"
@@ -87,7 +88,7 @@ def helperAsyncPredator(self, *args ):
         self.update_state(state='RUNNING', meta={'projectName': projectName})
         serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
         # join server Location to find TSSpredator
-        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator2.jar')
         # Run JAR file
         result = subprocess.run(['java', '-jar',tsspredatorLocation, jsonString], 
                                 stdout=subprocess.PIPE, 
@@ -98,10 +99,19 @@ def helperAsyncPredator(self, *args ):
         if len(result.stderr) > 0:
             raise subprocess.CalledProcessError(result.returncode, result.args, stderr=result.stderr, output=result.stdout)
         tmpdirResult = tempfile.mkdtemp(prefix='tmpPredZippedResult')
+        # remove temp dir from jsonString
+        jsonString = jsonString.replace(annotationDir, "")
+        jsonString = jsonString.replace(inputDir, "")
+        jsonString = jsonString.replace(resultDir, "")
+        # write json string into tmpdirResult
+        with open(os.path.join(tmpdirResult, 'config.json'), 'w') as f:
+            f.write(jsonString)
         # print files in resultDir
         print(f"Files in {resultDir}: {os.listdir(resultDir)}")
         self.update_state(state='ZIP_RESULTS', meta={'projectName': projectName})
-
+        # Process results for visualization
+        server_viz.process_results(resultDir, tmpdirResult)
+        # Zip the results        
         make_archive(os.path.join(tmpdirResult,'result'), 'zip', resultDir)
         filePath = os.path.basename(tmpdirResult)
         return {"filePath":filePath, "stderr": result.stderr, "stdout": result.stdout, "inputDir": inputDir, "annotationDir": annotationDir, "tempResultsDir": resultDir, "projectName": projectName}
@@ -248,218 +258,22 @@ def getFiles(filePath):
         # if file not found, send error message
         return resp
     
-def getHeaderIndices(header):
-    print(header)
-    return {
-        'genome': header.index('Genome') if 'Genome' in header else header.index('Condition'),
-        'superPos': header.index('SuperPos'),
-        'superStrand': header.index('SuperStrand'),
-        'detected': header.index('detected'),
-        'enriched': header.index('enriched'),
-        'primary': header.index('Primary'),
-        'secondary': header.index('Secondary'),
-        'internal': header.index('Internal'),
-        'antisense': header.index('Antisense')
-    }
-
-def getTSSClass(line, headerIndices):
-    '''get TSS class from MasterTable'''
-    classesIndices = [headerIndices['primary'], headerIndices['secondary'], headerIndices['internal'], headerIndices['antisense']]
-    classLine = ",".join([ line[indexUsed] for indexUsed in classesIndices ])
-    match classLine:
-        case '1,0,0,0':
-            return 'Primary'
-        case '0,1,0,0':
-            return 'Secondary'
-        case '0,0,1,0':
-            return 'Internal'
-        case '0,0,0,1':
-            return 'Antisense'
-        case _:
-            return "Orphan"
-        
-def getTSSType(line, headerIndices):
-    '''get TSS type from MasterTable'''
-    tssClass = ",".join([line[indexUsed] for indexUsed in [headerIndices['detected'], headerIndices['enriched']]])
-    match tssClass:
-        case '1,0':
-            return 'Detected'
-        case '1,1':
-            return 'Enriched'
-        case _:
-            return "Undetected"
-        
-def decideMainClass(newClass, oldClass):
-    orderTSS = ['Primary', 'Secondary', 'Internal', 'Antisense', 'Orphan']
-    if orderTSS.index(newClass) < orderTSS.index(oldClass):
-        return newClass
-    else:
-        return oldClass
-    
-def readMasterTable(path):
-    '''read MasterTable and return as JSON'''
-    data_per_genome = {}
-    with open(path, 'r') as f:
-        # Parse Header
-        header = f.readline().rstrip().split('\t')
-        # get indices of relevant columns
-        headerIndices = getHeaderIndices(header)
-        for line in f:
-            line = line.rstrip().split('\t')
-            genome = line[headerIndices['genome']]
-            if genome not in data_per_genome:
-                data_per_genome[genome] = {}
-                data_per_genome[genome]['TSS'] = {}
-            superPos = line[headerIndices['superPos']]
-            superStrand = line[headerIndices['superStrand']]
-            tss_key = f"{superPos}_{superStrand}"
-            classesTSS = getTSSClass(line, headerIndices)
-            if tss_key not in data_per_genome[genome]["TSS"]:
-                typeTSS = getTSSType(line, headerIndices)
-                if typeTSS == "Undetected":
-                    continue
-                data_per_genome[genome]["TSS"][tss_key] = {
-                    'superPos': superPos,
-                    'superStrand': superStrand,
-                    'classesTSS': [classesTSS],
-                    "mainClass": classesTSS,
-                    'typeTSS': typeTSS, 
-                    "count": 1
-                }
-            else:
-                data_per_genome[genome]["TSS"][tss_key]['classesTSS'].append(classesTSS)
-                data_per_genome[genome]["TSS"][tss_key]['mainClass'] = decideMainClass(classesTSS, data_per_genome[genome]["TSS"][tss_key]['mainClass'])   
-    return data_per_genome
-
-
-def descriptionToObject(description):
-    '''convert description to object'''
-    data = {}
-    for entry in description:
-        entry = entry.split('=')
-        data[entry[0]] = entry[1]
-    return data
-
-
-def parseSuperGFF (path):
-    '''parse SuperGFF and return as JSON'''
-    data_per_gene = []
-    maxValue = 0
-    with open(path, 'r') as f:
-        for line in f:
-            if line.startswith('#'):
-                continue
-            line = line.rstrip().split('\t')
-            description = descriptionToObject(line[8].split(';'))
-            data_per_gene.append({
-                "start": line[3],
-                "end": line[4],
-                "strand": line[6],
-                "locus_tag": description.get('locus_tag', ''),
-                "gene_name": description.get('gene_name', ''),
-                "product": description.get('product', ''),
-            })
-            maxValue = max(maxValue, int(line[4]))
-            
-    return data_per_gene, maxValue
-    
-def parseRNAGraphs(tmpdir, genomeKey):
-    '''parse RNA graphs and return path as json. Only send path, not the whole file.'''
-    print(tmpdir)
-    # get only last part of tmpdir
-    lastPart = tmpdir.split('/')[-1]
-    data_per_type = {}
-    data_per_type['plus'] = {}
-    data_per_type['minus'] = {}
-    for graphType in ['NormalPlus', 'NormalMinus', 'FivePrimePlus', 'FivePrimeMinus']:
-        graphPath = os.path.join(tmpdir, f'{genomeKey}_super{graphType}_avg.bigwig')
-        justGraphType = graphType.replace('Plus', '').replace('Minus', '')
-        strand = "plus" if "Plus" in graphType else "minus"
-        if os.path.exists(graphPath):
-            # Save just file name and path, otherwise too much data is sent to frontend
-            data_per_type[strand][justGraphType] = {
-                'path': lastPart, 
-                'filename': f'{genomeKey}_super{graphType}_avg.bigwig'
-                }
-    return data_per_type
-
-def aggregateTSS(tssList, maxGenome):
-    '''aggregate TSS'''
-    aggregatedTSS = {}
-    binSizes = [5000,10000,50000]
-    binSizeMax = {}
-    for binSize in binSizes:
-        aggregatedTSS[binSize] = []
-        maxBinCount = {"+": 0, "-": 0}
-        for i in range(0, maxGenome, binSize):
-            binStart = i
-            binEnd = i + binSize
-            filteredTSS = [(tss["mainClass"],tss["superStrand"], tss["typeTSS"]) for tss in tssList if binStart <= int(tss["superPos"]) < binEnd]
-            countedTSS = dict(collections.Counter(filteredTSS))
-            expanded_countedTSS = []
-            binSum = {"+": 0, "-": 0}
-            for key in countedTSS.keys():
-
-                binSum[key[1]] += countedTSS[key]
-                tempValue = {}
-                tempValue['mainClass'] = key[0]
-                tempValue['strand'] = key[1]
-                tempValue['typeTSS'] = key[2]
-                tempValue['count'] = countedTSS[key]
-                
-                tempValue['binStart'] = binStart
-
-                tempValue['binEnd'] = min(binEnd, maxGenome)
-                expanded_countedTSS.append(tempValue)
-            maxBinCount = {"+": max(maxBinCount["+"], binSum["+"]), "-": max(maxBinCount["-"], binSum["-"])}
-            aggregatedTSS[binSize].extend(expanded_countedTSS)
-        binSizeMax[binSize] = maxBinCount
-       
-    return aggregatedTSS, binSizeMax
-
-
-@app.route('/api/provideBigWig/<filePath>/<fileName>/')
-def provideBigWig(filePath, fileName):
-    '''provide bigwig file to frontend'''
-    # get path of bigwig file
-    completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/' + fileName
-    if os.path.exists(completePath):
-        return send_file(completePath, mimetype='text/plain')
-    else:
-        resp = Flask.make_response(app, rv="File not found")
-        resp.status_code = 404
-        resp.headers['Error'] = 'File Not found'
-        # if file not found, send error message
-        return resp
+@app.route('/api/provideBigWig/<filePath>/<genome>/<strand>/<fileType>')
+def returnBigWig(filePath, genome, strand, fileType): 
+    completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f"{genome}_super{fileType}{strand}.bw")
+    return send_file(completePath, mimetype='text/plain')
        
 @app.route('/api/TSSViewer/<filePath>/')
 def getTSSViewer(filePath):
     '''send result of TSS prediction to frontend'''
     # get path of zip file
-    completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/result.zip'
+    completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/aggregated_data.json'
     if os.path.exists(completePath):
-         # Unzip MasterTable
-        rnaData = {}
         try:
-            tmpdir = tempfile.mkdtemp(prefix='tmpPredViewer')
-            unpack_archive(completePath, tmpdir)
-            # get path of MasterTable
-            masterTablePath = tmpdir + '/MasterTable.tsv'
-            # read MasterTable
-            masterTable = readMasterTable(masterTablePath)
-            for genomeKey in masterTable.keys():
-                masterTable[genomeKey]['TSS'] = list(masterTable[genomeKey]['TSS'].values())
-                # get path of SuperGFF
-                superGFFPath = tmpdir + '/' + genomeKey + '_super.gff'
-                # read SuperGFF
-                masterTable[genomeKey]['superGFF'], maxValue = parseSuperGFF(superGFFPath)
-                masterTable[genomeKey]['maxValue'] = maxValue
-                masterTable[genomeKey]['aggregatedTSS'], maxValueTSS = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
-                masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
-                rnaData[genomeKey] = {}
-                rnaData[genomeKey] = parseRNAGraphs(tmpdir, genomeKey)
-            test = jsonify({'result': 'success', 'data': masterTable, 'rnaData': rnaData})
-            return test
+            with open(completePath) as f:
+                data = json.load(f)
+                return jsonify(data)
+            
         except Exception as e:
             print(e)
             traceback.print_exc() 
@@ -512,7 +326,6 @@ def getAlignment():
 
         # call jar file for to extract genome names & ids
         result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)
-        
         if(len(result.stderr) == 0):
             return {'result': 'success', 'data':json.loads((result.stdout).decode())}
         else:
@@ -590,7 +403,6 @@ def saveConfig():
     configFilename = newTmpDir + '/configFile.config'
     # write JSON string 
     jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", 'false', 'true', configFilename, multiFasta)
-    print(jsonString)
     serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
     # join server Location to find TSSpredator
     tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')

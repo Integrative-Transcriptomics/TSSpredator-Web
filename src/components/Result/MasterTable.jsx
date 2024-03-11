@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useRef } from 'react';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useTable } from 'react-table';
 
 /**
@@ -7,7 +7,7 @@ import { useTable } from 'react-table';
  * @param tableData: all table rows
  * @param showTable: true <-> show table, else hidden
  */
-function MasterTable({ tableColumns, tableData, showTable }) {
+function MasterTable({ tableColumns, tableData, showTable, gosRef }) {
 
     const [loading, setLoading] = useState(false)
     const [moreRows, setMoreRows] = useState(true);
@@ -150,6 +150,9 @@ function MasterTable({ tableColumns, tableData, showTable }) {
     // create table instance
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data });
 
+    useEffect(() => {
+    }, [gosRef]);
+
     return (
         <div className={showTable ? 'table-and-filter' : 'hidden'}>
             <div className='table-filter'>Search column
@@ -169,6 +172,7 @@ function MasterTable({ tableColumns, tableData, showTable }) {
                         {headerGroups.map((headerGroup) => (
                             <tr {...headerGroup.getHeaderGroupProps()} >
                                 {headerGroup.headers.map((column, i) => (
+
                                     <th {...column.getHeaderProps()} onClick={() => sortTable((i.toString()))}>
                                         {column.render('Header')}
                                         {currentSortedCol.current[0] === i.toString()
@@ -181,35 +185,30 @@ function MasterTable({ tableColumns, tableData, showTable }) {
                     </thead>
                     <tbody {...getTableBodyProps()} >
                         {rows.map((row, i) => {
-                            // add ref for observer to 20th last row
-                            if (rows.length - 21 === i) {
-                                prepareRow(row)
-                                return (
-                                    <tr {...row.getRowProps()} ref={lastRow}>
-                                        {row.cells.map((cell) => {
+
+                            prepareRow(row)
+                            return (
+                                <tr {...row.getRowProps()} ref={(rows.length - 21 === i) ? lastRow : null}>
+                                    <td> <button onClick={() => {
+                                        console.log(gosRef)
+                                        gosRef.current.api.zoomTo(row.original[4], `${row.original[4].trim()}:${row.original[0]}-${row.original[0] + 1}`)
+                                    }}> {row.original[0]}</button></td>
+
+                                    {
+                                        row.cells.map((cell) => {
                                             return (
                                                 <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
                                             )
-                                        })}
-                                    </tr>
-                                )
-                            } else {
-                                prepareRow(row)
-                                return (
-                                    <tr {...row.getRowProps()}>
-                                        {row.cells.map((cell) => {
-                                            return (
-                                                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                                            )
-                                        })}
-                                    </tr>
-                                )
-                            }
+                                        })
+                                    }
+                                </tr>
+                            )
+
                         })}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </div >
     )
 }
 

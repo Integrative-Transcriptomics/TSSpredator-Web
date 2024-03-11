@@ -8,7 +8,7 @@ import { GoslingComponent } from "gosling.js";
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
+function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosRef }) {
     const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
     const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
     const [spec, setSpec] = useState(null);
@@ -36,9 +36,11 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
             "spacing": 50,
             "linkingId": "detail",
             "zoomLimits": [0, maxValue],
-            "views": distributedViews
+            "views": distributedViews,
+            "id": "gffexplorer"
         };
         setSpec(spec);
+        settingGosRef(gosRef)
 
     }, [dataGosling]);
 
@@ -46,6 +48,8 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
         return [{
             "alignment": "overlay",
             "height": 20,
+            "id": genome,
+
             "data": {
                 "url": "/api/provideFasta/" + filePath + "/" + genome + "/",
                 "type": "csv",
@@ -433,7 +437,6 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
             views.push({
                 "alignment": "stack",
                 "title": genome,
-
                 "assembly": [[genome, data[genome]["lengthGenome"]]],
                 "spacing": 0,
                 "layout": "linear",

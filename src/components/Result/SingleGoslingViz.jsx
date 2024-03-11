@@ -18,11 +18,7 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
 
 
     useEffect(() => {
-        console.log("fetching data")
-        console.log(gosRef.current)
-        // if (gosRef.current == null) return;
         const data = dataGosling
-        console.log(data)
         const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
         const allViews = getViews(data, filePath)
         const distributedViews = [{
@@ -46,8 +42,99 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
 
     }, [dataGosling]);
 
+    const createGenomeTrack = (filePath, genome) => {
+        return [{
+            "alignment": "overlay",
+            "height": 20,
+            "data": {
+                "url": "/api/provideFasta/" + filePath + "/" + genome + "/",
+                "type": "csv",
+                "separator": "\t",
+                "headerNames": ["pos", "base"],
+            },
+            "mark": "text",
+            "text": { "field": "base", "type": "nominal" },
+            "x": { "field": "pos", "type": "genomic" },
+            "style": { "textFontWeight": "bold", "align": "center" },
+            "size": { "value": 16 },
+            "color": {
+                "field": "base",
+                "type": "nominal",
+                "domain": ["A", "T", "G", "C", "-"],
+                "range": ["#FF0000", "#0000FF", "#008000", "#FFA500", "#000000"]
+            },
+            "tracks": [
+                {
+                    "visibility": [
+                        {
+                            "operation": "LT",
+                            "measure": "zoomLevel",
+                            "threshold": 500,
+                            "transitionPadding": 1000,
+                            "target": "mark"
+                        }]
 
-    const createGeneTrack = (data) => {
+                }
+
+            ]
+        }]
+
+
+    }
+
+    const createGFFTrack = (data) => {
+        const TSS_DETAIL_LEVEL_ZOOM = 50000;
+        let transitionPadding = 5000;
+        return [{
+            "alignment": "overlay",
+            "height": 60,
+            "data": {
+                "values": data,
+                "type": "json",
+                "genomicFields": ["start", "end"]
+            },
+            "mark": "rect",
+            "x": { "field": "start", "type": "genomic", "axis": "none" },
+            "xe": { "field": "end", "type": "genomic", "axis": "none" },
+            "color": { "value": "grey" },
+            "opacity": { "value": 0.4 },
+            "size": { "value": 4 },
+            "tracks": [
+                {
+                    "tooltip": [
+                        { "field": "start", "type": "genomic", "alt": "Gene Start" },
+                        { "field": "end", "type": "genomic", "alt": "Gene End" },
+                        {
+                            "field": "locus_tag",
+                            "type": "nominal",
+                            "alt": "Locus Tag",
+                        }, {
+                            "field": "gene_name",
+                            "type": "nominal",
+                            "alt": "Gene name",
+                        },
+                        { "field": "product", "alt": "Gene Product" },
+                    ],
+                }, {
+                    "mark": "text",
+                    "text": { "field": "locus_tag", "type": "nominal" },
+                    "x": { "field": "start", "type": "genomic" },
+                    "xe": { "field": "end", "type": "genomic" },
+                    "size": { "value": 8 },
+                    "style": { "textFontSize": 8, "dy": -12 },
+                    "visibility": [
+                        {
+                            "operation": "LT",
+                            "measure": "zoomLevel",
+                            "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                            "transitionPadding": transitionPadding,
+                            "target": "track"
+                        }]
+                }]
+        }]
+
+    }
+    const createGeneTrack = (data, filePath, genome) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
         let transitionPadding = 5000;
         return [{
@@ -102,6 +189,35 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
                             "transitionPadding": transitionPadding,
                             "target": "track"
                         }]
+                }, {
+                    "data": {
+                        "url": "/api/provideFasta/" + filePath + "/" + genome + "/",
+                        "type": "csv",
+                        "separator": "\t",
+                        "headerNames": ["pos", "base"],
+                    },
+                    "mark": "text",
+                    "text": { "field": "base", "type": "nominal" },
+                    "x": { "field": "pos", "type": "genomic" },
+                    "y": { "value": 0 },
+                    "style": { "textFontWeight": "bold", "dy": 2, "align": "center" },
+                    "size": { "value": 18 },
+                    "color": {
+                        "field": "base",
+                        "type": "nominal",
+                        "domain": ["A", "T", "G", "C", "-"],
+                    },
+                    "displacement": { "type": "pile", "padding": 2 },
+
+                    "visibility": [
+                        {
+                            "operation": "LT",
+                            "measure": "zoomLevel",
+                            "threshold": 150,
+                            "transitionPadding": transitionPadding,
+                            "target": "track"
+                        }]
+
                 },
                 {
 
@@ -206,7 +322,6 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
                     "type": "quantitative",
                     axis: "left",
                     domain: [0, maxValueBin[strand]],
-                    // range: strand === "+" ? [0, 90] : [90, 0],
                     flip: strand === "-",
                     zeroBaseline: strand === "+"
                 },
@@ -258,7 +373,6 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
                 },
                 "tracks": [
                     {
-                        "title": title,
                         "dataTransform": [
                             { "type": "filter", "field": "superStrand", "oneOf": [strand] }
                         ],
@@ -301,15 +415,16 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath }) {
         ]
     }
 
-    const createTracks = (data, title, maxGenome, filePath) => {
-        let geneTracks = createGeneTrack(data["superGFF"]);
-        // create dummy wiggle data
-        console.log(data)
-        let TSSTracks_plus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], "+", maxGenome, title, filePath);
-        let TSSTracks_minus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], "-", maxGenome, title, filePath);
+    const createTracks = (data, genomeName, maxGenome, filePath) => {
+        let forwardGenes = createGFFTrack(data["superGFF"].filter(d => d["strand"] === "+"));
+        let reverseGenes = createGFFTrack(data["superGFF"].filter(d => d["strand"] === "-"));
+        let fastaTrack = createGenomeTrack(filePath, genomeName);
+
+
+        let TSSTracks_plus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], "+", maxGenome, genomeName, filePath);
+        let TSSTracks_minus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], "-", maxGenome, genomeName, filePath);
         let TSSTracks = [TSSTracks_plus, TSSTracks_minus];
-        // return [...TSSTracks[0], ...TSSTracks[1]];
-        return [...TSSTracks[0], ...geneTracks, ...TSSTracks[1]];
+        return [...TSSTracks[0], ...forwardGenes, ...fastaTrack, ...reverseGenes, ...TSSTracks[1]];
     }
 
     const getViews = (data, filePath) => {

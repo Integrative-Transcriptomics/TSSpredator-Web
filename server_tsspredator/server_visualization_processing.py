@@ -55,6 +55,7 @@ def decideMainClass(newClass, oldClass):
 def readMasterTable(path):
     '''read MasterTable and return as JSON'''
     data_per_genome = {}
+    tss_unique = set()
     with open(path, 'r') as f:
         # Parse Header
         header = f.readline().rstrip().split('\t')
@@ -68,7 +69,9 @@ def readMasterTable(path):
                 data_per_genome[genome]['TSS'] = {}
             superPos = line[headerIndices['superPos']]
             superStrand = line[headerIndices['superStrand']]
+            tss_unique.add((superPos, superStrand))
             tss_key = f"{superPos}_{superStrand}"
+
             classesTSS = getTSSClass(line, headerIndices)
             if tss_key not in data_per_genome[genome]["TSS"]:
                 typeTSS = getTSSType(line, headerIndices)
@@ -85,7 +88,7 @@ def readMasterTable(path):
             else:
                 data_per_genome[genome]["TSS"][tss_key]['classesTSS'].append(classesTSS)
                 data_per_genome[genome]["TSS"][tss_key]['mainClass'] = decideMainClass(classesTSS, data_per_genome[genome]["TSS"][tss_key]['mainClass'])   
-    return data_per_genome
+    return data_per_genome, tss_unique
 
 def aggregateTSS(tssList, maxGenome):
     '''aggregate TSS'''
@@ -189,14 +192,7 @@ def parseRNAGraphs(tmpdir, genomeKey, resultsDir):
             'path': lastPart, 
             'filename': bw_name
         }
-        # # create bw file from bigwig
-        # bw_name = adaptWiggleFile(os.path.join(tmpdir, f'{genomeKey}_superFivePrime{strand}_avg.bigwig'), resultsDir)
 
-        # joinedWiggles = joinWiggleFiles(os.path.join(tmpdir, f'{genomeKey}_superFivePrime{strand}_avg.bigwig'), os.path.join(tmpdir, f'{genomeKey}_superNormal{strand}_avg.bigwig'))
-        # # stackedWiggles = stackWiggle(joinedWiggles)
-        # newFileName = f'{genomeKey}_super{strand}_avgAggregated.tsv'
-        # joinedWiggles.to_csv(os.path.join(resultsDir, newFileName), sep='\t', index=False)
-        
     return dataRNA
 
 
@@ -231,7 +227,7 @@ def parseSuperGFF (path):
             
     return data_per_gene, maxValue
 
-def from_fasta_to_tsv(tempDir, genomeKey, resultsDir):
+def from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss):
     '''convert fasta to tsv'''
     with open(os.path.join(tempDir, f'{genomeKey}_super.fa'), 'r') as f:
         with open(os.path.join(resultsDir,f'{genomeKey}_superGenome.tsv'), 'w') as output:
@@ -239,15 +235,29 @@ def from_fasta_to_tsv(tempDir, genomeKey, resultsDir):
             for line in f:
                 if line.startswith('>'):
                     continue
-                line = line.rstrip().split()
+                line = line.rstrip()
                 for i, base in enumerate(line):
-                    output.write(f'{length_genome + i + 1}\t{base}\n')
+                    position = length_genome + i + 1
+                    if position in unique_tss:
+                        output.write(f'{position}\t{base}\n')
                 length_genome += len(line)
+
+def expandTSSPositions(tss_set, expansion):
+    '''expand TSS positions'''
+    expandedTSS = set()
+    for tss_pair in tss_set:
+        tss = int(tss_pair[0])
+        strand = tss_pair[1]
+        rangeIteration = range(-expansion, 1) if strand == "+" else range(expansion, -1, -1)
+        for i in rangeIteration:
+            expandedTSS.add(int(tss + i))
+    return expandedTSS  
 
     
 def process_results(tempDir, resultsDir): 
     masterTablePath = tempDir + '/MasterTable.tsv'
-    masterTable = readMasterTable(masterTablePath)
+    masterTable, unique_tss = readMasterTable(masterTablePath)
+    unique_tss = expandTSSPositions(unique_tss, 50)
     rnaData = {}
     for genomeKey in masterTable.keys():
         masterTable[genomeKey]['TSS'] = list(masterTable[genomeKey]['TSS'].values())
@@ -261,7 +271,7 @@ def process_results(tempDir, resultsDir):
         masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
         rnaData[genomeKey] = {}
         rnaData[genomeKey] = parseRNAGraphs(tempDir, genomeKey, resultsDir)
-        from_fasta_to_tsv(tempDir, genomeKey, resultsDir)
+        from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss)
     #write compressed json in resultsDir
     with open(resultsDir + '/aggregated_data.json', 'w') as f:
         f.write(json.dumps(masterTable))

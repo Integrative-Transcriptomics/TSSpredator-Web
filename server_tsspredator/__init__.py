@@ -109,10 +109,10 @@ def helperAsyncPredator(self, *args ):
         # print files in resultDir
         print(f"Files in {resultDir}: {os.listdir(resultDir)}")
         self.update_state(state='ZIP_RESULTS', meta={'projectName': projectName})
-        # Process results for visualization
-        server_viz.process_results(resultDir, tmpdirResult)
         # Zip the results        
         make_archive(os.path.join(tmpdirResult,'result'), 'zip', resultDir)
+        # Process results for visualization
+        server_viz.process_results(resultDir, tmpdirResult)
         filePath = os.path.basename(tmpdirResult)
         return {"filePath":filePath, "stderr": result.stderr, "stdout": result.stdout, "inputDir": inputDir, "annotationDir": annotationDir, "tempResultsDir": resultDir, "projectName": projectName}
     except Exception as e:
@@ -265,6 +265,12 @@ def returnBigWig(filePath, genome, strand, fileType):
     completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f"{genome}_super{fileType}{strand}.bw")
     return send_file(completePath, mimetype='text/plain')
        
+@app.route('/api/provideFasta/<filePath>/<genome>/')
+def returnFasta(filePath, genome): 
+    completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f'{genome}_superGenome.tsv')
+    print(completePath)
+    return send_file(completePath, mimetype='text/plain')
+
 @app.route('/api/TSSViewer/<filePath>/')
 def getTSSViewer(filePath):
     '''send result of TSS prediction to frontend'''
@@ -320,6 +326,7 @@ def getAlignment():
         alignmentFilename = newTmpDir + '/' + secure_filename(alignmentFile.filename)
         alignmentFile.save(alignmentFilename)
 
+        # write JSON string 
         # write JSON string 
         jsonString = '{"loadConfig": "false",' + '"saveConfig": "false", "loadAlignment": "true",' + '"alignmentFile": "' + alignmentFilename + '"}'
         serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())

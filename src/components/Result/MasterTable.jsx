@@ -191,7 +191,8 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef }) {
                                 <tr {...row.getRowProps()} ref={(rows.length - 21 === i) ? lastRow : null}>
                                     <td> <button onClick={() => {
                                         console.log(gosRef)
-                                        gosRef.current.api.zoomTo(row.original[4], `${row.original[4].trim()}:${row.original[0]}-${row.original[0] + 1}`)
+                                        console.log(`${row.original[4].trim()}:${row.original[0]}`)
+                                        gosRef.current.api.zoomTo(row.original[4], `${row.original[4].trim()}:${parseInt(row.original[0]) - 150}-${parseInt(row.original[0]) + 150}`, 200)
                                     }}> {row.original[0]}</button></td>
 
                                     {

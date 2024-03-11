@@ -38,6 +38,9 @@ function Result() {
   const [showUpSet, setShowUpSet] = useState(false);
   const [upsetClasses, setUpsetClasses] = useState([]);
 
+  // GoslingRef
+  const [gosRef, setGosRef] = useState(null);
+
   // histograms
   const [processedMasterTable, setProcessedMasterTable] = useState(false);
 
@@ -99,6 +102,7 @@ function Result() {
       });
       setTableData([...dataRows]);
       setAllGenomes(allG);
+
 
 
     };
@@ -327,7 +331,8 @@ function Result() {
                   showPlot={showGFFViewer}
                   dataGosling={dataGosling}
                   filePath={filePath}
-                  filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]} />
+                  filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
+                  settingGosRef={(x) => setGosRef(x)} />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}
@@ -352,7 +357,7 @@ function Result() {
                 {showTable ? "-" : "+"} Master Table
               </h3>
               {tableColumns.length > 0 ? (
-                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} />
+                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}

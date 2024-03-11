@@ -2,11 +2,12 @@ version: '3.8'
 services:
   web:
     image: tsspredator_web:latest
+    platform: linux/x86_64
     build:
       context: .
       dockerfile: webapp/Dockerfile
     working_dir: /app/server_tsspredator
-    command: gunicorn --workers 6 --timeout 500 --graceful-timeout 500   --bind 0.0.0.0:5001 server_tsspredator.wsgi:tsspredator
+    command: gunicorn --workers 6 --timeout 500 --graceful-timeout 500  --bind 0.0.0.0:5001 server_tsspredator.wsgi:tsspredator
     deploy:
       resources:
         limits:
@@ -33,6 +34,7 @@ services:
 
   celery:
     image: tsspredator_celery_app:latest
+    platform: linux/x86_64
     build:
       context: .
       dockerfile: celery/Dockerfile

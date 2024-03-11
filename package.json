@@ -36,7 +36,7 @@
     "server-redis": "redis-server",
     "server-celery": "celery -A server_tsspredator.celery_app worker -B --loglevel=warning",
     "server": "cd server_tsspredator && flask run --with-threads --debug",
-    "server-deploy": "cd server_tsspredator && gunicorn --workers 3 --timeout 500 --graceful-timeout 500 --bind 0.0.0.0:3001 --log-level=debug server_tsspredator.wsgi:tsspredator",
+    "server-deploy": "gunicorn --workers 3 --timeout 500 --graceful-timeout 500 --bind 0.0.0.0:3001 --log-level=debug server_tsspredator.wsgi:tsspredator",
     "tsspredator": "run-p server server-redis server-celery start",
     "tsspredator-test": "run-p server-deploy server-redis server-celery",
     "start": "vite",

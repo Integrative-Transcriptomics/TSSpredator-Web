@@ -172,9 +172,8 @@ def adaptWiggleFile(inputDir, genome, fileType, strand, resultsDir):
     result = subprocess.run([bedGraphPath, adaptedFile, chromSizes, outputBigWig], stdout=subprocess.PIPE, 
                                 stderr=subprocess.PIPE, 
                                 text=True)
-    print(f'Created {outputBigWig}')
-    print(f'Created {result.stdout}')
-    print(f'Error {result.stderr}')
+    if len(result.stderr) > 0:
+        print(f'Error {result.stderr}')
     return outputBigWig
 def parseRNAGraphs(tmpdir, genomeKey, resultsDir):
     '''parse RNA graphs and return path as json. Only send path, not the whole file.'''
@@ -250,8 +249,6 @@ def process_results(tempDir, resultsDir):
     masterTablePath = tempDir + '/MasterTable.tsv'
     masterTable = readMasterTable(masterTablePath)
     rnaData = {}
-    geneData = {}
-
     for genomeKey in masterTable.keys():
         masterTable[genomeKey]['TSS'] = list(masterTable[genomeKey]['TSS'].values())
         # get path of SuperGFF

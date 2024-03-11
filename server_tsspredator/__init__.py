@@ -35,7 +35,7 @@ def celery_init_app(app: Flask) -> Celery:
     app.extensions["celery"] = celery_app
     return celery_app
 
-app = Flask(__name__, static_folder='../build', static_url_path='/')
+app = Flask(__name__, static_folder='../dist', static_url_path='/')
 app.secret_key = os.getenv('SECRET_KEY_TSSPREDATOR', "BAD_SECRET_KEY")
 
 
@@ -88,7 +88,7 @@ def helperAsyncPredator(self, *args ):
         self.update_state(state='RUNNING', meta={'projectName': projectName})
         serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
         # join server Location to find TSSpredator
-        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator2.jar')
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
         # Run JAR file
         result = subprocess.run(['java', '-jar',tsspredatorLocation, jsonString], 
                                 stdout=subprocess.PIPE, 
@@ -187,6 +187,14 @@ def index():
 def not_found(e):
     return app.send_static_file('index.html')
 
+@app.route('/result/<filePath>/')
+def index_results(filePath):
+    return app.send_static_file('index.html')
+
+@app.route('/status/<id>/')
+def index_status(id):
+    return app.send_static_file('index.html')
+
 @app.route('/api/checkStatus/<task_id>', methods=['POST', 'GET'])
 def task_status(task_id):
     task = helperAsyncPredator.AsyncResult(task_id)
@@ -231,13 +239,7 @@ def remove_tmp_dirs(dirs) -> None   :
         if os.path.exists(dir):
             rmtree(dir)
 
-@app.route('/result/<filePath>/')
-def index_results(filePath):
-    return app.send_static_file('index.html')
 
-@app.route('/status/<id>/')
-def index_status(id):
-    return app.send_static_file('index.html')
 
 @app.route('/api/parameters/')
 def parameters():
@@ -415,6 +417,7 @@ def saveConfig():
 def exampleData(organism, type,filename):
     '''send config file (json) or zip directory to load example data'''
     data_path = os.getenv('TSSPREDATOR_DATA_PATH', "./exampleData")
+    print(data_path)
     json_path = '{}/{}/{}_config.json'.format(data_path,organism, organism)
     files_path =  '{}/{}/Archive'.format(data_path,organism)
     if type == 'json':

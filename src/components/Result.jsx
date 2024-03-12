@@ -332,7 +332,9 @@ function Result() {
                   dataGosling={dataGosling}
                   filePath={filePath}
                   filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
-                  settingGosRef={(x) => setGosRef(x)} />
+                  settingGosRef={(x) => setGosRef(x)}
+                  gosRef={gosRef} />
+
               }
 
             </div>

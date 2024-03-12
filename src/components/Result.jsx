@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
-import GoslingGenomeViz from "./Result/SingleGoslingViz";
 import JSZip from "jszip";
 import "../css/Result.css";
 import "../css/App.css";
@@ -9,7 +8,7 @@ import "../css/MasterTable.css";
 import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
 import Header from "./Main/Header";
-import SingleWiggleViz from "./Result/SingleWiggleViz";
+import GenomeViewer from "./Result/GenomeViewer";
 
 /**
  * creates page that displays result of TSS prediction
@@ -33,10 +32,14 @@ function Result() {
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(true);
   const [filterForPlots, setFilterForPlots] = useState("enriched");
+  const [dataGosling, setDataGosling] = useState(null);
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
   const [upsetClasses, setUpsetClasses] = useState([]);
+
+  // GoslingRef
+  const [gosRef, setGosRef] = useState(null);
 
   // histograms
   const [processedMasterTable, setProcessedMasterTable] = useState(false);
@@ -44,6 +47,11 @@ function Result() {
   // Genome Viewer
   const [showGFFViewer, setGFFViewer] = useState(false);
 
+  const fetchDataGosling = async (filePath) => {
+    const dataPerGenome = await fetch(`/api/TSSViewer/${filePath}/`);
+    const data = await dataPerGenome.json();
+    return data;
+  };
 
   /**
    * get all files from TSS prediction as .zip from server
@@ -96,6 +104,7 @@ function Result() {
       setAllGenomes(allG);
 
 
+
     };
 
     // Fetch files from server and handle MasterTable
@@ -130,7 +139,13 @@ function Result() {
             console.log("Error loading MasterTable file:", error);
           });
       });
-  }, [filePath]);
+    const dataGosling = fetchDataGosling(filePath);
+    dataGosling.then((data) => {
+      setDataGosling(data);
+    });
+
+
+  }, []);
 
   /**
    * download files action, after clicking on link
@@ -268,8 +283,6 @@ function Result() {
   return (
     <>
       <Header />
-
-      <SingleWiggleViz />
       { // if file not found
         // TODO: improve 404 page
         blob === 404 ? <h2>404: File not found</h2> :
@@ -313,14 +326,15 @@ function Result() {
               <h3 className='header click-param' onClick={() => setGFFViewer(!showGFFViewer)}>
                 {showGFFViewer ? "-" : "+"} Annotation Viewer with TSS positions
               </h3>
-              {processedMasterTable ? (
-                <GoslingGenomeViz
-                  showPlot={showGFFViewer}
-                  dataKey={filePath}
-                  filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]} />
-              ) : (
-                <ClipLoader color='#ffa000' size={30} />
-              )}
+              {
+                showGFFViewer &&
+                <GenomeViewer
+                  dataGosling={dataGosling}
+                  filePath={filePath}
+                  filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
+                  settingGosRef={(x) => setGosRef(x)} />
+              }
+
             </div>
 
             <div className='result-margin-left'>
@@ -342,7 +356,7 @@ function Result() {
                 {showTable ? "-" : "+"} Master Table
               </h3>
               {tableColumns.length > 0 ? (
-                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} />
+                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}

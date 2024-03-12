@@ -8,6 +8,12 @@ import { extractCombinations, UpSetJS } from '@upsetjs/react';
  * @param showUpSet: boolean for showing/hiding the plot
  */
 function UpSet({ classes, showUpSet, type }) {
+  const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
+  const ORDER_TSS_CLASSES = ["primary", "secondary", "internal", "antisense", "orphan"]
+  let color_tss = {}
+  ORDER_TSS_CLASSES.forEach((x, i) => {
+    color_tss[x] = COLORS_TSS[i]
+  })
   let elems;
   if (type === "all") {
     elems = Object.entries(classes).reduce((accum, curr) => {
@@ -28,7 +34,15 @@ function UpSet({ classes, showUpSet, type }) {
   }
 
 
-  let { sets } = useMemo(() => extractCombinations(elems), [elems]);
+  let { sets } = useMemo(() => {
+    const { sets } = extractCombinations(elems);
+    for (let key of Object.keys(color_tss)) {
+      sets.filter(x => x.name === key).forEach(x => x.color = color_tss[key])
+    }
+    return { sets };
+  },
+
+    [elems]);
   const combinations = useMemo(
     () => ({
       type: 'distinctIntersection',
@@ -37,7 +51,7 @@ function UpSet({ classes, showUpSet, type }) {
   );
   const [selection, setSelection] = useState(null);
   if (type === "all") {
-    sets = sets.filter(x => ["primary", "secondary", "internal", "antisense", "orphan"].includes(x.name))
+    sets = sets.filter(x => ORDER_TSS_CLASSES.includes(x.name))
   }
 
   return <UpSetJS className={showUpSet ? '' : 'hidden'}

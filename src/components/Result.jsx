@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
-import GoslingGenomeViz from "./Result/SingleGoslingViz";
 import JSZip from "jszip";
 import "../css/Result.css";
 import "../css/App.css";
@@ -9,6 +8,7 @@ import "../css/MasterTable.css";
 import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
 import Header from "./Main/Header";
+import GenomeViewer from "./Result/GenomeViewer";
 
 /**
  * creates page that displays result of TSS prediction
@@ -326,16 +326,15 @@ function Result() {
               <h3 className='header click-param' onClick={() => setGFFViewer(!showGFFViewer)}>
                 {showGFFViewer ? "-" : "+"} Annotation Viewer with TSS positions
               </h3>
-              {processedMasterTable ? (
-                <GoslingGenomeViz
-                  showPlot={showGFFViewer}
+              {
+                showGFFViewer &&
+                <GenomeViewer
                   dataGosling={dataGosling}
                   filePath={filePath}
                   filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
                   settingGosRef={(x) => setGosRef(x)} />
-              ) : (
-                <ClipLoader color='#ffa000' size={30} />
-              )}
+              }
+
             </div>
 
             <div className='result-margin-left'>

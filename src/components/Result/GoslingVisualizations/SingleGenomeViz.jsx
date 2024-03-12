@@ -8,7 +8,7 @@ import { GoslingComponent } from "gosling.js";
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosRef }) {
+function SingleGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosRef }) {
     const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
     const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
     const [spec, setSpec] = useState(null);
@@ -460,4 +460,4 @@ function GoslingGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosR
 
 
 
-export default GoslingGenomeViz
+export default SingleGenomeViz

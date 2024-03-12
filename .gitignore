@@ -2,6 +2,7 @@
 
 # dependencies
 node_modules
+.yarn
 /.pnp
 .pnp.js
 env
@@ -38,3 +39,4 @@ server_tsspredator.egg-info
 .npmrc
 .gradle
 bin
+.yarnrc.yml

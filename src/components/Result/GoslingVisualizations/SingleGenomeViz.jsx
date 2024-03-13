@@ -8,14 +8,9 @@ import { GoslingComponent } from "gosling.js";
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function SingleGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosRef }) {
-    const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
-    const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
+function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_TSS, ORDER_TSS_CLASSES }) {
     const [spec, setSpec] = useState(null);
-    const gosRef = useRef(null)
-
-
-
+    const gosRef = useRef(null);
 
     useEffect(() => {
         const data = dataGosling
@@ -30,14 +25,12 @@ function SingleGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosRe
         }]
 
         const spec = {
-            style: { background: "gray", backgroundOpacity: 0.05, outline: "black", outlineWidth: 2 },
             "title": "Visualization of TSSs and Genes",
             "arrangement": "horizontal",
             "spacing": 50,
-            "linkingId": "detail",
+            "linkingId": "detail", // linkingId is used to enable zooming and panning across views
             "zoomLimits": [0, maxValue],
             "views": distributedViews,
-            "id": "gffexplorer"
         };
         setSpec(spec);
         settingGosRef(gosRef)
@@ -49,7 +42,6 @@ function SingleGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosRe
             "alignment": "overlay",
             "height": 20,
             "id": genome,
-
             "data": {
                 "url": "/api/provideFasta/" + filePath + "/" + genome + "/",
                 "type": "csv",
@@ -59,7 +51,7 @@ function SingleGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosRe
             "mark": "text",
             "text": { "field": "base", "type": "nominal" },
             "x": { "field": "pos", "type": "genomic" },
-            "style": { "textFontWeight": "bold", "align": "center" },
+            "style": { "textFontWeight": "bold", "align": "center", outline: "none", outlineWidth: 0 },
             "size": { "value": 16 },
             "color": {
                 "field": "base",
@@ -138,123 +130,7 @@ function SingleGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosRe
         }]
 
     }
-    const createGeneTrack = (data, filePath, genome) => {
-        const TSS_DETAIL_LEVEL_ZOOM = 50000;
-        let transitionPadding = 5000;
-        return [{
-            "alignment": "overlay",
-            "data": {
-                "values": data,
-                "type": "json",
-                "genomicFields": ["start", "end"]
-            },
-            "row": { "field": "strand", "type": "nominal", "domain": ["+", "-"] },
-            "mark": "rect",
-            "x": { "field": "start", "type": "genomic", "axis": "none" },
-            "xe": { "field": "end", "type": "genomic", "axis": "none" },
-            "color": { "value": "grey" },
-            "opacity": { "value": 0.4 },
-            "size": { "value": 4 },
-            "tracks": [
-                {
-                    "tooltip": [
-                        { "field": "start", "type": "genomic", "alt": "Gene Start" },
-                        { "field": "end", "type": "genomic", "alt": "Gene End" },
-                        {
-                            "field": "locus_tag",
-                            "type": "nominal",
-                            "alt": "Locus Tag",
-                        }, {
-                            "field": "gene_name",
-                            "type": "nominal",
-                            "alt": "Gene name",
-                        },
-                        { "field": "product", "alt": "Gene Product" },
-                    ],
 
-                    "dataTransform": [
-                        { "type": "filter", "field": "strand", "oneOf": "+" }
-                    ],
-                }, {
-                    "dataTransform": [
-                        { "type": "filter", "field": "strand", "oneOf": ["+"] }
-                    ],
-                    "mark": "text",
-                    "text": { "field": "locus_tag", "type": "nominal" },
-                    "x": { "field": "start", "type": "genomic" },
-                    "xe": { "field": "end", "type": "genomic" },
-                    "size": { "value": 8 },
-                    "style": { "textFontSize": 8, "dy": -12 },
-                    "visibility": [
-                        {
-                            "operation": "LT",
-                            "measure": "zoomLevel",
-                            "threshold": TSS_DETAIL_LEVEL_ZOOM,
-                            "transitionPadding": transitionPadding,
-                            "target": "track"
-                        }]
-                }, {
-                    "data": {
-                        "url": "/api/provideFasta/" + filePath + "/" + genome + "/",
-                        "type": "csv",
-                        "separator": "\t",
-                        "headerNames": ["pos", "base"],
-                    },
-                    "mark": "text",
-                    "text": { "field": "base", "type": "nominal" },
-                    "x": { "field": "pos", "type": "genomic" },
-                    "y": { "value": 0 },
-                    "style": { "textFontWeight": "bold", "dy": 2, "align": "center" },
-                    "size": { "value": 18 },
-                    "color": {
-                        "field": "base",
-                        "type": "nominal",
-                        "domain": ["A", "T", "G", "C", "-"],
-                    },
-                    "displacement": { "type": "pile", "padding": 2 },
-
-                    "visibility": [
-                        {
-                            "operation": "LT",
-                            "measure": "zoomLevel",
-                            "threshold": 150,
-                            "transitionPadding": transitionPadding,
-                            "target": "track"
-                        }]
-
-                },
-                {
-
-                    "dataTransform": [
-                        { "type": "filter", "field": "strand", "oneOf": "-" }
-                    ],
-                },
-                {
-                    "dataTransform": [
-                        { "type": "filter", "field": "strand", "oneOf": ["-"] }
-                    ],
-                    "mark": "text",
-                    "text": { "field": "locus_tag", "type": "nominal" },
-                    "x": { "field": "start", "type": "genomic" },
-                    "xe": { "field": "end", "type": "genomic" },
-                    "size": { "value": 8 },
-                    "style": { "textFontSize": 8, "dy": -12 },
-
-                    "visibility": [
-                        {
-                            "operation": "LT",
-                            "measure": "width",
-                            "threshold": "|xe-x|",
-                            "transitionPadding": 30,
-                            "target": "mark"
-                        }
-                    ],
-                },
-            ]
-        }]
-
-
-    }
     const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePath) => {
         return ["Normal", "FivePrime"].map(type => {
             return {
@@ -435,6 +311,8 @@ function SingleGenomeViz({ dataGosling, showPlot, filter, filePath, settingGosRe
         let views = [];
         for (let genome of Object.keys(data)) {
             views.push({
+                style: { background: "gray", backgroundOpacity: 0.05, outline: "black", outlineWidth: 2 },
+
                 "alignment": "stack",
                 "title": genome,
                 "assembly": [[genome, data[genome]["lengthGenome"]]],

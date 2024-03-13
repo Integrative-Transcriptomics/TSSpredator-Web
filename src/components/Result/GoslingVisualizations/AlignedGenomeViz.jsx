@@ -1,6 +1,9 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { GoslingComponent } from "gosling.js";
+import { ClipLoader } from "react-spinners";
+import { createGenomeTrack, createWiggleTracksTest } from "./SharedGoslingFunctions.js"
+
 
 /**
  * Renders a genome visualization using Gosling.js library.
@@ -18,15 +21,14 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
         const data = dataGosling
         const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
         const [view_forward, view_reverse] = getViews(data, filePath)
-        console.log(view_forward, view_reverse)
         const distributedViews = [{
-            "style": { "background": "blue", "backgroundOpacity": 0.05, "outline": "black", "outlineWidth": 2 },
+            "style": { "background": "lightblue", "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
             "subtitle": "Reverse strand",
             "spacing": 0,
             "arrangement": "vertical",
             "views": view_reverse
         }, {
-            "style": { "background": "red", "backgroundOpacity": 0.05, "outline": "black", "outlineWidth": 2 },
+            "style": { "background": "#f59f95", "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
             "subtitle": "Reverse strand",
 
             "spacing": 0,
@@ -50,47 +52,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
 
     }, [dataGosling]);
 
-    const createGenomeTrack = (filePath, genome, strand) => {
-        return [{
-            "alignment": "overlay",
-            "height": 20,
-            "id": `${genome}${strand}`,
 
-            "data": {
-                "url": "/api/provideFasta/" + filePath + "/" + genome + "/",
-                "type": "csv",
-                "separator": "\t",
-                "headerNames": ["pos", "base"],
-            },
-            "mark": "text",
-            "text": { "field": "base", "type": "nominal" },
-            "x": { "field": "pos", "type": "genomic" },
-            "style": { "textFontWeight": "bold", "align": "center" },
-            "size": { "value": 16 },
-            "color": {
-                "field": "base",
-                "type": "nominal",
-                "domain": ["A", "T", "G", "C", "-"],
-                "range": ["#FF0000", "#0000FF", "#008000", "#FFA500", "#000000"]
-            },
-            "tracks": [
-                {
-                    "visibility": [
-                        {
-                            "operation": "LT",
-                            "measure": "zoomLevel",
-                            "threshold": 500,
-                            "transitionPadding": 1000,
-                            "target": "mark"
-                        }]
-
-                }
-
-            ]
-        }]
-
-
-    }
 
     const createGFFTrack = (data) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
@@ -159,10 +121,9 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
                 "mark": "bar",
                 "x": { "field": "start", "type": "genomic", },
                 "xe": { "field": "end", "type": "genomic", },
-                "style": { "align": strand === "+" ? "left" : "right" },
+                "style": { "align": strand === "+" ? "left" : "right", backgroundOpacity: 0 },
                 "y": { "field": "value", "type": "quantitative", flip: strand === "-" },
                 "color": { "value": type === "Normal" ? "gray" : "orange" },
-                "stroke": { "value": "gray" },
                 "opacity": { "value": 0.25 },
 
                 "visibility": [
@@ -225,7 +186,6 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
                     "type": "nominal",
                     "domain": ORDER_TSS_CLASSES,
                     "range": COLORS_TSS,
-                    // "legend": strand === "+"
                 },
                 "tooltip": [
                     { "field": "binStart", "type": "genomic", "alt": "Bin start" },
@@ -256,7 +216,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
                 ]
             }
         });
-        let specsWiggle = createWiggleTracks(TSS_DETAIL_LEVEL_ZOOM, strand, title, filePath)
+        let specsWiggle = createWiggleTracksTest(TSS_DETAIL_LEVEL_ZOOM, strand, title, filePath)
         return [
             {
 
@@ -347,9 +307,9 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
 
 
 
-    return <div style={{ padding: "0 !important", width: "100vw" }}>
-        <GoslingComponent spec={spec} ref={gosRef} />
-    </div>
+    return <>
+        {spec === null ? <ClipLoader color='#ffa000' size={30} /> : <GoslingComponent spec={spec} ref={gosRef} />}
+    </>
         ;
 
 

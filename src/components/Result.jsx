@@ -19,13 +19,11 @@ function Result() {
   let { filePath } = useParams();
 
   // save files
-  const [blob, setBlob] = useState(new Blob());
+  const [zipBlobFile, setZipBlobFile] = useState(new Blob());
   const [showDownload, setShowDownload] = useState(true);
 
   // all genomes/conditions names
   const [allGenomes, setAllGenomes] = useState([]);
-  // currently used genome/condition data for the plot
-  const [currentData, setCurrentData] = useState("all");
 
   // for master table
   const [tableColumns, setTableColumns] = useState([]);
@@ -36,7 +34,6 @@ function Result() {
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
-  const [upsetClasses, setUpsetClasses] = useState([]);
 
   // GoslingRef
   const [gosRef, setGosRef] = useState(null);
@@ -78,7 +75,7 @@ function Result() {
         }
       });
 
-      let allG = [];
+      let allG = new Set();
       setTableColumns([...col]);
 
       // save rows
@@ -93,9 +90,7 @@ function Result() {
           });
           const tmpGenome = tmp[genomeIdx];
           // add genome to all genomes
-          if (!allG.includes(tmpGenome)) {
-            allG.push(tmpGenome);
-          }
+          allG.add(tmpGenome);
 
           dataRows.push(tmpRow);
         }
@@ -122,10 +117,10 @@ function Result() {
       )
       .then((blob) => {
         if (blob === 404) {
-          setBlob(404);
+          setZipBlobFile(404);
           return
         }
-        setBlob(blob);
+        setZipBlobFile(blob);
 
         JSZip.loadAsync(blob)
           .then((zip) => {
@@ -152,7 +147,7 @@ function Result() {
    */
   const downloadFiles = () => {
     // blob url to download files
-    const url = window.URL.createObjectURL(new Blob([blob]));
+    const url = window.URL.createObjectURL(new Blob([zipBlobFile]));
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", `TSSpredator-prediction.zip`);
@@ -168,124 +163,18 @@ function Result() {
 
 
 
-  /**
-   * return tss class of current row
-   */
-  const getClass = (row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx) => {
-    // get class of this row
-    if (row[primaryIdx] === "1") {
-      return "primary";
-    } else if (row[secondaryIdx] === "1") {
-      return "secondary";
-    } else if (row[internalIdx] === "1") {
-      return "internal";
-    } else if (row[antisenseIdx] === "1") {
-      return "antisense";
-      // orphan
-    } else {
-      return "orphan";
-    }
-  };
 
   /**
    * update plots for selected genome/condition
    */
 
-  useEffect(() => {
-    /**
-   * for upset plot: count frequncy of each tss class
-   * for line chart: count TSS per position
-   * and get all genome/condition names
-   */
-    const TSSperPosition = (rows, columns, typeIntersection = "all") => {
-      // get column indices
-      const primaryIdx = columns.findIndex((col) => col["Header"] === "Primary");
-      const secondaryIdx = columns.findIndex((col) => col["Header"] === "Secondary");
-      const internalIdx = columns.findIndex((col) => col["Header"] === "Internal");
-      const antisenseIdx = columns.findIndex((col) => col["Header"] === "Antisense");
-      const superPosIdx = columns.findIndex((col) => col["Header"] === "SuperPos");
-      const variableFilterTSS = columns.findIndex((col) => col["Header"] === filterForPlots);
 
-
-
-      // save frequency of classes for a TSS (upset plot)
-      let tssByClass = {};
-      let tssWithMultipleClasses = {};
-
-      rows.forEach((row) => {
-        if (row[variableFilterTSS] === "1") {
-          const tmpPos = row[superPosIdx];
-          // Get genome/condition name
-          const genomeIdx = columns.findIndex(
-            (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
-          );
-          const genomeName = row[genomeIdx];
-          let tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
-
-          // add tss to tssWithMultipleClasses
-          if (tmpPos in tssWithMultipleClasses) {
-            // Add once to set
-            if (!tssWithMultipleClasses[tmpPos]["set"].includes(tmpClass)) {
-              tssWithMultipleClasses[tmpPos]["set"].push(tmpClass);
-            }
-            // But also add to genome/condition
-            if (!Object.keys(tssWithMultipleClasses[tmpPos]).includes(genomeName)) {
-              tssWithMultipleClasses[tmpPos][genomeName] = [tmpClass];
-            }
-            else if (!tssWithMultipleClasses[tmpPos][genomeName].includes(tmpClass)) {
-              tssWithMultipleClasses[tmpPos][genomeName].push(tmpClass);
-            }
-          } else {
-            tssWithMultipleClasses[tmpPos] = { "set": [tmpClass] }
-            tssWithMultipleClasses[tmpPos][genomeName] = [tmpClass]
-          }
-
-
-
-          // add tss to tssByClass
-          if (tmpClass in tssByClass) {
-            if (!tssByClass[tmpClass].includes(tmpPos)) {
-              tssByClass[tmpClass].push(tmpPos);
-            } else if (typeIntersection === "dedup") {
-              return; // Exit the current iteration of the loop
-            }
-          } else {
-            tssByClass[tmpClass] = [tmpPos];
-          }
-
-        }
-      });
-      setUpsetClasses(tssWithMultipleClasses);
-    };
-    const value = currentData;
-    if (value === "all") {
-      // create new plots
-      TSSperPosition(tableData, tableColumns);
-    }
-    else if (value === "dedup") {
-      TSSperPosition(tableData, tableColumns, value);
-    }
-    else {
-      const genomeIdx = tableColumns.findIndex(
-        (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
-      );
-      // filter table
-      const newData = [];
-      tableData.forEach((row) => {
-        if (row[genomeIdx] === value) {
-          newData.push(row);
-        }
-      });
-      // create new plots
-      TSSperPosition(newData, tableColumns);
-    }
-  }, [currentData, filterForPlots, tableColumns, tableData]);
   return (
     <>
       <Header />
       { // if file not found
         // TODO: improve 404 page
-        blob === 404 ? <h2>404: File not found</h2> :
+        zipBlobFile === 404 ? <h2>404: File not found</h2> :
           <div className='result-container'>
 
             <div>
@@ -300,20 +189,7 @@ function Result() {
               </div>
             </div>
 
-            <div className='result-select'>
-              <h3 className='select-header'>Show Plots for</h3>
-              <select onChange={(e) => setCurrentData(e.target.value)} defaultValue={"all"} value={currentData}>
-                <option value='all'>Union of all TSS across Conditions/Genomes</option>
-                <option value='dedup'>Intersection of all TSS across Conditions/Genomes</option>
-                {allGenomes.map((col, i) => {
-                  return (
-                    <option value={col} key={i}>
-                      {col}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+
 
             <div className='result-select'>
               <h3 className='select-header'>TSS to show</h3>
@@ -344,7 +220,13 @@ function Result() {
                 {showUpSet ? "-" : "+"} TSS classes overview
               </h3>
               {processedMasterTable ? (
-                <UpSet classes={upsetClasses} showUpSet={showUpSet} type={currentData} />
+                <UpSet
+                  showUpSet={showUpSet}
+                  allGenomes={allGenomes}
+                  filterForPlots={filterForPlots}
+                  tableColumns={tableColumns}
+                  tableData={tableData}
+                />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}

@@ -1,5 +1,5 @@
 
-export const createWiggleTracksTest = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePath) => {
+export const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePath) => {
     return ["Normal", "FivePrime"].map(type => {
         return {
             "data": {

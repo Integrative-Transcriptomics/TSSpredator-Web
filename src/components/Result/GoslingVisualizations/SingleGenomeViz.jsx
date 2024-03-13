@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { GoslingComponent } from "gosling.js";
 import { ClipLoader } from "react-spinners";
-import { createWiggleTracksTest, createGenomeTrack } from "./SharedGoslingFunctions.js";
+import { createWiggleTracks, createGenomeTrack } from "./SharedGoslingFunctions.js";
 /**
  * Renders a genome visualization using Gosling.js library.
  * @param {Object} props - The component props.
@@ -39,47 +39,6 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_
         settingGosRef(gosRef)
 
     }, [dataGosling]);
-
-    // const createGenomeTrack = (filePath, genome) => {
-    //     return [{
-    //         "alignment": "overlay",
-    //         "height": 20,
-    //         "id": genome,
-    //         "data": {
-    //             "url": "/api/provideFasta/" + filePath + "/" + genome + "/",
-    //             "type": "csv",
-    //             "separator": "\t",
-    //             "headerNames": ["pos", "base"],
-    //         },
-    //         "mark": "text",
-    //         "text": { "field": "base", "type": "nominal" },
-    //         "x": { "field": "pos", "type": "genomic" },
-    //         "style": { "textFontWeight": "bold", "align": "center", background: "lightgray", backgroundOpacity: 0.25 },
-    //         "size": { "value": 16 },
-    //         "color": {
-    //             "field": "base",
-    //             "type": "nominal",
-    //             "domain": ["A", "T", "G", "C", "-"],
-    //             "range": ["#FF0000", "#0000FF", "#008000", "#FFA500", "#000000"]
-    //         },
-    //         "tracks": [
-    //             {
-    //                 "visibility": [
-    //                     {
-    //                         "operation": "LT",
-    //                         "measure": "zoomLevel",
-    //                         "threshold": 500,
-    //                         "transitionPadding": 1000,
-    //                         "target": "mark"
-    //                     }]
-
-    //             }
-
-    //         ]
-    //     }]
-
-
-    // }
 
     const createGFFTrack = (data, strand) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
@@ -130,50 +89,6 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_
         }]
 
     }
-
-    const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePath) => {
-        return ["Normal", "FivePrime"].map(type => {
-            return {
-                "data": {
-                    "url": `/api/provideBigWig/${filePath}/${genome}/${strand === "+" ? "Plus" : "Minus"}/${type}`,
-                    "type": "bigwig",
-                    "binSize": 1,
-                    "aggregation": "mean"
-
-
-                },
-                "mark": "bar",
-                "x": { "field": "start", "type": "genomic", },
-                "xe": { "field": "end", "type": "genomic", },
-                "style": { "align": strand === "+" ? "left" : "right", backgroundOpacity: 0 },
-                "y": { "field": "value", "type": "quantitative", "range": strand === "+" & [0, 90], flip: strand === "-" },
-                "color": { "value": type === "Normal" ? "gray" : "orange" },
-                "stroke": { "value": "gray" },
-                "opacity": { "value": 0.25 },
-
-                "visibility": [
-                    {
-                        "operation": "LT",
-                        "measure": "zoomLevel",
-                        "threshold": TSS_DETAIL_LEVEL_ZOOM,
-                        "transitionPadding": 100,
-                        "target": "track"
-                    }
-                ],
-                "tooltip": [
-                    { "field": "start", "alt": "start" },
-                    { "field": "end", "alt": "Bin end" },
-                    { "field": "position", "alt": "pos" },
-                    {
-                        "field": "value",
-                        "alt": "val",
-                    },
-                ],
-            }
-        }
-        )
-    }
-
     const createTSSTrack = (data, aggregatedTSS, binSizes, strand, maxGenome, title = null, filePath) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
         let sizesBins = Object.keys(binSizes).sort((a, b) => parseInt(a) - parseInt(b)).map((size, i, arr) => {
@@ -243,7 +158,8 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_
                 ]
             }
         });
-        let specsWiggle = createWiggleTracksTest(TSS_DETAIL_LEVEL_ZOOM, strand, title, filePath)
+        let specsWiggle = createWiggleTracks(TSS_DETAIL_LEVEL_ZOOM, strand, title, filePath)
+        let detailTSSTrack = createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM)
         return [
             {
 
@@ -255,40 +171,8 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_
                 },
                 "style": { background: strand === "+" ? "lightblue" : "#f59f95", backgroundOpacity: 0.25 },
                 "tracks": [
-                    {
-                        "dataTransform": [
-                            { "type": "filter", "field": "superStrand", "oneOf": [strand] }
-                        ],
-                        "x": { "field": "superPos", "type": "genomic", "axis": strand === "+" ? "top" : "none" },
-                        "mark": strand === "+" ? "triangleRight" : "triangleLeft",
-                        "style": { "align": strand === "+" ? "left" : "right" },
-                        "size": { "value": 10, "legend": false, axis: "none" },
-                        "color": {
-                            "field": "mainClass",
-                            "type": "nominal",
-                            "domain": ORDER_TSS_CLASSES,
-                            "range": COLORS_TSS,
-                            "legend": strand === "+"
-                        },
-                        "tooltip": [
-                            { "field": "superPos", "type": "genomic", "alt": "TSS Position" },
-                            {
-                                "field": "mainClass",
-                                "type": "nominal",
-                                "alt": "Main TSS class",
-                            },
-                            { "field": "classesTSS", "alt": "All TSS classes" },
-                        ],
-                        "visibility": [
-                            {
-                                "operation": "LT",
-                                "measure": "zoomLevel",
-                                "threshold": TSS_DETAIL_LEVEL_ZOOM,
-                                "transitionPadding": 0,
-                                "target": "track"
-                            }
-                        ]
-                    }, ...binnedViews,
+                    detailTSSTrack,
+                    ...binnedViews,
                     ...specsWiggle
 
 
@@ -336,6 +220,43 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_
 
 
 
+
+    function createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM) {
+        return {
+            "dataTransform": [
+                { "type": "filter", "field": "superStrand", "oneOf": [strand] }
+            ],
+            "x": { "field": "superPos", "type": "genomic", "axis": strand === "+" ? "top" : "none" },
+            "mark": strand === "+" ? "triangleRight" : "triangleLeft",
+            "style": { "align": strand === "+" ? "left" : "right" },
+            "size": { "value": 10, "legend": false, axis: "none" },
+            "color": {
+                "field": "mainClass",
+                "type": "nominal",
+                "domain": ORDER_TSS_CLASSES,
+                "range": COLORS_TSS,
+                "legend": strand === "+"
+            },
+            "tooltip": [
+                { "field": "superPos", "type": "genomic", "alt": "TSS Position" },
+                {
+                    "field": "mainClass",
+                    "type": "nominal",
+                    "alt": "Main TSS class",
+                },
+                { "field": "classesTSS", "alt": "All TSS classes" },
+            ],
+            "visibility": [
+                {
+                    "operation": "LT",
+                    "measure": "zoomLevel",
+                    "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                    "transitionPadding": 0,
+                    "target": "track"
+                }
+            ]
+        };
+    }
 }
 
 

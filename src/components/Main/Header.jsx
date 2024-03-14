@@ -7,7 +7,7 @@ import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import '../../css/Header.css';
 
 
-function Header({ loading, onLoadExampleData, showExamples = false, statusID = null }) {
+function Header({ loading, onLoadExampleData, showExamples = false, statusID = null, startZipUpload }) {
 
   return <header>
 
@@ -32,6 +32,18 @@ function Header({ loading, onLoadExampleData, showExamples = false, statusID = n
 
 
     </div>
+
+    {
+      true &&
+      <div className='dropdown'>
+        <button className='dropbtn'
+          style={{ paddingRight: '0.5em', paddingLeft: '0.5em' }}
+          onClick={() => { startZipUpload(true) }}
+        >Upload Zip for Visualization
+        </button>
+
+      </div>
+    }
 
     {
       showExamples &&

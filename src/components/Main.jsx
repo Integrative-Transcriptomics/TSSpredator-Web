@@ -9,6 +9,7 @@ import FormConfig from "./Main/ParameterInputField";
 import Header from "./Main/Header";
 import JSZip from "jszip";
 import LoadingBanner from "./Main/LoadingBanner";
+import ZipUpload from "./Main/ZipUpload";
 
 /**
  * creates the main window and saves all inputs
@@ -71,6 +72,7 @@ function Main() {
 
   // show config popup
   const [confPopup, setConfPopup] = useState(false);
+  const [uploadZip, setUploadZip] = useState(false);
   const [text, setText] = useState("");
   const [confHeader, setConfHeader] = useState("Upload Config File");
   const [confFile, setConfFile] = useState("");
@@ -840,26 +842,16 @@ function Main() {
       saveGenomes(genomeIdx, "genomeannotation", genomeFiles.genomeannotation);
     }
 
-    Object.keys(enrichFor).forEach((key) => {
-      if (enrichFor[key].name) {
-        saveReplicates(genomeIdx, parseInt(key), "enrichedforward", enrichFor[key]);
-      }
+    let listObjects = [enrichFor, enrichRev, normalFor, normalRev];
+    let listNames = ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"];
+    listObjects.forEach((obj, i) => {
+      Object.keys(obj).forEach((key) => {
+        if (obj[key].name) {
+          saveReplicates(genomeIdx, parseInt(key), listNames[i], obj[key]);
+        }
+      });
     });
-    Object.keys(enrichRev).forEach((key) => {
-      if (enrichRev[key].name) {
-        saveReplicates(genomeIdx, parseInt(key), "enrichedreverse", enrichRev[key]);
-      }
-    });
-    Object.keys(normalFor).forEach((key) => {
-      if (normalFor[key].name) {
-        saveReplicates(genomeIdx, parseInt(key), "normalforward", normalFor[key]);
-      }
-    });
-    Object.keys(normalRev).forEach((key) => {
-      if (normalRev[key].name) {
-        saveReplicates(genomeIdx, parseInt(key), "normalreverse", normalRev[key]);
-      }
-    });
+
   };
 
   /**
@@ -908,7 +900,6 @@ function Main() {
       showError("The file " + file.name + " exceeds the maximum size of 200MB.");
     } else {
       const replicate = "replicate" + String.fromCharCode(97 + rId);
-
       let newValue = { ...replicates[gId]["genome" + (gId + 1)][rId][replicate] };
       newValue[node] = file;
       let temp = [...replicates];
@@ -1029,8 +1020,9 @@ function Main() {
 
     // assign uploaded files to genomes
     for (let i = 0; i < new_genomes.length; i++) {
-      var tmpFasta = new_genomes[i]["genome" + (i + 1)]["genomefasta"];
-      var tmpAnnotation = new_genomes[i]["genome" + (i + 1)]["genomeannotation"];
+      let currentObject = new_genomes[i]["genome" + (i + 1)];
+      var tmpFasta = currentObject["genomefasta"];
+      var tmpAnnotation = currentObject["genomeannotation"];
       new_genomes[i]["genome" + (i + 1)]["genomeannotation"] = [];
 
       for (let j = 0; j < allFiles.length; j++) {
@@ -1062,28 +1054,19 @@ function Main() {
     // assign uploaded files to replicates
     for (let i = 0; i < new_replicates.length; i++) {
       var tmpG = new_replicates[i]["genome" + (i + 1)];
-
+      console.log(tmpG)
       for (let k = 0; k < tmpG.length; k++) {
         const letter = String.fromCharCode(97 + k);
-
-        var tmpEF = tmpG[k]["replicate" + letter]["enrichedforward"];
-        var tmpER = tmpG[k]["replicate" + letter]["enrichedreverse"];
-        var tmpNF = tmpG[k]["replicate" + letter]["normalforward"];
-        var tmpNR = tmpG[k]["replicate" + letter]["normalreverse"];
-
-        for (let j = 0; j < allFiles.length; j++) {
-          let fileName = allFiles[j].name;
-
-          if (fileName === tmpEF) {
-            tmpG[k]["replicate" + letter]["enrichedforward"] = allFiles[j];
-          } else if (fileName === tmpER) {
-            tmpG[k]["replicate" + letter]["enrichedreverse"] = allFiles[j];
-          } else if (fileName === tmpNF) {
-            tmpG[k]["replicate" + letter]["normalforward"] = allFiles[j];
-          } else if (fileName === tmpNR) {
-            tmpG[k]["replicate" + letter]["normalreverse"] = allFiles[j];
+        const replicateKey = "replicate" + letter;
+        let listKeys = ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"];
+        listKeys.forEach((key) => {
+          let tmpFile = tmpG[k][replicateKey][key];
+          // find index of file in allFiles with matching and assign it to the replicate
+          let file = allFiles.find((f) => f.name === tmpFile);
+          if (file) {
+            tmpG[k][replicateKey][key] = file;
           }
-        }
+        });
       }
       new_replicates[i]["genome" + (i + 1)] = tmpG;
     }
@@ -1252,7 +1235,6 @@ function Main() {
   }
 
   useEffect(() => {
-    console.log('Loading files:', loadingFiles);
   }, [loadingFiles]);
 
 
@@ -1275,6 +1257,9 @@ function Main() {
           uploadFiles={(e) => uploadConfFiles(e)}
         />
       )}
+      {uploadZip && (
+        <ZipUpload />
+      )}
       {
         typeof readyLoaded === "string" && (
           <LoadingBanner
@@ -1286,7 +1271,7 @@ function Main() {
         )
       }
 
-      <Header loading={loading} onLoadExampleData={loadExampleData} showExamples={true} statusID={!statusID ? null : statusID} />
+      <Header loading={loading} startZipUpload={(x) => setUploadZip(x)} onLoadExampleData={loadExampleData} showExamples={true} statusID={!statusID ? null : statusID} />
 
       <FormConfig projectName={projectName}
         setProjectName={setProjectName}

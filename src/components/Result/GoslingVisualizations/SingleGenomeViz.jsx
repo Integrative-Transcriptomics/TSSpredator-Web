@@ -99,7 +99,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
                 "maxValueBin": binSizes[size]
             }
         })
-        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(aggregatedTSS, size, maxValueBin, filter, strand, GT, LT, "single"), title);
+        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(aggregatedTSS, size, maxValueBin, filter, strand, GT, LT, "single", title));
         let specsWiggle = createWiggleTracks(TSS_DETAIL_LEVEL_ZOOM, strand, title, filePath)
         let detailTSSTrack = createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM, "single", title)
         if (strand === "-") detailTSSTrack["x"]["axis"] = "none";

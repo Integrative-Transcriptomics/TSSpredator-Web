@@ -7,7 +7,7 @@ import { useTable } from 'react-table';
  * @param tableData: all table rows
  * @param showTable: true <-> show table, else hidden
  */
-function MasterTable({ tableColumns, tableData, showTable, gosRef }) {
+function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer }) {
 
     const [loading, setLoading] = useState(false)
     const [moreRows, setMoreRows] = useState(true);
@@ -151,6 +151,7 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef }) {
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data });
 
     useEffect(() => {
+        console.log(gosRef)
     }, [gosRef]);
 
     return (
@@ -171,6 +172,7 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef }) {
                     <thead >
                         {headerGroups.map((headerGroup) => (
                             <tr {...headerGroup.getHeaderGroupProps()} >
+                                {showGFFViewer && <th> Zoom in Viewer </th>}
                                 {headerGroup.headers.map((column, i) => (
 
                                     <th {...column.getHeaderProps()} onClick={() => sortTable((i.toString()))}>
@@ -189,11 +191,25 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef }) {
                             prepareRow(row)
                             return (
                                 <tr {...row.getRowProps()} ref={(rows.length - 21 === i) ? lastRow : null}>
-                                    <td> <button onClick={() => {
-                                        console.log(gosRef)
-                                        console.log(`${row.original[4].trim()}:${row.original[0]}`)
-                                        gosRef.current.api.zoomTo(row.original[4], `${row.original[4].trim()}:${parseInt(row.original[0]) - 150}-${parseInt(row.original[0]) + 150}`, 200)
-                                    }}> {row.original[0]}</button></td>
+
+                                    {showGFFViewer && <td> <button className="button-results" style={
+                                        {
+                                            backgroundColor: "lightgrey",
+                                            color: "black",
+                                            padding: "2px",
+                                            margin: "2px",
+                                            border: "none",
+                                            cursor: "pointer",
+                                            borderRadius: "5px"
+                                        }
+                                    }
+                                        onClick={() => {
+                                            gosRef.current.api.zoomTo(
+                                                `${row.original[4]}_${row.original[1]}_genome_track`,
+                                                `${row.original[4].trim()}:${parseInt(row.original[0]) - 150}-${parseInt(row.original[0]) + 150}`,
+                                                200)
+                                        }}> Show in Viewer</button></td>
+                                    }
 
                                     {
                                         row.cells.map((cell) => {

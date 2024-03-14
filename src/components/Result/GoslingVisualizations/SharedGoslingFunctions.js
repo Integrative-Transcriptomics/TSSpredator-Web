@@ -44,11 +44,11 @@ export const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePa
     )
 }
 
-export const createGenomeTrack = (filePath, genome, strand = "") => {
+export const createGenomeTrack = (filePath, genome, strand = "+") => {
     return [{
         "alignment": "overlay",
         "height": 20,
-        "id": `${genome}${strand}`,
+        "id": `${genome}_${strand}_genome_track`,
 
         "data": {
             "url": "/api/provideFasta/" + filePath + "/" + genome + "/",

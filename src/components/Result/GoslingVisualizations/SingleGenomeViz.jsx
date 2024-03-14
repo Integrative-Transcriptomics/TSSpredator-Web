@@ -38,7 +38,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
         setSpec(spec);
         settingGosRef(gosRef)
 
-    }, [dataGosling]);
+    }, [dataGosling, filter]);
 
     const createGFFTrack = (data, strand) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;

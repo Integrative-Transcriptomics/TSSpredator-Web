@@ -49,7 +49,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
         setSpec(spec);
         settingGosRef(gosRef)
 
-    }, [dataGosling]);
+    }, [dataGosling, filter]);
 
 
 

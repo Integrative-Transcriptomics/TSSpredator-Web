@@ -189,7 +189,7 @@ function Result() {
               </div>
             </div>
             <div className='result-select'>
-              <h3 className='select-header'>TSS to show</h3>
+              <h3 className='select-header'>Show the following TSS in plots: </h3>
               <select onChange={(e) => setFilterForPlots(e.target.value)} defaultValue={"enriched"} value={filterForPlots}>
                 <option value='enriched'>Only enriched TSSs</option>
                 <option value='detected'>All detected TSSs</option>
@@ -197,7 +197,7 @@ function Result() {
             </div>
             <div className='result-margin-left'>
               <h3 className='header click-param' onClick={() => setGFFViewer(!showGFFViewer)}>
-                {showGFFViewer ? "-" : "+"} Annotation Viewer with TSS positions
+                {showGFFViewer ? "-" : "+"} TSS positions with genome viewer
               </h3>
               {
                 showGFFViewer &&
@@ -214,7 +214,7 @@ function Result() {
 
             <div className='result-margin-left'>
               <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
-                {showUpSet ? "-" : "+"} TSS classes overview
+                {showUpSet ? "-" : "+"} Distribution of TSS across classes
               </h3>
               {processedMasterTable ? (
                 <UpSet

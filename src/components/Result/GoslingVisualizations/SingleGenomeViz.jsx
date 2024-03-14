@@ -2,14 +2,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { GoslingComponent } from "gosling.js";
 import { ClipLoader } from "react-spinners";
-import { createWiggleTracks, createGenomeTrack } from "./SharedGoslingFunctions.js";
+import { createWiggleTracks, createGenomeTrack, createDetailTSSTrack, createBinnedView } from "./SharedGoslingFunctions.js";
 /**
  * Renders a genome visualization using Gosling.js library.
  * @param {Object} props - The component props.
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_TSS, ORDER_TSS_CLASSES }) {
+function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
     const [spec, setSpec] = useState(null);
     const gosRef = useRef(null);
 
@@ -95,71 +95,14 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_
             return {
                 "GT": i === 0 ? TSS_DETAIL_LEVEL_ZOOM : arr[i - 1] * 40,
                 "LT": (i === Object.keys(binSizes).length - 1) ? maxGenome * 1.1 : size * 40,
-                size: parseInt(size), maxValueBin: binSizes[size]
+                "size": parseInt(size),
+                "maxValueBin": binSizes[size]
             }
         })
-        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => {
-            let transitionPadding = 5000;
-            return {
-                "title": `TSS counts in ${strand === "+" ? "forward" : "reverse"} strand `,
-                "data": {
-                    "values": aggregatedTSS[size].filter(d => filter.includes(d["typeTSS"])).sort((a, b) => ORDER_TSS_CLASSES.indexOf(a["mainClass"]) - ORDER_TSS_CLASSES.indexOf(b["mainClass"])),
-                    "type": "json",
-                    "genomicFields": ["binStart", "binEnd"],
-                },
-                "dataTransform": [
-                    { "type": "filter", "field": "strand", "oneOf": [strand] }
-                ],
-                "x": { "field": "binStart", "type": "genomic", "axis": strand === "+" ? "top" : "none", },
-                "xe": { "field": "binEnd", "type": "genomic", "axis": "none" },
-                "mark": "bar",
-                "style": { background: strand === "+" ? "lightblue" : "#f59f95", backgroundOpacity: 0.25 },
-                "y": {
-                    "field": "count",
-                    "type": "quantitative",
-                    axis: "left",
-                    domain: [0, maxValueBin[strand]],
-                    flip: strand === "-",
-                    zeroBaseline: strand === "+"
-                },
-                "color": {
-                    "field": "mainClass",
-                    "type": "nominal",
-                    "domain": ORDER_TSS_CLASSES,
-                    "range": COLORS_TSS,
-                    "legend": strand === "+"
-                },
-                "tooltip": [
-                    { "field": "binStart", "alt": "Bin start" },
-                    { "field": "binEnd", "alt": "Bin end" },
-                    {
-                        "field": "mainClass",
-                        "type": "nominal",
-                        "alt": "Main TSS class",
-                    },
-                    { "field": "count", "alt": "Number of TSS" },
-                ],
-                "visibility": [
-                    {
-                        "operation": "GT",
-                        "measure": "zoomLevel",
-                        "threshold": GT,
-                        "transitionPadding": transitionPadding,
-                        "target": "track"
-                    },
-                    !isNaN(LT) &&
-                    {
-                        "operation": "LT",
-                        "measure": "zoomLevel",
-                        "threshold": LT,
-                        "transitionPadding": transitionPadding,
-                        "target": "track"
-                    }
-                ]
-            }
-        });
+        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(aggregatedTSS, size, maxValueBin, filter, strand, GT, LT, "single"), title);
         let specsWiggle = createWiggleTracks(TSS_DETAIL_LEVEL_ZOOM, strand, title, filePath)
-        let detailTSSTrack = createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM)
+        let detailTSSTrack = createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM, "single", title)
+        if (strand === "-") detailTSSTrack["x"]["axis"] = "none";
         return [
             {
 
@@ -187,7 +130,6 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_
         let reverseGenes = createGFFTrack(data["superGFF"].filter(d => d["strand"] === "-"), "-");
         let fastaTrack = createGenomeTrack(filePath, genomeName);
 
-
         let TSSTracks_plus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], "+", maxGenome, genomeName, filePath);
         let TSSTracks_minus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], "-", maxGenome, genomeName, filePath);
         let TSSTracks = [TSSTracks_plus, TSSTracks_minus];
@@ -211,52 +153,10 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_
 
     }
 
-
-
     return <>
         {spec === null ? <ClipLoader color='#ffa000' size={30} /> : <GoslingComponent spec={spec} ref={gosRef} />}
     </>
         ;
-
-
-
-
-    function createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM) {
-        return {
-            "dataTransform": [
-                { "type": "filter", "field": "superStrand", "oneOf": [strand] }
-            ],
-            "x": { "field": "superPos", "type": "genomic", "axis": strand === "+" ? "top" : "none" },
-            "mark": strand === "+" ? "triangleRight" : "triangleLeft",
-            "style": { "align": strand === "+" ? "left" : "right" },
-            "size": { "value": 10, "legend": false, axis: "none" },
-            "color": {
-                "field": "mainClass",
-                "type": "nominal",
-                "domain": ORDER_TSS_CLASSES,
-                "range": COLORS_TSS,
-                "legend": strand === "+"
-            },
-            "tooltip": [
-                { "field": "superPos", "type": "genomic", "alt": "TSS Position" },
-                {
-                    "field": "mainClass",
-                    "type": "nominal",
-                    "alt": "Main TSS class",
-                },
-                { "field": "classesTSS", "alt": "All TSS classes" },
-            ],
-            "visibility": [
-                {
-                    "operation": "LT",
-                    "measure": "zoomLevel",
-                    "threshold": TSS_DETAIL_LEVEL_ZOOM,
-                    "transitionPadding": 0,
-                    "target": "track"
-                }
-            ]
-        };
-    }
 }
 
 

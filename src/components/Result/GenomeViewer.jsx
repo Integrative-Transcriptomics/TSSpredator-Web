@@ -39,8 +39,6 @@ function GenomeViewer({ filePath, dataGosling, filterForPlots, settingGosRef, go
                                 filePath={filePath}
                                 filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
                                 settingGosRef={settingGosRef}
-                                COLORS_TSS={COLORS_TSS}
-                                ORDER_TSS_CLASSES={ORDER_TSS_CLASSES}
                             /> :
                             <AlignedGenomeViz
                                 dataGosling={dataGosling}

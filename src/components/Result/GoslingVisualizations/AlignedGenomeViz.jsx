@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { GoslingComponent } from "gosling.js";
 import { ClipLoader } from "react-spinners";
-import { createGenomeTrack, createWiggleTracks } from "./SharedGoslingFunctions.js"
+import { createGenomeTrack, createWiggleTracks, createDetailTSSTrack, createBinnedView } from "./SharedGoslingFunctions.js"
 
 
 /**
@@ -11,7 +11,7 @@ import { createGenomeTrack, createWiggleTracks } from "./SharedGoslingFunctions.
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS_TSS, ORDER_TSS_CLASSES }) {
+function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
 
 
     const [spec, setSpec] = useState(null);
@@ -37,15 +37,14 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
         },]
 
         const spec = {
-            // "style": { "background": "gray", "backgroundOpacity": 0.05, "outline": "black", "outlineWidth": 2 },
             "title": "Visualization of TSSs and genes grouped by strand",
+            "subtitle": "Distribution of TSSs and genes per strand. The aligned view allows for an easier comparison across genomes",
             "arrangement": "horizontal",
             "spacing": 50,
             "linkingId": "detail", // linkingId is used to enable zooming and panning across views
 
             "zoomLimits": [0, maxValue],
             "views": distributedViews,
-            // "views": [...view_reverse, ...view_forward,],
         };
         setSpec(spec);
         settingGosRef(gosRef)
@@ -107,47 +106,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
 
     }
 
-    const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePath) => {
-        return ["Normal", "FivePrime"].map(type => {
-            return {
-                "data": {
-                    "url": `/api/provideBigWig/${filePath}/${genome}/${strand === "+" ? "Plus" : "Minus"}/${type}`,
-                    "type": "bigwig",
-                    "binSize": 1,
-                    "aggregation": "mean"
 
-
-                },
-                "mark": "bar",
-                "x": { "field": "start", "type": "genomic", },
-                "xe": { "field": "end", "type": "genomic", },
-                "style": { "align": strand === "+" ? "left" : "right", backgroundOpacity: 0 },
-                "y": { "field": "value", "type": "quantitative", flip: strand === "-" },
-                "color": { "value": type === "Normal" ? "gray" : "orange" },
-                "opacity": { "value": 0.25 },
-
-                "visibility": [
-                    {
-                        "operation": "LT",
-                        "measure": "zoomLevel",
-                        "threshold": TSS_DETAIL_LEVEL_ZOOM,
-                        "transitionPadding": 100,
-                        "target": "track"
-                    }
-                ],
-                "tooltip": [
-                    { "field": "start", "alt": "start" },
-                    { "field": "end", "alt": "Bin end" },
-                    { "field": "position", "alt": "pos" },
-                    {
-                        "field": "value",
-                        "alt": "val",
-                    },
-                ],
-            }
-        }
-        )
-    }
 
     const createTSSTrack = (data, aggregatedTSS, binSizes, strand, maxGenome, title = null, filePath) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
@@ -159,65 +118,9 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
                 "maxValueBin": binSizes[size]
             }
         })
-        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => {
-            let transitionPadding = 5000;
-            return {
-                "data": {
-                    "values": aggregatedTSS[size].filter(d => filter.includes(d["typeTSS"])).sort((a, b) => ORDER_TSS_CLASSES.indexOf(a["mainClass"]) - ORDER_TSS_CLASSES.indexOf(b["mainClass"])),
-                    "type": "json",
-                    "genomicFields": ["binStart", "binEnd"],
-                },
-                "dataTransform": [
-                    { "type": "filter", "field": "strand", "oneOf": [strand] }
-                ],
-                "x": { "field": "binStart", "type": "genomic", "axis": "none", },
-                "xe": { "field": "binEnd", "type": "genomic", "axis": "none" },
-                "mark": "bar",
-                "y": {
-                    "field": "count",
-                    "type": "quantitative",
-                    "axis": strand == "+" ? "left" : "right",
-                    domain: [0, maxValueBin[strand]],
-                    flip: strand === "-",
-                    zeroBaseline: strand === "+"
-                },
-                "color": {
-                    "field": "mainClass",
-                    "type": "nominal",
-                    "domain": ORDER_TSS_CLASSES,
-                    "range": COLORS_TSS,
-                },
-                "tooltip": [
-                    { "field": "binStart", "type": "genomic", "alt": "Bin start" },
-                    { "field": "binEnd", "alt": "Bin end" },
-                    {
-                        "field": "mainClass",
-                        "type": "nominal",
-                        "alt": "Main TSS class",
-                    },
-                    { "field": "count", "alt": "Number of TSS" },
-                ],
-                "visibility": [
-                    {
-                        "operation": "GT",
-                        "measure": "zoomLevel",
-                        "threshold": GT,
-                        "transitionPadding": transitionPadding,
-                        "target": "track"
-                    },
-                    !isNaN(LT) &&
-                    {
-                        "operation": "LT",
-                        "measure": "zoomLevel",
-                        "threshold": LT,
-                        "transitionPadding": transitionPadding,
-                        "target": "track"
-                    }
-                ]
-            }
-        });
+        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(aggregatedTSS, size, maxValueBin, filter, strand, GT, LT, "aligned", title));
         let specsWiggle = createWiggleTracks(TSS_DETAIL_LEVEL_ZOOM, strand, title, filePath)
-        let detailTSSTrack = createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM)
+        let detailTSSTrack = createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM, "aligned", title)
         return [
             {
 
@@ -228,7 +131,8 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
                     "genomicFields": ["superPos"],
                 },
                 "tracks": [
-                    detailTSSTrack, ...binnedViews,
+                    detailTSSTrack,
+                    ...binnedViews,
                     ...specsWiggle
 
 
@@ -236,6 +140,23 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
             }
 
         ]
+    }
+
+    const addLegendToTSS = (view) => {
+        let elementsToModify = view["tracks"][0]["tracks"].map(d => {
+            let id = d.id;
+            if (id) {
+                if (id.includes("detail_tss") | id.includes("aggregated_tss")) {
+                    d["color"]["legend"] = true;
+                }
+            }
+
+
+            return d;
+
+        });
+        view["tracks"][0]["tracks"] = elementsToModify;
+        return view;
     }
 
     const createTracks = (data, genomeName, maxGenome, filePath, strand) => {
@@ -250,6 +171,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
     const getViews = (data, filePath) => {
         let views_plus = [];
         let views_minus = [];
+        let addLegend = true;
         for (let genome of Object.keys(data)) {
             for (let strand of ["+", "-"]) {
                 let tempView = {
@@ -260,6 +182,8 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
                     "layout": "linear",
                     "tracks": createTracks(data[genome], genome, data[genome]["lengthGenome"], filePath, strand)
                 }
+                if (addLegend)
+                    tempView = addLegendToTSS(tempView)
                 if (strand === "+") {
                     views_plus.push(tempView)
                 } else {
@@ -268,6 +192,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
                 }
 
             }
+            addLegend = false;
         }
         return [views_minus, views_plus];
 
@@ -282,42 +207,6 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef, COLORS
 
 
 
-
-    function createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM) {
-        return {
-            "dataTransform": [
-                { "type": "filter", "field": "superStrand", "oneOf": [strand] }
-            ],
-            "x": { "field": "superPos", "type": "genomic", "axis": "top" },
-            "mark": strand === "+" ? "triangleRight" : "triangleLeft",
-            "style": { "align": strand === "+" ? "left" : "right" },
-            "size": { "value": 10, "legend": false, axis: "none" },
-            "color": {
-                "field": "mainClass",
-                "type": "nominal",
-                "domain": ORDER_TSS_CLASSES,
-                "range": COLORS_TSS,
-            },
-            "tooltip": [
-                { "field": "superPos", "type": "genomic", "alt": "TSS Position" },
-                {
-                    "field": "mainClass",
-                    "type": "nominal",
-                    "alt": "Main TSS class",
-                },
-                { "field": "classesTSS", "alt": "All TSS classes" },
-            ],
-            "visibility": [
-                {
-                    "operation": "LT",
-                    "measure": "zoomLevel",
-                    "threshold": TSS_DETAIL_LEVEL_ZOOM,
-                    "transitionPadding": 0,
-                    "target": "track"
-                }
-            ]
-        };
-    }
 }
 
 

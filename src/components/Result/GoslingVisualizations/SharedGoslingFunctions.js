@@ -1,4 +1,8 @@
 
+const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
+const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
+
+
 export const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePath) => {
     return ["Normal", "FivePrime"].map(type => {
         return {
@@ -82,4 +86,104 @@ export const createGenomeTrack = (filePath, genome, strand = "") => {
     }]
 
 
+}
+
+export const createBinnedView = (aggregatedTSS, binSize, maxValueBin, filterTSS, strand, GT, LT, viewType, genomeName) => {
+    let transitionPadding = 5000;
+    return {
+        "title": `TSS counts in ${strand === "+" ? "forward" : "reverse"} strand `,
+        "data": {
+            "values": aggregatedTSS[binSize].filter(d => filterTSS.includes(d["typeTSS"])).sort((a, b) => ORDER_TSS_CLASSES.indexOf(a["mainClass"]) - ORDER_TSS_CLASSES.indexOf(b["mainClass"])),
+            "type": "json",
+            "genomicFields": ["binStart", "binEnd"],
+        },
+        "dataTransform": [
+            { "type": "filter", "field": "strand", "oneOf": [strand] }
+        ],
+        "id": `aggregated_tss_${strand}_${binSize}_${genomeName}`,
+        "x": { "field": "binStart", "type": "genomic", "axis": "none" },
+        "xe": { "field": "binEnd", "type": "genomic", "axis": "none" },
+        "mark": "bar",
+        "style": { "background": strand === "+" ? "lightblue" : "#f59f95", "backgroundOpacity": 0.25 },
+        "y": {
+            "field": "count",
+            "type": "quantitative",
+            "axis": "left",
+            "domain": [0, maxValueBin[strand]],
+            "flip": strand === "-",
+            "zeroBaseline": strand === "+"
+        },
+        "color": {
+            "field": "mainClass",
+            "type": "nominal",
+            "domain": ORDER_TSS_CLASSES,
+            "range": COLORS_TSS,
+            "legend": viewType === "single" ? strand === "+" : false
+        },
+        "tooltip": [
+            { "field": "binStart", "alt": "Bin start" },
+            { "field": "binEnd", "alt": "Bin end" },
+            {
+                "field": "mainClass",
+                "type": "nominal",
+                "alt": "Main TSS class",
+            },
+            { "field": "count", "alt": "Number of TSS" },
+        ],
+        "visibility": [
+            {
+                "operation": "GT",
+                "measure": "zoomLevel",
+                "threshold": GT,
+                "transitionPadding": transitionPadding,
+                "target": "track"
+            },
+            !isNaN(LT) &&
+            {
+                "operation": "LT",
+                "measure": "zoomLevel",
+                "threshold": LT,
+                "transitionPadding": transitionPadding,
+                "target": "track"
+            }
+        ]
+    }
+}
+
+export const createDetailTSSTrack = (strand, TSS_DETAIL_LEVEL_ZOOM, viewType, genomeName) => {
+    return {
+        "dataTransform": [
+            { "type": "filter", "field": "superStrand", "oneOf": [strand] }
+        ],
+        "id": `detail_tss_${strand}_${genomeName}`,
+        "x": { "field": "superPos", "type": "genomic", "axis": "top" },
+        "mark": strand === "+" ? "triangleRight" : "triangleLeft",
+        "style": { "align": strand === "+" ? "left" : "right" },
+        "size": { "value": 10, "legend": false, axis: "none" },
+        "color": {
+            "field": "mainClass",
+            "type": "nominal",
+            "domain": ORDER_TSS_CLASSES,
+            "range": COLORS_TSS,
+            "legend": viewType === "single" ? strand === "+" : false
+        },
+        "tooltip": [
+            { "field": "superPos", "type": "genomic", "alt": "TSS Position" },
+            {
+                "field": "mainClass",
+                "type": "nominal",
+                "alt": "Main TSS class",
+            },
+            { "field": "classesTSS", "alt": "All TSS classes" },
+        ],
+        "visibility": [
+            {
+                "operation": "LT",
+                "measure": "zoomLevel",
+                "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                "transitionPadding": 0,
+                "target": "track"
+            }
+        ]
+    };
 }

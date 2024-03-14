@@ -108,7 +108,7 @@ def helperAsyncPredator(self, *args ):
             f.write(jsonString)
         # print files in resultDir
         print(f"Files in {resultDir}: {os.listdir(resultDir)}")
-        self.update_state(state='ZIP_RESULTS', meta={'projectName': projectName})
+        self.update_state(state='PROCESSING_RESULTS', meta={'projectName': projectName})
         # Zip the results        
         make_archive(os.path.join(tmpdirResult,'result'), 'zip', resultDir)
         # Process results for visualization
@@ -205,7 +205,7 @@ def task_status(task_id):
         # if file not found, send error message
         return resp
 
-    elif task.state in ['STARTED', "RUNNING", "PARSING DATA", "ZIP_RESULTS"]:
+    elif task.state in ['STARTED', "RUNNING", "PARSING DATA", "PROCESSING_RESULTS"]:
         # job did not start yet
         response = {
             'state': task.state,

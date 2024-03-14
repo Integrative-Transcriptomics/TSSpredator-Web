@@ -51,7 +51,7 @@ export const createGenomeTrack = (filePath, genome, strand = "+") => {
         "id": `${genome}_${strand}_genome_track`,
 
         "data": {
-            "url": "/api/provideFasta/" + filePath + "/" + genome + "/",
+            "url": `/api/provideFasta/${filePath}/${genome}/${strand}`,
             "type": "csv",
             "separator": "\t",
             "headerNames": ["pos", "base"],

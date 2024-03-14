@@ -128,12 +128,12 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
     const createTracks = (data, genomeName, maxGenome, filePath) => {
         let forwardGenes = createGFFTrack(data["superGFF"].filter(d => d["strand"] === "+"), "+");
         let reverseGenes = createGFFTrack(data["superGFF"].filter(d => d["strand"] === "-"), "-");
-        let fastaTrack = createGenomeTrack(filePath, genomeName);
-
+        let fastaTrack_forward = createGenomeTrack(filePath, genomeName, "+");
+        let fastaTrack_reverse = createGenomeTrack(filePath, genomeName, "-");
         let TSSTracks_plus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], "+", maxGenome, genomeName, filePath);
         let TSSTracks_minus = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], "-", maxGenome, genomeName, filePath);
         let TSSTracks = [TSSTracks_plus, TSSTracks_minus];
-        return [...TSSTracks[0], ...forwardGenes, ...fastaTrack, ...reverseGenes, ...TSSTracks[1]];
+        return [...TSSTracks[0], ...forwardGenes, ...fastaTrack_forward, ...fastaTrack_reverse, ...reverseGenes, ...TSSTracks[1]];
     }
 
     const getViews = (data, filePath) => {

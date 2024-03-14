@@ -103,7 +103,7 @@ def helperAsyncPredator(self, *args ):
         jsonString = jsonString.replace(inputDir, "")
         jsonString = jsonString.replace(resultDir, "")
         # write json string into tmpdirResult
-        with open(os.path.join(tmpdirResult, 'config.json'), 'w') as f:
+        with open(os.path.join(resultDir, 'config.json'), 'w') as f:
             f.write(jsonString)
         # print files in resultDir
         print(f"Files in {resultDir}: {os.listdir(resultDir)}")
@@ -264,10 +264,9 @@ def returnBigWig(filePath, genome, strand, fileType):
     completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f"{genome}_super{fileType}{strand}.bw")
     return send_file(completePath, mimetype='text/plain')
        
-@app.route('/api/provideFasta/<filePath>/<genome>/')
-def returnFasta(filePath, genome): 
-    completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f'{genome}_superGenome.tsv')
-    print(completePath)
+@app.route('/api/provideFasta/<filePath>/<genome>/<strand>')
+def returnFasta(filePath, genome, strand): 
+    completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f'{genome}_{strand}_superGenome.tsv')
     return send_file(completePath, mimetype='text/plain')
 
 @app.route('/api/TSSViewer/<filePath>/')
@@ -347,12 +346,9 @@ def loadConfig():
     parameters = json.loads(request.form['parameters'])
     genomes = json.loads(request.form['genomes'])
     replicates = json.loads(request.form['replicates'])
-    print(parameters)
-    print(genomes)
+   
     with tempfile.TemporaryDirectory() as tmpdir:
-
         newTmpDir = tmpdir.replace('\\', '/')
-
         # save config file
         configFilename = newTmpDir + '/' + secure_filename(configFile.filename)
         configFile.save(configFilename)

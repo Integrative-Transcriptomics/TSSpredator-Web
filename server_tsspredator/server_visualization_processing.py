@@ -204,18 +204,39 @@ def parseSuperGFF (path):
 def from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss):
     '''convert fasta to tsv'''
     with open(os.path.join(tempDir, f'{genomeKey}_super.fa'), 'r') as f:
-        with open(os.path.join(resultsDir,f'{genomeKey}_superGenome.tsv'), 'w') as output:
-            length_genome = 0
-            for line in f:
-                if line.startswith('>'):
-                    continue
-                line = line.rstrip()
-                for i, base in enumerate(line):
-                    position = length_genome + i + 1
-                    if position in unique_tss:
-                        output.write(f'{position}\t{base}\n')
-                length_genome += len(line)
+        genome_as_string = ""
+        for line in f:
+            if line.startswith('>'):
+                continue
+            line = line.rstrip()
+            genome_as_string += line
 
+    length_genome = len(genome_as_string)
+    for fix_strand in ["+", "-"]:
+        filt_unique_tss = [tss[0] for tss in unique_tss if tss[1] == fix_strand]
+        with open(os.path.join(resultsDir,f'{genomeKey}_{fix_strand}_superGenome.tsv'), 'w') as output:
+            for pos in filt_unique_tss:
+                if pos < 1 or pos > length_genome:
+                    continue
+                base = genome_as_string[pos-1]
+                if fix_strand == "-":
+                    base = reverse_base(base)
+                output.write(f'{pos}\t{base}\n')
+       
+
+def reverse_base(base):
+    '''reverse base'''
+    match base:
+        case 'A':
+            return 'T'
+        case 'T':
+            return 'A'
+        case 'C':
+            return 'G'
+        case 'G':
+            return 'C'
+        case _:
+            return base
 def expandTSSPositions(tss_set, expansion):
     '''expand TSS positions'''
     expandedTSS = set()
@@ -224,14 +245,23 @@ def expandTSSPositions(tss_set, expansion):
         strand = tss_pair[1]
         rangeIteration = range(-expansion, 1) if strand == "+" else range(expansion, -1, -1)
         for i in rangeIteration:
-            expandedTSS.add(int(tss + i))
+            expandedTSS.add((int(tss + i),strand))
     return expandedTSS  
 
     
 def process_results(tempDir, resultsDir): 
     masterTablePath = tempDir + '/MasterTable.tsv'
+    # copy config file to resultsDir
+    configPath = tempDir + '/config.json'
+    with open(configPath, 'r') as f:
+        config = json.load(f)
+    with open(resultsDir + '/config.json', 'w') as f:
+        f.write(json.dumps(config))
+        
+   
+
     masterTable, unique_tss = readMasterTable(masterTablePath)
-    unique_tss = expandTSSPositions(unique_tss, 50)
+    unique_tss_expanded = expandTSSPositions(unique_tss, 50)
     rnaData = {}
     for genomeKey in masterTable.keys():
         masterTable[genomeKey]['TSS'] = list(masterTable[genomeKey]['TSS'].values())
@@ -245,7 +275,7 @@ def process_results(tempDir, resultsDir):
         masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
         rnaData[genomeKey] = {}
         rnaData[genomeKey] = parseRNAGraphs(tempDir, genomeKey, resultsDir)
-        from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss)
+        from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss_expanded)
     #write compressed json in resultsDir
     with open(resultsDir + '/aggregated_data.json', 'w') as f:
         f.write(json.dumps(masterTable))

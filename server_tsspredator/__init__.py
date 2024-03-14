@@ -344,7 +344,6 @@ def getAlignment():
 @app.route('/api/loadConfig/', methods=['POST', 'GET'])
 def loadConfig():
     '''load config file and send data back to frontend'''
-
     configFile = request.files['configFile']
     parameters = json.loads(request.form['parameters'])
     genomes = json.loads(request.form['genomes'])
@@ -368,9 +367,9 @@ def loadConfig():
         tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
         # call jar file for to extract genome names & ids
         result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)        
-        print(result.stderr)
         if(len(result.stderr) == 0):
-            config = json.loads((result.stdout).decode())
+            string_result = (result.stdout).decode()
+            config = json.loads(string_result)
             parameters, genomes, replicates, alignmentFile, multiFasta = sf.handle_config_file(parameters, config, genomes, replicates)
 
             projectName = sf.get_value(config, 'projectName')
@@ -417,6 +416,13 @@ def saveConfig():
     tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
     # call jar file for to write config file
     subprocess.run(['java', '-jar', tsspredatorLocation, jsonString])
+
+    # remove "" from config file
+    with open(configFilename, 'r') as file:
+        data = file.read()
+    data = data.replace('"', '')
+    with open(configFilename, 'w') as file:
+        file.write(data)
 
     return send_file(configFilename, as_attachment=True)
 

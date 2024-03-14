@@ -1,12 +1,11 @@
 from asyncio.subprocess import PIPE
-from shutil import make_archive, rmtree, unpack_archive
+from shutil import make_archive, rmtree
 from time import time
 import traceback
 from flask import Flask, request, send_file, send_from_directory, jsonify, session
 from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
-import collections
 
 import json
 import tempfile

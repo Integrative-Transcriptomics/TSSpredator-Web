@@ -947,10 +947,8 @@ function Main() {
    */
   const uploadConfFiles = (event) => {
     const maxFileSize = 200000000;
-    var filesOK = true;
-
+    let filesOK = true;
     const files = event.target.files;
-    console.log(files)
     const tmpArray = [];
     for (let i = 0; i < files.length; i++) {
       // check file size
@@ -1312,7 +1310,6 @@ function Main() {
         setConfHeader={setConfHeader}
         setText={setText}
         setConfPopup={setConfPopup}
-        // saveConfigFile={saveConfigFile}
         fillGenomes={fillGenomes}
         checkInput={checkInput}
         loading={loading}

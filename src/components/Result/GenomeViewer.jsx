@@ -3,10 +3,9 @@ import SingleGenomeViz from './GoslingVisualizations/SingleGenomeViz';
 import AlignedGenomeViz from './GoslingVisualizations/AlignedGenomeViz';
 
 
-function GenomeViewer({ filePath, dataGosling, filterForPlots, settingGosRef, gosRef }) {
+function GenomeViewer({ filePath, dataGosling, filter, settingGosRef, gosRef }) {
     const [currentType, setCurrentType] = useState('single'); // single or aligned
-    const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
-    const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
+
 
     return (
         <div className='gosling-component'>
@@ -37,16 +36,14 @@ function GenomeViewer({ filePath, dataGosling, filterForPlots, settingGosRef, go
                             <SingleGenomeViz
                                 dataGosling={dataGosling}
                                 filePath={filePath}
-                                filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
+                                filter={filter}
                                 settingGosRef={settingGosRef}
                             /> :
                             <AlignedGenomeViz
                                 dataGosling={dataGosling}
                                 filePath={filePath}
-                                filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
+                                filter={filter}
                                 settingGosRef={settingGosRef}
-                                COLORS_TSS={COLORS_TSS}
-                                ORDER_TSS_CLASSES={ORDER_TSS_CLASSES}
                             />
 
                     )

@@ -11,8 +11,6 @@ export const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePa
                 "type": "bigwig",
                 "binSize": 1,
                 "aggregation": "mean"
-
-
             },
             "mark": "bar",
             "x": { "field": "start", "type": "genomic", },

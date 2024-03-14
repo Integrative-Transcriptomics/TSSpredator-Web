@@ -188,9 +188,6 @@ function Result() {
                 TSSpredator-prediction.zip
               </div>
             </div>
-
-
-
             <div className='result-select'>
               <h3 className='select-header'>TSS to show</h3>
               <select onChange={(e) => setFilterForPlots(e.target.value)} defaultValue={"enriched"} value={filterForPlots}>

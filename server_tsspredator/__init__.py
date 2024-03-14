@@ -1,5 +1,5 @@
 from asyncio.subprocess import PIPE
-from shutil import make_archive, rmtree
+from shutil import make_archive, rmtree, unpack_archive
 from time import time
 import traceback
 from flask import Flask, request, send_file, send_from_directory, jsonify, session
@@ -125,11 +125,26 @@ def helperAsyncPredator(self, *args ):
                                 })
         raise Ignore()
     
-@app.route('/api/startUpload/', methods=['GET'])
+@app.route('/api/startUpload/', methods=['GET', 'POST'])
 def startUpload():
     session["inputFiles"] = tempfile.mkdtemp(prefix='tmpPredInputFolder')
     session["annotationFiles"] = tempfile.mkdtemp(prefix='tmpPredAnnotation')
     return {'result': 'success'}
+
+@app.route('/api/zipUpload/', methods=['POST'])
+def startResultUpload():
+    print(request.files)
+    print("stadrt upload")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Unpack the uploaded archive
+        newTmpDir = tmpdir.replace('\\', '/')
+        file = request.files['file']
+        file.save(newTmpDir + '/' + secure_filename(file.filename))
+        unpack_archive(newTmpDir + '/' + secure_filename(file.filename), newTmpDir)
+        resultDir = tempfile.mkdtemp(prefix='tmpPredResultFolder').replace('\\', '/')
+        server_viz.process_results(tmpdir, resultDir)
+    return {'result': 'success', 'filePath': resultDir.split('/')[-1]}
+
 
 @app.route('/api/upload/', methods=['POST'])
 def upload():

@@ -10,7 +10,24 @@ import React from 'react';
 function ZipUpload({ }) {
     const startZipUpload = (e) => {
         const file = e.target.files[0];
-        console.log(file)
+        // TODO: Check that the zip file contains only expected files
+
+        const fileName = file.name;
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch('/api/zipUpload/', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+
+
     }
 
     return (
@@ -19,14 +36,9 @@ function ZipUpload({ }) {
                 <h3 className='header error-popup-header'>Upload Zip File</h3>
                 <div className='error-field'>Please Upload a Zip File generated with TSSPredator-Web</div>
                 <div className='error-button'>
-
                     <label className='button error'> Upload Zip File
                         <input type='file' onChange={(e) => startZipUpload(e)} style={{ display: 'none' }} />
                     </label>
-
-
-
-
                 </div>
             </div>
         </div>

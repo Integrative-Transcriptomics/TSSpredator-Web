@@ -29,7 +29,7 @@ function StatusSite() {
 
       setData(json);
 
-      if (json["state"] !== "RUNNING" && json["state"] !== "STARTED") {
+      if (json["state"] !== "RUNNING" && json["state"] !== "STARTED" && json["state"] !== "PROCESSING_RESULTS") {
         setUpdate(false);
         if (json["state"] === "INTERNAL_ERROR") {
           setEPopup(true);

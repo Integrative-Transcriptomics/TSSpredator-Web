@@ -3,6 +3,7 @@ import os
 import collections
 import json
 import subprocess
+import shutil
 from asyncio.subprocess import PIPE
 
 
@@ -253,13 +254,7 @@ def process_results(tempDir, resultsDir):
     masterTablePath = tempDir + '/MasterTable.tsv'
     # copy config file to resultsDir
     configPath = tempDir + '/config.json'
-    with open(configPath, 'r') as f:
-        config = json.load(f)
-    with open(resultsDir + '/config.json', 'w') as f:
-        f.write(json.dumps(config))
-        
-   
-
+    shutil.copy(configPath, resultsDir + '/config.json')
     masterTable, unique_tss = readMasterTable(masterTablePath)
     unique_tss_expanded = expandTSSPositions(unique_tss, 50)
     rnaData = {}

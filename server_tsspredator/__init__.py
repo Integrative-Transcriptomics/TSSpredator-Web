@@ -1,5 +1,5 @@
 from asyncio.subprocess import PIPE
-from shutil import make_archive, rmtree, unpack_archive
+from shutil import make_archive, rmtree, unpack_archive, copy
 from time import time
 import traceback
 from flask import Flask, request, send_file, send_from_directory, jsonify, session
@@ -133,8 +133,6 @@ def startUpload():
 
 @app.route('/api/zipUpload/', methods=['POST'])
 def startResultUpload():
-    print(request.files)
-    print("stadrt upload")
     with tempfile.TemporaryDirectory() as tmpdir:
         # Unpack the uploaded archive
         newTmpDir = tmpdir.replace('\\', '/')
@@ -142,7 +140,10 @@ def startResultUpload():
         file.save(newTmpDir + '/' + secure_filename(file.filename))
         unpack_archive(newTmpDir + '/' + secure_filename(file.filename), newTmpDir)
         resultDir = tempfile.mkdtemp(prefix='tmpPredResultFolder').replace('\\', '/')
+        # Process results for visualization
         server_viz.process_results(tmpdir, resultDir)
+        # copy mainzip to resultDir
+        copy(newTmpDir + '/' + secure_filename(file.filename), resultDir+ '/result.zip')
     return {'result': 'success', 'filePath': resultDir.split('/')[-1]}
 
 

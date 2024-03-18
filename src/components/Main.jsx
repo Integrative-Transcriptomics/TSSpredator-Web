@@ -1271,7 +1271,7 @@ function Main() {
         )
       }
 
-      <Header loading={loading} startZipUpload={(x) => setUploadZip(x)} onLoadExampleData={loadExampleData} showExamples={true} statusID={!statusID ? null : statusID} />
+      <Header loading={loading} startZipUpload={(x) => setUploadZip(x)} onLoadExampleData={loadExampleData} showExamples={true} statusID={!statusID ? null : statusID} allowZipUpload={true} />
 
       <FormConfig projectName={projectName}
         setProjectName={setProjectName}

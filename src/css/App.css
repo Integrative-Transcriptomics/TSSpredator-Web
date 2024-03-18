@@ -520,6 +520,13 @@ a.open-results {
     position: relative;
 }
 
+#upload-zip-button:hover {
+    color: var(--mainColor);
+    background-color: white;
+    border: 1px solid var(--mainColor);
+
+}
+
 .loading {
     margin-left: 65%;
 }
@@ -536,12 +543,13 @@ a.open-results {
 .dropbtn {
     background-color: var(--mainColor);
     font-size: 1rem;
-    padding: 1.5% 0;
+    padding: 0.25em 0.5rem 0.25em 0.5rem;
     text-align: center;
     min-width: 100%;
     color: white;
     border: 1px solid white;
     cursor: pointer;
+
 }
 
 .dropdown-content {
@@ -573,6 +581,7 @@ a.open-results {
 .dropdown:hover .dropdown-content {
     display: block;
 }
+
 
 
 @media only screen and (max-width: 1450px) {

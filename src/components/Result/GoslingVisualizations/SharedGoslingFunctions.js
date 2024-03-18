@@ -31,12 +31,11 @@ export const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePa
                 }
             ],
             "tooltip": [
-                { "field": "start", "alt": "start" },
+                { "field": "start", "alt": "Bin start" },
                 { "field": "end", "alt": "Bin end" },
-                { "field": "position", "alt": "pos" },
                 {
                     "field": "value",
-                    "alt": "val",
+                    "alt": `Value of ${type} library `,
                 },
             ],
         }

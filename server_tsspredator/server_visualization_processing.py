@@ -126,22 +126,34 @@ def aggregateTSS(tssList, maxGenome):
     return aggregatedTSS, binSizeMax
 
 
-def adaptWiggleFile(inputDir, genome, fileType, strand, resultsDir):
+def adaptWiggleFile(inputDir, genome, strand, resultsDir):
     '''adapt wiggle file and return path'''
-    file = os.path.join(inputDir, f'{genome}_{fileType}{strand}_avg.bigwig')
-    df = pd.read_csv(file, sep='\t')
-    df["end"] = df["end"] + 1
-    df["chrom"] = genome
-    maxEnd = df['end'].max()
-    chromSizes = os.path.join(inputDir, f'{genome}.chromsizes')
-    if strand == "Minus":
-        df['value'] = df['value'] * -1
-        # if negative change to zero
-        df['value'] = df['value'].apply(lambda x: 0 if x < 0 else x)
+    results_per_filetype = {}
+    ## TODO: from file to df
+    for fileType in ["superFivePrime", "superNormal"]:
+        file, df, maxEnd, min_val, max_val = from_bedgraph_to_df(inputDir, genome, fileType, strand)
+        results_per_filetype[fileType] = {"file": file, "df": df, "maxEnd": maxEnd, "min": min_val, "max": max_val}
+   ## TODO: Normalize both files using the max and min from both files
+    min_value = min(results_per_filetype[fileType]["min"] for fileType in results_per_filetype)
+    max_value = max(results_per_filetype[fileType]["max"] for fileType in results_per_filetype)
+    file_names = {}
+    for fileType in ["superFivePrime", "superNormal"]:
+        df = results_per_filetype[fileType]["df"]
+        df['value'] = (df['value'] - min_value) / (max_value - min_value)
+        results_per_filetype[fileType]["df"] = df
+        file = results_per_filetype[fileType]["file"]
+        maxEnd = results_per_filetype[fileType]["maxEnd"]
+        outputBigWig = from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df, maxEnd)
+        file_names[fileType] = outputBigWig
+    return {"filename":file_names, "normalization": {"translation": min_value, "multiplication": (max_value - min_value)}}
 
+def from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df, maxEnd):
+    df["chrom"] = genome
+    chromSizes = os.path.join(inputDir, f'{genome}.chromsizes')
     with open(chromSizes, 'w') as f:
         f.write(f'{genome}\t{maxEnd+1}\n')
     df = df[['chrom', 'start', 'end', 'value']]
+
     adaptedFile = file.replace("_avg.bigwig", "_adapted.bigwig")
     df.to_csv(adaptedFile, sep='\t', index=False, header=False)
     outputBigWig = os.path.join(resultsDir, f'{genome}_{fileType}{strand}.bw')
@@ -153,6 +165,19 @@ def adaptWiggleFile(inputDir, genome, fileType, strand, resultsDir):
     if len(result.stderr) > 0:
         print(f'Error {result.stderr}')
     return outputBigWig
+
+def from_bedgraph_to_df(inputDir, genome, fileType, strand):
+    file = os.path.join(inputDir, f'{genome}_{fileType}{strand}_avg.bigwig')
+    df = pd.read_csv(file, sep='\t')
+    df["end"] = df["end"] + 1
+    maxEnd = df['end'].max()
+    if strand == "Minus":
+        df['value'] = df['value'] * -1
+        # if negative change to zero
+        df['value'] = df['value'].apply(lambda x: 0 if x < 0 else x)
+    # get mix max of value
+    min, max = df['value'].min(), df['value'].max()
+    return file,df,maxEnd,min,max
 def parseRNAGraphs(tmpdir, genomeKey, resultsDir):
     '''parse RNA graphs and return path as json. Only send path, not the whole file.'''
     # get only last part of tmpdir
@@ -160,12 +185,12 @@ def parseRNAGraphs(tmpdir, genomeKey, resultsDir):
     dataRNA = {}
     for strand in ['Plus', 'Minus']:
         dataRNA[strand] = {}
+        bw_name = adaptWiggleFile(tmpdir, genomeKey, strand, resultsDir)
         for fileType in ["superFivePrime", "superNormal"]:
-            # create bw file from bigwig
-            bw_name = adaptWiggleFile(tmpdir, genomeKey, fileType, strand, resultsDir)
             dataRNA[fileType] = {
             'path': lastPart, 
-            'filename': bw_name
+            'filename': bw_name["filename"][fileType],
+            'normalization': bw_name["normalization"]
         }
 
     return dataRNA

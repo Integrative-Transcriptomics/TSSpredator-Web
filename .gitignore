@@ -27,8 +27,8 @@ __pycache__
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-server_tsspredator/exampleData/campylobacter/Archive/*
-server_tsspredator/exampleData/pseudomonas/Archive/*
+server_tsspredator/exampleData/campylobacter/files/*
+server_tsspredator/exampleData/pseudomonas/files/*
 dump.rdb
 package-lock.json
 server_tsspredator.egg-info/PKG-INFO
@@ -40,3 +40,5 @@ server_tsspredator.egg-info
 .gradle
 bin
 .yarnrc.yml
+image_tsspredator_celery_app.tar.gz
+image_tsspredator_web.tar.gz

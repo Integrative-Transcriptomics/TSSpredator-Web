@@ -109,7 +109,6 @@ def defParameterComparative():
 
 def convertToJson(array):
 
-    #jsonString="\"" +"\": {"
     jsonString=""
     for p in array:
        
@@ -129,10 +128,7 @@ def getParameters():
     jsonString+="\"Clustering\": {" + convertToJson(defParameterCluster()) + ","
     jsonString+="\"Classification\": {" + convertToJson(defParameterClass()) + ","
     jsonString+="\"Comparative\": {" + convertToJson(defParameterComparative()) + "}}"
-    
-    #print(jsonString)
     return jsonString
     
 
-#getParameters()
 

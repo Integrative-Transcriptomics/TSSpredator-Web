@@ -358,43 +358,46 @@ def getAlignment():
 @app.route('/api/loadConfig/', methods=['POST', 'GET'])
 def loadConfig():
     '''load config file and send data back to frontend'''
+
     configFile = request.files['configFile']
     parameters = json.loads(request.form['parameters'])
     genomes = json.loads(request.form['genomes'])
     replicates = json.loads(request.form['replicates'])
-   
     with tempfile.TemporaryDirectory() as tmpdir:
+
         newTmpDir = tmpdir.replace('\\', '/')
-        # save config file
-        configFilename = newTmpDir + '/' + secure_filename(configFile.filename)
-        configFile.save(configFilename)
-        print(configFilename)
-
-        # write JSON string 
-        jsonString = '{"loadConfig": "true",' + '"saveConfig": "false", "loadAlignment": "false",' + '"configFile": "' + configFilename + '"}'
-        
-        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
-        # join server Location to find TSSpredator
-        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
-        # call jar file for to extract genome names & ids
-        result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)        
-        if(len(result.stderr) == 0):
-            string_result = (result.stdout).decode()
-            config = json.loads(string_result)
-            parameters, genomes, replicates, alignmentFile, multiFasta = sf.handle_config_file(parameters, config, genomes, replicates)
-
-            projectName = sf.get_value(config, 'projectName')
-
-            rnaGraph = 'false'
-            if int(sf.get_value(config, 'writeGraphs')) == 1:
-                rnaGraph = "true"
-
-            # use json.dumps() to keep order            
-            return {'result': 'success', 'data': {'parameters': json.dumps(parameters), 'genomes': json.dumps(genomes), 
-                    'replicates': json.dumps(replicates), 'projectName': projectName, 'rnaGraph': rnaGraph, 'alignmentFile': alignmentFile, 
-                    'numReplicate': parameters['setup']['numberofreplicates']['value'], 'multiFasta': multiFasta}}
+        # Check extension of file
+        if not configFile.filename.endswith('.json'):
+            # save config file
+            configFilename = newTmpDir + '/' + secure_filename(configFile.filename)
+            configFile.save(configFilename)
+            # write JSON string 
+            jsonString = '{"loadConfig": "true",' + '"saveConfig": "false", "loadAlignment": "false",' + '"configFile": "' + configFilename + '"}'
+            
+            serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
+            # join server Location to find TSSpredator
+            tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
+            # call jar file for to extract genome names & ids
+            result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)        
+        if configFile.filename.endswith('.json'):
+            config = json.loads(configFile.read())
+        elif (len(result.stderr) == 0):
+            config = json.loads((result.stdout).decode())
         else:
             return {'result': 'error', 'data': json.loads((result.stderr).decode())}
+        parameters, genomes, replicates, alignmentFile, multiFasta = sf.handle_config_file(parameters, config, genomes, replicates)
+
+        projectName = sf.get_value(config, 'projectName')
+
+        rnaGraph = 'false'
+        if int(sf.get_value(config, 'writeGraphs')) == 1:
+            rnaGraph = "true"
+
+        # use json.dumps() to keep order            
+        return {'result': 'success', 'data': {'parameters': json.dumps(parameters), 'genomes': json.dumps(genomes), 
+                'replicates': json.dumps(replicates), 'projectName': projectName, 'rnaGraph': rnaGraph, 'alignmentFile': alignmentFile, 
+                'numReplicate': parameters['setup']['numberofreplicates']['value'], 'multiFasta': multiFasta}}
+       
      
 
 @app.route('/api/saveConfig/', methods=['POST', 'GET'])

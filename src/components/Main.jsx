@@ -923,9 +923,10 @@ function Main() {
   const uploadConfig = (event) => {
     const file = event.target.files[0];
     const split = file.name.split(".");
-    if (split[split.length - 1] !== "config") {
+    console.log(split)
+    if (split[split.length - 1] !== "config" && split[split.length - 1] !== "json") {
       setConfPopup(false);
-      showError("Config File has wrong format. Config file format (.config) needed.");
+      showError("Config File has wrong format. Config file format (.config) or JSON needed.");
     } else {
       setConfHeader("Upload Folder");
       setText("Select the folder that contains all needed files."); //The genome annotation files for each Genome/Condition have to be in separate directories.")
@@ -1255,6 +1256,7 @@ function Main() {
           header={confHeader}
           uploadConfig={(e) => uploadConfig(e)}
           uploadFiles={(e) => uploadConfFiles(e)}
+          closePopup={() => setConfPopup(false)}
         />
       )}
       {uploadZip && (

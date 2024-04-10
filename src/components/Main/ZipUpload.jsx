@@ -118,7 +118,7 @@ function ZipUpload({ closePopup }) {
                                 <h3 style={{ textAlign: "center" }}> Upload Zip File</h3>
                                 <FontAwesomeIcon style={{ "cursor": "pointer", color: "#ffa000", marginRight: "5px" }} onClick={() => {
                                     closePopup()
-                                }} size="xl" icon={faCircleXmark} />
+                                }} size="lg" icon={faCircleXmark} />
                             </div>
 
 

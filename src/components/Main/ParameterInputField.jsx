@@ -302,7 +302,7 @@ function FormConfig({
         type='button'
         onClick={() => {
           setConfHeader("Upload Config File");
-          setText("Select the config file (.config).");
+          setText("Select the config file (.config) or a JSON file (.json).");
           setConfPopup(true);
         }}
       >

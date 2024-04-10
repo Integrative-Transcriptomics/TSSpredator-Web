@@ -1,4 +1,7 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleXmark } from '@fortawesome/pro-light-svg-icons';
+
 
 /**
  * popup window for uploading config file and folder that contains all needed files
@@ -7,12 +10,18 @@ import React from 'react';
  * @param uploadConfig: function for uploading the config file
  * @param uploadConfFiles: function for uploading all files
  */
-function LoadConfig({ header, text, uploadConfig, uploadFiles }) {
+function LoadConfig({ header, text, uploadConfig, uploadFiles, closePopup }) {
 
     return (
         <div className='error-popup'>
             <div className='error-popup-inner'>
-                <h3 className='header error-popup-header'>{header}</h3>
+                <div className='header error-popup-header' style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div />
+                    <h3 style={{ textAlign: "center" }}> {header}</h3>
+                    <FontAwesomeIcon style={{ "cursor": "pointer", color: "#ffa000", marginRight: "5px" }} onClick={() => {
+                        closePopup()
+                    }} size="lg" icon={faCircleXmark} />
+                </div>
                 <div className='error-field'>{text}</div>
                 <div className='error-button'>
                     {header === 'Upload Config File'

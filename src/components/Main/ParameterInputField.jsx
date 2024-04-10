@@ -172,15 +172,19 @@ function FormConfig({
   };
   return <div className='form-container'>
     <div>
-      <label>
+      <div class="form-group">
+        <label for="project-name" class="project-name-label">
+          <h3 className='header'>Project Name:</h3></label>
         <input
-          className='project-name'
-          type='text'
-          name='project-name'
-          placeholder='Enter Project Name'
-          defaultValue={projectName}
-          onChange={(e) => setProjectName(e.target.value)} />
-      </label>
+          id="project-name"
+          class="project-name"
+          type="text"
+          name="project-name"
+          placeholder="Your Project Name"
+          value={projectName} onChange={(e) => setProjectName(e.target.value)}
+        />
+      </div>
+
       {!parameters.setup ? (
         <p></p>
       ) : (

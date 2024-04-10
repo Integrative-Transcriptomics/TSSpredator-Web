@@ -2,7 +2,7 @@ import ClipLoader from "react-spinners/ClipLoader";
 import React from "react";
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook } from '@fortawesome/pro-light-svg-icons';
+import { faBook, faCircleInfo } from '@fortawesome/pro-light-svg-icons';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import '../../css/Header.css';
 
@@ -40,10 +40,16 @@ function Header({ loading, onLoadExampleData, showExamples = false, statusID = n
         {
           allowZipUpload &&
           <div className='dropdown'>
-            <button className='dropbtn' id="upload-zip-button"
-              onClick={() => { startZipUpload(true) }}
-            >Upload Zip for Visualization
-            </button>
+            <label htmlFor="upload-zip-button"
+              style={{
+                "cursor": "pointer", "position": "relative", "margin-right": "10px", "margin-top": "10px", color: "black", "display": "flex",
+              }}
+              data-title="Uploading results of TSSpredator-Web allow to directly visualize and explore the results without reanalyzing the data. " >
+              <button className='dropbtn' id="upload-zip-button"
+                onClick={() => { startZipUpload(true) }}
+              >Upload Zip for Visualization
+              </button>
+            </label>
 
           </div>
         }

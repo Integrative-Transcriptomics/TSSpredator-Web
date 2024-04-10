@@ -1,4 +1,6 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleInfo } from '@fortawesome/pro-light-svg-icons';
 
 /** creates text field with label
  * 
@@ -13,7 +15,7 @@ function TextField({ field, id, studyType, handleTabs }) {
   let value = "";
   let title;
 
-  if(field.name === 'Alignment ID') {
+  if (field.name === 'Alignment ID') {
     title = "The identifier of this genome in the alignment file."
     // to show alingment id of xmfa file
     value = field.value;
@@ -25,16 +27,17 @@ function TextField({ field, id, studyType, handleTabs }) {
   if (studyType === 'condition' && field.name === 'Alignment ID') {
     disabled = true;
     value = id + 1;
-  } else if(studyType === 'condition' && id > 0) {
+  } else if (studyType === 'condition' && id > 0) {
     disabled = true;
   }
 
   return (
     <div className='text-field-box'>
-      <label htmlFor={id} data-title={title}> {field.name}</label>
-      <input disabled={disabled} className={disabled ? 'element text-field disabled-field' : 'element text-field'} type="text" 
-              name={(field.name).toLowerCase().replace(' ', '')} defaultValue={value} id={id}
-              onChange={(e) => handleTabs(e)} />
+      <label htmlFor={id}> {field.name}</label>
+      <label htmlFor={id} data-title={title}><FontAwesomeIcon icon={faCircleInfo} /></label>
+      <input disabled={disabled} className={disabled ? 'element text-field disabled-field' : 'element text-field'} type="text"
+        name={(field.name).toLowerCase().replace(' ', '')} defaultValue={value} id={id}
+        onChange={(e) => handleTabs(e)} />
     </div>
   )
 }

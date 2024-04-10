@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import TextFieldGroup from './TextFieldGroup';
 import UploadFilesIndividually from './UploadFilesIndividually';
 import PopupWindow from "./PopupWindow";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleInfo } from '@fortawesome/pro-light-svg-icons';
 
 /** creates the genome and replicate tabs
  * 
@@ -126,7 +128,7 @@ function Tabs({ genomes, genome, replicates, whichGenome, studyType, handleTabs,
                     saveAnnotationFile={(e) => saveAnnotationFile(e)}
                   />
                 </>
-                  : <><div className="info-row"><div className='info-icon'>i</div><div className="info-text">tagRNA-seq: Use the TSS reads as the enriched library and the PSS reads as the normal library.</div></div>
+                  : <><div className="info-row"><FontAwesomeIcon icon={faCircleInfo} /><div className="info-text">tagRNA-seq: Use the TSS reads as the enriched library and the PSS reads as the normal library.</div></div>
                     <UploadFilesIndividually files={fileNames} id={[whichGenome, i]} genomes={genomes} handleTabs={(e) => handleTabs(e)}
                       saveIndividualFile={(e) => saveIndividualFile(e)} saveAnnotationFile={(e) => saveAnnotationFile(e)} /> </>}
               </div>

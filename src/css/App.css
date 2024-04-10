@@ -189,10 +189,22 @@ input:focus {
     display: flex;
 }
 
+.form-group { 
+    margin-bottom: 10px;  /* Spacing between form elements */
+    display: flex;        /* Align form elements horizontally */
+    align-items: baseline;  /* Center form elements vertically */
+  }
+  
+  .project-name-label {
+    font-weight: bold;    /* Make label text bold */
+    /* display: block;       Place label on its own line */
+    margin-bottom: 5px;   /* Space between label and input */
+    margin-right: 5px;     /* Space between label and input */
+  }
 .text-field-box {
     width: 100%;
     display: grid;
-    grid-template-columns: 16% 84%;
+    grid-template-columns: 16% 4% 80%;
     align-items: center;
 }
 

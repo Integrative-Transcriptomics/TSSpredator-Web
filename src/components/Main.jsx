@@ -1258,7 +1258,7 @@ function Main() {
         />
       )}
       {uploadZip && (
-        <ZipUpload />
+        <ZipUpload closePopup={() => setUploadZip(false)} />
       )}
       {
         typeof readyLoaded === "string" && (

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { GoslingComponent } from "gosling.js";
 import { ClipLoader } from "react-spinners";
 import { createWiggleTracks, createGenomeTrack, createDetailTSSTrack, createBinnedView } from "./SharedGoslingFunctions.js";
@@ -9,36 +9,12 @@ import { createWiggleTracks, createGenomeTrack, createDetailTSSTrack, createBinn
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
-    const [spec, setSpec] = useState(null);
-    const gosRef = useRef(null);
+function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict }) {
+
 
     useEffect(() => {
-        const data = dataGosling
-        const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
-        const allViews = getViews(data, filePath)
-        const distributedViews = [{
-            "arrangement": "vertical",
-            "views": allViews.filter((_, i) => i < allViews.length / 2)
-        }, {
-            "arrangement": "vertical",
-            "views": allViews.filter((_, i) => i >= allViews.length / 2)
-        }]
 
-        const spec = {
-            "title": "Visualization of TSSs and Genes grouped by genome/condition",
-            "subtitle": "Distribution of TSSs and genes per the genomes/conditions. At higher levels, the TSSs are aggregated by their main class and their strand location.",
-            "description": "The TSSs are aggregated by their main class and their strand location. At higher genomic zoom levels, the TSSs are binned and the number of TSSs per bin is shown.",
-            "arrangement": "horizontal",
-            "spacing": 50,
-            "linkingId": "detail", // linkingId is used to enable zooming and panning across views
-            "zoomLimits": [0, maxValue],
-            "views": distributedViews,
-        };
-        setSpec(spec);
-        settingGosRef(gosRef)
-
-    }, [dataGosling, filter]);
+    }, [dataGosling, filter, maxValueWiggleDict]);
 
     const createGFFTrack = (data, strand) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
@@ -89,6 +65,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
         }]
 
     }
+
     const createTSSTrack = (data, aggregatedTSS, binSizes, strand, maxGenome, title = null, filePath) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
         let sizesBins = Object.keys(binSizes).sort((a, b) => parseInt(a) - parseInt(b)).map((size, i, arr) => {
@@ -100,7 +77,16 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
             }
         })
         let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(aggregatedTSS, size, maxValueBin, filter, strand, GT, LT, "single", title));
-        let specsWiggle = createWiggleTracks(TSS_DETAIL_LEVEL_ZOOM, strand, title, filePath)
+        let specsWiggle = createWiggleTracks(strand, title, filePath)
+        specsWiggle.map(spec => {
+            let [strand, genome, type] = spec["id"].split("_").slice(2)
+            let genomeID = genome.replace(/-/g, "_")
+            let strandID = strand === "+" ? "Plus" : "Minus"
+            let maxValuesTemp = maxValueWiggleDict?.[genomeID]?.[strandID] || 100;
+            spec["y"]["domain"] = [0, maxValuesTemp]
+        })
+
+
         let detailTSSTrack = createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM, "single", title)
         if (strand === "-") detailTSSTrack["x"]["axis"] = "none";
         return [
@@ -117,8 +103,6 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
                     detailTSSTrack,
                     ...binnedViews,
                     ...specsWiggle
-
-
                 ]
             }
 
@@ -152,13 +136,37 @@ function SingleGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
         return views;
 
     }
+    const data = dataGosling
+    const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
+    const allViews = getViews(data, filePath)
+    const distributedViews = [{
+        "arrangement": "vertical",
+        "views": allViews.filter((_, i) => i < allViews.length / 2)
+    }, {
+        "arrangement": "vertical",
+        "views": allViews.filter((_, i) => i >= allViews.length / 2)
+    }]
+
+    let specTest = {
+        "title": "Visualization of TSSs and Genes grouped by genome/condition",
+        "subtitle": "Distribution of TSSs and genes per the genomes/conditions. At higher levels, the TSSs are aggregated by their main class and their strand location.",
+        "description": "The TSSs are aggregated by their main class and their strand location. At higher genomic zoom levels, the TSSs are binned and the number of TSSs per bin is shown.",
+        "arrangement": "horizontal",
+        "spacing": 50,
+        "linkingId": "detail", // linkingId is used to enable zooming and panning across views
+        "zoomLimits": [0, maxValue],
+        "views": distributedViews,
+    };
+
 
     return <>
-        {spec === null ? <ClipLoader color='#ffa000' size={30} /> : <GoslingComponent spec={spec} ref={gosRef} />}
+        {dataGosling === null ?
+            <ClipLoader color='#ffa000' size={30} /> :
+            <GoslingComponent spec={specTest} ref={gosRef} experimental={{ "reactive": true }} />}
     </>
         ;
 }
 
 
 
-export default SingleGenomeViz
+export default React.memo(SingleGenomeViz);

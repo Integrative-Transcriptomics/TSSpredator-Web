@@ -3,7 +3,8 @@ const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
 const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
 
 
-export const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePath) => {
+export const createWiggleTracks = (strand, genome, filePath) => {
+
     return ["Normal", "FivePrime"].map(type => {
         return {
             "data": {
@@ -12,20 +13,22 @@ export const createWiggleTracks = (TSS_DETAIL_LEVEL_ZOOM, strand, genome, filePa
                 "binSize": 1,
                 "aggregation": "mean"
             },
+            "id": `detail_wiggle_${strand}_${genome.replace(/_/g, "-")}_${type}`,
             "mark": "bar",
-            "x": { "field": "start", "type": "genomic", },
-            "xe": { "field": "end", "type": "genomic", },
+            "x": { "field": "start", "type": "genomic" },
+            "xe": { "field": "end", "type": "genomic" },
             "style": { "align": strand === "+" ? "left" : "right", backgroundOpacity: 0 },
-            "y": { "field": "value", "type": "quantitative", "range": strand === "+" & [0, 90], flip: strand === "-" },
+            "y": { "field": "value", "axis": type === "Normal" ? "left" : "none", "type": "quantitative", "range": strand === "+" & [0, 90], flip: strand === "-" },
             "color": { "value": type === "Normal" ? "gray" : "orange" },
             "stroke": { "value": "gray" },
             "opacity": { "value": 0.25 },
+
 
             "visibility": [
                 {
                     "operation": "LT",
                     "measure": "zoomLevel",
-                    "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                    "threshold": 5000,
                     "transitionPadding": 100,
                     "target": "track"
                 }

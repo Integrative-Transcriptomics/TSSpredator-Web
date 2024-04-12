@@ -7,6 +7,8 @@ from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
 
+import pyBigWig
+import math
 import json
 import tempfile
 import subprocess
@@ -280,6 +282,35 @@ def returnBigWig(filePath, genome, strand, fileType):
     completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f"{genome}_super{fileType}{strand}.bw")
     return send_file(completePath, mimetype='text/plain')
        
+@app.route('/api/provideMax/<filePath>/<start>/<end>')
+def returnBigWigMax(filePath, start, end): 
+    # Gett all bw files in filepath
+    bwFiles = glob.glob(os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, "*.bw"))
+    sorted_files = {}
+    for file in bwFiles:
+        genome = os.path.basename(file).split('_super')[0]
+        strand = "Plus" if ("Plus" in os.path.basename(file) ) else "Minus"
+        fileType = "FivePrime" if ("FivePrime" in os.path.basename(file) ) else "Normal"
+        if genome not in sorted_files:
+            sorted_files[genome] = {}
+        if strand not in sorted_files[genome]:
+            sorted_files[genome][strand] = {}
+        maxValue = pyBigWig.open(file).stats(genome, int(start), int(end), type="max")
+        sorted_files[genome][strand][fileType] = maxValue[0] if maxValue[0] else 1
+    maxValues = {}
+    for genome in sorted_files:
+        maxValues[genome] = {}
+        for strand in sorted_files[genome]:
+            
+            fivePrime = sorted_files[genome][strand]['FivePrime']
+            normal = sorted_files[genome][strand]['Normal']
+            maxTemp = max(fivePrime, normal)
+            # number to the next integer in 100 steps
+            maxValues[genome][strand] = math.ceil(maxTemp/ 100) * 100
+
+    print(maxValues)
+    return maxValues
+
 @app.route('/api/provideFasta/<filePath>/<genome>/<strand>')
 def returnFasta(filePath, genome, strand): 
     completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f'{genome}_{strand}_superGenome.tsv')

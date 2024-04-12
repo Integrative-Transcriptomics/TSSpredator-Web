@@ -150,9 +150,6 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
     // create table instance
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data });
 
-    useEffect(() => {
-        console.log(gosRef)
-    }, [gosRef]);
 
     return (
         <div className={showTable ? 'table-and-filter' : 'hidden'}>

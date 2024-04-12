@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import ClipLoader from "react-spinners/ClipLoader";
 import JSZip from "jszip";
@@ -36,7 +36,7 @@ function Result() {
   const [showUpSet, setShowUpSet] = useState(false);
 
   // GoslingRef
-  const [gosRef, setGosRef] = useState(null);
+  const gosRef = useRef();
 
   // histograms
   const [processedMasterTable, setProcessedMasterTable] = useState(false);
@@ -140,7 +140,7 @@ function Result() {
     });
 
 
-  }, []);
+  }, [filePath]);
 
   /**
    * download files action, after clicking on link
@@ -205,8 +205,8 @@ function Result() {
                   dataGosling={dataGosling}
                   filePath={filePath}
                   filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
-                  settingGosRef={(x) => setGosRef(x)}
-                  gosRef={gosRef} />
+                  gosRef={gosRef}
+                />
 
               }
 

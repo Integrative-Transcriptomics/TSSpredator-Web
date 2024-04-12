@@ -130,22 +130,22 @@ def adaptWiggleFile(inputDir, genome, strand, resultsDir):
     '''adapt wiggle file and return path'''
     results_per_filetype = {}
     ## TODO: from file to df
-    for fileType in ["superFivePrime", "superNormal"]:
-        file, df, maxEnd, min_val, max_val = from_bedgraph_to_df(inputDir, genome, fileType, strand)
-        results_per_filetype[fileType] = {"file": file, "df": df, "maxEnd": maxEnd, "min": min_val, "max": max_val}
-   ## TODO: Normalize both files using the max and min from both files
-    min_value = min(results_per_filetype[fileType]["min"] for fileType in results_per_filetype)
-    max_value = max(results_per_filetype[fileType]["max"] for fileType in results_per_filetype)
     file_names = {}
     for fileType in ["superFivePrime", "superNormal"]:
-        df = results_per_filetype[fileType]["df"]
-        df['value'] = (df['value'] - min_value) / (max_value - min_value)
-        results_per_filetype[fileType]["df"] = df
-        file = results_per_filetype[fileType]["file"]
-        maxEnd = results_per_filetype[fileType]["maxEnd"]
+        file, df, maxEnd, min_val, max_val = from_bedgraph_to_df(inputDir, genome, fileType, strand)
+        # results_per_filetype[fileType] = {"file": file, "df": df, "maxEnd": maxEnd, "min": min_val, "max": max_val}
+   ## TODO: Normalize both files using the max and min from both files
+    # min_value = min(results_per_filetype[fileType]["min"] for fileType in results_per_filetype)
+    # max_value = max(results_per_filetype[fileType]["max"] for fileType in results_per_filetype)
+    # for fileType in ["superFivePrime", "superNormal"]:
+        # df = results_per_filetype[fileType]["df"]
+        # df['value'] = (df['value'] - min_value) / (max_value - min_value)
+        # results_per_filetype[fileType]["df"] = df
+        # file = results_per_filetype[fileType]["file"]
+        # maxEnd = results_per_filetype[fileType]["maxEnd"]
         outputBigWig = from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df, maxEnd)
         file_names[fileType] = outputBigWig
-    return {"filename":file_names, "normalization": {"translation": min_value, "multiplication": (max_value - min_value)}}
+    return {"filename":file_names}
 
 def from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df, maxEnd):
     df["chrom"] = genome
@@ -190,7 +190,7 @@ def parseRNAGraphs(tmpdir, genomeKey, resultsDir):
             dataRNA[fileType] = {
             'path': lastPart, 
             'filename': bw_name["filename"][fileType],
-            'normalization': bw_name["normalization"]
+            # 'normalization': bw_name["normalization"]
         }
 
     return dataRNA

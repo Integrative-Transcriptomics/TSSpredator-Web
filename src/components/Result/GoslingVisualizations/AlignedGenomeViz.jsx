@@ -11,45 +11,11 @@ import { createGenomeTrack, createWiggleTracks, createDetailTSSTrack, createBinn
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
-
-
-    const [spec, setSpec] = useState(null);
-    const gosRef = useRef(null);
-
+function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict }) {
     useEffect(() => {
-        const data = dataGosling
-        const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
-        const [view_forward, view_reverse] = getViews(data, filePath)
-        const distributedViews = [{
-            "style": { "background": "lightblue", "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
-            "subtitle": "Reverse strand",
-            "spacing": 0,
-            "arrangement": "vertical",
-            "views": view_reverse
-        }, {
-            "style": { "background": "#f59f95", "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
-            "subtitle": "Reverse strand",
 
-            "spacing": 0,
-            "arrangement": "vertical",
-            "views": view_forward
-        },]
 
-        const spec = {
-            "title": "Visualization of TSSs and genes grouped by strand",
-            "subtitle": "Distribution of TSSs and genes per strand. The aligned view allows for an easier comparison across genomes",
-            "arrangement": "horizontal",
-            "spacing": 50,
-            "linkingId": "detail", // linkingId is used to enable zooming and panning across views
-
-            "zoomLimits": [0, maxValue],
-            "views": distributedViews,
-        };
-        setSpec(spec);
-        settingGosRef(gosRef)
-
-    }, [dataGosling, filter]);
+    }, [dataGosling, filter, maxValueWiggleDict]);
 
 
 
@@ -119,7 +85,14 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
             }
         })
         let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(aggregatedTSS, size, maxValueBin, filter, strand, GT, LT, "aligned", title));
-        let specsWiggle = createWiggleTracks(TSS_DETAIL_LEVEL_ZOOM, strand, title, filePath)
+        let specsWiggle = createWiggleTracks(strand, title, filePath)
+        specsWiggle.map(spec => {
+            let [strand, genome, type] = spec["id"].split("_").slice(2)
+            let genomeID = genome.replace(/-/g, "_")
+            let strandID = strand === "+" ? "Plus" : "Minus"
+            let maxValuesTemp = maxValueWiggleDict?.[genomeID]?.[strandID] || 100;
+            spec["y"]["domain"] = [0, maxValuesTemp]
+        })
         let detailTSSTrack = createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM, "aligned", title)
         return [
             {
@@ -198,10 +171,37 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, settingGosRef }) {
 
     }
 
+    const data = dataGosling
+    const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
+    const [view_forward, view_reverse] = getViews(data, filePath);
+    const distributedViews = [{
+        "style": { "background": "lightblue", "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
+        "subtitle": "Reverse strand",
+        "spacing": 0,
+        "arrangement": "vertical",
+        "views": view_reverse
+    }, {
+        "style": { "background": "#f59f95", "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
+        "subtitle": "Reverse strand",
 
+        "spacing": 0,
+        "arrangement": "vertical",
+        "views": view_forward
+    },]
+
+    const spec = {
+        "title": "Visualization of TSSs and genes grouped by strand",
+        "subtitle": "Distribution of TSSs and genes per strand. The aligned view allows for an easier comparison across genomes",
+        "arrangement": "horizontal",
+        "spacing": 50,
+        "linkingId": "detail", // linkingId is used to enable zooming and panning across views
+
+        "zoomLimits": [0, maxValue],
+        "views": distributedViews,
+    };
 
     return <>
-        {spec === null ? <ClipLoader color='#ffa000' size={30} /> : <GoslingComponent spec={spec} ref={gosRef} />}
+        {spec === null ? <ClipLoader color='#ffa000' size={30} /> : <GoslingComponent spec={spec} ref={gosRef} experimental={{ "reactive": true }} />}
     </>
         ;
 

@@ -88,17 +88,19 @@ export const createGenomeTrack = (filePath, genome, strand = "+") => {
 
 }
 
-export const createBinnedView = (aggregatedTSS, binSize, maxValueBin, filterTSS, strand, GT, LT, viewType, genomeName) => {
+export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, strand, GT, LT, viewType, genomeName) => {
     let transitionPadding = 5000;
     return {
-        "title": `TSS counts in ${strand === "+" ? "forward" : "reverse"} strand `,
+        "title": `TSS counts in ${strand === "+" ? "forward" : "reverse"} strand`,
         "data": {
-            "values": aggregatedTSS[binSize].filter(d => filterTSS.includes(d["typeTSS"])).sort((a, b) => ORDER_TSS_CLASSES.indexOf(a["mainClass"]) - ORDER_TSS_CLASSES.indexOf(b["mainClass"])),
-            "type": "json",
+            "type": "csv",
+            "url": "/api/getAggregated/" + filePath + "/" + genomeName + "/" + binSize,
             "genomicFields": ["binStart", "binEnd"],
         },
         "dataTransform": [
-            { "type": "filter", "field": "strand", "oneOf": [strand] }
+            { "type": "filter", "field": "strand", "oneOf": [strand] },
+            { "type": "filter", "field": "typeTSS", "oneOf": filterTSS }
+
         ],
         "id": `aggregated_tss_${strand}_${binSize}_${genomeName}`,
         "x": { "field": "binStart", "type": "genomic", "axis": "none" },
@@ -129,6 +131,7 @@ export const createBinnedView = (aggregatedTSS, binSize, maxValueBin, filterTSS,
                 "alt": "Main TSS class",
             },
             { "field": "count", "alt": "Number of TSS" },
+            { "field": "typeTSS", "alt": "Enriched or Detected?" }
         ],
         "visibility": [
             {
@@ -150,10 +153,17 @@ export const createBinnedView = (aggregatedTSS, binSize, maxValueBin, filterTSS,
     }
 }
 
-export const createDetailTSSTrack = (strand, TSS_DETAIL_LEVEL_ZOOM, viewType, genomeName) => {
+export const createDetailTSSTrack = (filePath, strand, filterTSS, TSS_DETAIL_LEVEL_ZOOM, viewType, genomeName) => {
+    console.log("genomeName", genomeName)
     return {
+        "data": {
+            "type": "csv",
+            "url": "/api/getSingleTSS/" + filePath + "/" + genomeName,
+            "genomicFields": ["superPos"],
+        },
         "dataTransform": [
-            { "type": "filter", "field": "superStrand", "oneOf": [strand] }
+            { "type": "filter", "field": "superStrand", "oneOf": [strand] },
+            { "type": "filter", "field": "typeTSS", "oneOf": filterTSS }
         ],
         "id": `detail_tss_${strand}_${genomeName}`,
         "x": { "field": "superPos", "type": "genomic", "axis": "top" },
@@ -175,6 +185,8 @@ export const createDetailTSSTrack = (strand, TSS_DETAIL_LEVEL_ZOOM, viewType, ge
                 "alt": "Main TSS class",
             },
             { "field": "classesTSS", "alt": "All TSS classes" },
+            { "field": "typeTSS", "alt": "Enriched or Detected?" }
+
         ],
         "visibility": [
             {
@@ -186,4 +198,58 @@ export const createDetailTSSTrack = (strand, TSS_DETAIL_LEVEL_ZOOM, viewType, ge
             }
         ]
     };
+}
+
+export const createGFFTrack = (filePath, genomeName, strand) => {
+    const TSS_DETAIL_LEVEL_ZOOM = 50000;
+    let transitionPadding = 5000;
+    console.log("/api/getGFFData/" + filePath + "/" + genomeName + "/" + (strand === "+" ? "Plus" : "Minus"))
+    return [{
+        "alignment": "overlay",
+        "height": 60,
+        "data": {
+            "type": "csv",
+            "url": "/api/getGFFData/" + filePath + "/" + genomeName + "/" + (strand === "+" ? "Plus" : "Minus"),
+            "genomicFields": ["start", "end"],
+        },
+        // "dataTransform": [
+        //     { "type": "filter", "field": "strand", "oneOf": [strand] }
+        // ],
+        "mark": "rect",
+        "x": { "field": "start", "type": "genomic", "axis": "none" },
+        "xe": { "field": "end", "type": "genomic", "axis": "none" },
+        "color": { "value": "grey" },
+        "opacity": { "value": 0.4 },
+        "size": { "value": 4 },
+        "style": { background: strand === "+" ? "lightblue" : "#f59f95", backgroundOpacity: 0.15 },
+        "tracks": [
+            {
+                "tooltip": [
+                    { "field": "start", "alt": "Gene Start" },
+                    { "field": "end", "alt": "Gene End" },
+                    {
+                        "field": "locus_tag",
+                        "type": "nominal",
+                        "alt": "Locus Tag",
+                    },
+                    { "field": "product", "alt": "Gene Product" },
+                ],
+            }, {
+                "mark": "text",
+                "text": { "field": "locus_tag", "type": "nominal" },
+                "x": { "field": "start", "type": "genomic" },
+                "xe": { "field": "end", "type": "genomic" },
+                "size": { "value": 8 },
+                "style": { "textFontSize": 8, "dy": -12 },
+                "visibility": [
+                    {
+                        "operation": "LT",
+                        "measure": "zoomLevel",
+                        "threshold": TSS_DETAIL_LEVEL_ZOOM,
+                        "transitionPadding": transitionPadding,
+                        "target": "track"
+                    }]
+            }]
+    }]
+
 }

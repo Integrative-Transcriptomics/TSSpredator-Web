@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { GoslingComponent } from "gosling.js";
 import { ClipLoader } from "react-spinners";
-import { createGenomeTrack, createWiggleTracks, createDetailTSSTrack, createBinnedView } from "./SharedGoslingFunctions.js"
+import { createGenomeTrack, createWiggleTracks, createDetailTSSTrack, createBinnedView, createGFFTrack } from "./SharedGoslingFunctions.js"
 
 
 /**
@@ -12,97 +12,35 @@ import { createGenomeTrack, createWiggleTracks, createDetailTSSTrack, createBinn
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
 function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict }) {
-    useEffect(() => {
 
 
-    }, [dataGosling, filter, maxValueWiggleDict]);
-
-
-
-    const createGFFTrack = (data) => {
-        const TSS_DETAIL_LEVEL_ZOOM = 50000;
-        let transitionPadding = 5000;
-        return [{
-            "alignment": "overlay",
-            "height": 60,
-            "data": {
-                "values": data,
-                "type": "json",
-                "genomicFields": ["start", "end"]
-            },
-            "mark": "rect",
-            "x": { "field": "start", "type": "genomic", "axis": "none" },
-            "xe": { "field": "end", "type": "genomic", "axis": "none" },
-            "color": { "value": "grey" },
-            "opacity": { "value": 0.4 },
-            "size": { "value": 4 },
-            "tracks": [
-                {
-                    "tooltip": [
-                        { "field": "start", "type": "genomic", "alt": "Gene Start" },
-                        { "field": "end", "type": "genomic", "alt": "Gene End" },
-                        {
-                            "field": "locus_tag",
-                            "type": "nominal",
-                            "alt": "Locus Tag",
-                        }, {
-                            "field": "gene_name",
-                            "type": "nominal",
-                            "alt": "Gene name",
-                        },
-                        { "field": "product", "alt": "Gene Product" },
-                    ],
-                }, {
-                    "mark": "text",
-                    "text": { "field": "locus_tag", "type": "nominal" },
-                    "x": { "field": "start", "type": "genomic" },
-                    "xe": { "field": "end", "type": "genomic" },
-                    "size": { "value": 8 },
-                    "style": { "textFontSize": 8, "dy": -12 },
-                    "visibility": [
-                        {
-                            "operation": "LT",
-                            "measure": "zoomLevel",
-                            "threshold": TSS_DETAIL_LEVEL_ZOOM,
-                            "transitionPadding": transitionPadding,
-                            "target": "track"
-                        }]
-                }]
-        }]
-
-    }
-
-
-
-    const createTSSTrack = (data, aggregatedTSS, binSizes, strand, maxGenome, title = null, filePath) => {
+    const createTSSTrack = (binSizes, strand, maxGenome, title, filePath) => {
+        let genomeName = title;
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
         let sizesBins = Object.keys(binSizes).sort((a, b) => parseInt(a) - parseInt(b)).map((size, i, arr) => {
+            const overflowForTransition = 40;
             return {
-                "GT": i === 0 ? TSS_DETAIL_LEVEL_ZOOM : arr[i - 1] * 40,
-                "LT": (i === Object.keys(binSizes).length - 1) ? maxGenome * 1.1 : size * 40,
+                "GT": i === 0 ? TSS_DETAIL_LEVEL_ZOOM : arr[i - 1] * overflowForTransition,
+                "LT": (i === Object.keys(binSizes).length - 1) ? maxGenome * 1.1 : size * overflowForTransition,
                 "size": parseInt(size),
                 "maxValueBin": binSizes[size]
             }
         })
-        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(aggregatedTSS, size, maxValueBin, filter, strand, GT, LT, "aligned", title));
+        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(filePath, size, maxValueBin, filter, strand, GT, LT, "aligned", title));
         let specsWiggle = createWiggleTracks(strand, title, filePath)
         specsWiggle.map(spec => {
             let [strand, genome, type] = spec["id"].split("_").slice(2)
             let genomeID = genome.replace(/-/g, "_")
             let strandID = strand === "+" ? "Plus" : "Minus"
-            let maxValuesTemp = maxValueWiggleDict?.[genomeID]?.[strandID] || 100;
+            const defaultMaxWiggle = 100;
+            let maxValuesTemp = maxValueWiggleDict?.[genomeID]?.[strandID] || defaultMaxWiggle;
             spec["y"]["domain"] = [0, maxValuesTemp]
         })
-        let detailTSSTrack = createDetailTSSTrack(strand, TSS_DETAIL_LEVEL_ZOOM, "aligned", title)
+        let detailTSSTrack = createDetailTSSTrack(filePath, strand, filter, TSS_DETAIL_LEVEL_ZOOM, "aligned", genomeName)
         return [
             {
 
                 "alignment": "overlay",
-                "data": {
-                    "values": data.filter(d => filter.includes(d["typeTSS"])),
-                    "type": "json",
-                    "genomicFields": ["superPos"],
-                },
                 "tracks": [
                     detailTSSTrack,
                     ...binnedViews,
@@ -132,12 +70,10 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
         return view;
     }
 
-    const createTracks = (data, genomeName, maxGenome, filePath, strand) => {
-        let genes = createGFFTrack(data["superGFF"].filter(d => d["strand"] === strand));
+    const createTracks = (filePath, data, genomeName, maxGenome, strand) => {
+        let genes = createGFFTrack(filePath, genomeName, strand);
         let fastaTrack = createGenomeTrack(filePath, genomeName, strand);
-        let TSSTracks = createTSSTrack(data["TSS"], data["aggregatedTSS"], data["maxAggregatedTSS"], strand, maxGenome, genomeName, filePath);
-
-
+        let TSSTracks = createTSSTrack(data["maxAggregatedTSS"], strand, maxGenome, genomeName, filePath);
         return [...TSSTracks, ...genes, ...fastaTrack];
     }
 
@@ -153,7 +89,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
                     "assembly": [[genome, data[genome]["lengthGenome"]]],
                     "spacing": 0,
                     "layout": "linear",
-                    "tracks": createTracks(data[genome], genome, data[genome]["lengthGenome"], filePath, strand)
+                    "tracks": createTracks(filePath, data[genome], genome, data[genome]["lengthGenome"], strand)
                 }
                 if (addLegend)
                     tempView = addLegendToTSS(tempView)
@@ -163,35 +99,29 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
                     views_minus.push(tempView)
 
                 }
-
             }
             addLegend = false;
         }
         return [views_minus, views_plus];
 
     }
-
+    const completeView = (views, color, subtitle) => {
+        return {
+            "style": { "background": color, "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
+            "subtitle": subtitle,
+            "spacing": 0,
+            "arrangement": "vertical",
+            "views": views
+        }
+    }
     const data = dataGosling
     const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
     const [view_forward, view_reverse] = getViews(data, filePath);
-    const distributedViews = [{
-        "style": { "background": "lightblue", "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
-        "subtitle": "Reverse strand",
-        "spacing": 0,
-        "arrangement": "vertical",
-        "views": view_reverse
-    }, {
-        "style": { "background": "#f59f95", "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
-        "subtitle": "Reverse strand",
-
-        "spacing": 0,
-        "arrangement": "vertical",
-        "views": view_forward
-    },]
+    const distributedViews = [completeView(view_reverse, "lightblue", "Reverse strand"), completeView(view_forward, "#f59f95", "Forward strand")]
 
     const spec = {
         "title": "Visualization of TSSs and genes grouped by strand",
-        "subtitle": "Distribution of TSSs and genes per strand. The aligned view allows for an easier comparison across genomes",
+        "subtitle": "Distribution of TSSs and genes per strand. The aligned view allows for an easier comparison across genomes. At higher genomic zoom levels, the TSSs are binned and the number of TSSs per bin is shown. In deeper zoom levels, the individual TSSs and the respective transcriptomic data are shown.",
         "arrangement": "horizontal",
         "spacing": 50,
         "linkingId": "detail", // linkingId is used to enable zooming and panning across views
@@ -211,4 +141,4 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
 
 
 
-export default AlignedGenomeViz
+export default React.memo(AlignedGenomeViz)

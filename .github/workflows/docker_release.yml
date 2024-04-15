@@ -16,8 +16,10 @@ jobs:
 
       # build the image now
       - name: Build Docker image
+        env:
+          YARNRC: ${{secrets.YARNRC}}
         run: |
-          cat ${{secrets.YARNRC}} > .yarnrc.yml
+          echo "$YARNRC" > .yarnrc.yml
           docker compose --env-file variables_tsspredator.env build
 
       - name: save images

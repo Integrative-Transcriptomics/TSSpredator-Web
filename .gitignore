@@ -7,7 +7,7 @@ node_modules
 .pnp.js
 env
 /.vite
-
+/.vite/***/
 # testing
 /coverage
 

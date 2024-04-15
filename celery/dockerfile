@@ -1,7 +1,7 @@
 
 # first stage build the frontend
 # FROM node:20-alpine3.18 as build
-FROM --platform=linux/x86_64 alpine:3.18
+FROM --platform=linux/x86_64 alpine:latest
 
 # Set the working directory in the container to /app
 # Set the working directory in the container to /app
@@ -27,7 +27,7 @@ COPY server_tsspredator /app/server_tsspredator
 COPY requirements.txt /app
 COPY setup.py /app
 COPY server_tsspredator/TSSpredator.jar /app
-RUN apk add gcompat libbz2 libcurl libstdc++ krb5-dev
+RUN apk add gcompat libbz2 libcurl libstdc++ krb5-dev zlib gcc musl-dev g++ curl-dev
 RUN wget https://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig -P /app
 RUN chmod +x /app/bedGraphToBigWig
 
@@ -36,10 +36,12 @@ RUN apk add --update --no-cache openjdk17-jre-headless
 
 
 # Install python3.11
-RUN apk add --update --no-cache python3 py3-pip
-
+RUN apk add --update --no-cache python3-dev py3-pip
+RUN python3 -m venv /app/env_tss_predator_celery
+ENV PATH="/app/env_tss_predator_celery/bin:$PATH"
+RUN python3 -m pip install --upgrade pip
 # install python dependencies
-RUN pip install -r requirements.txt
+RUN python3 -m pip install -r requirements.txt
 
 # Install the server package
 RUN pip install -e .

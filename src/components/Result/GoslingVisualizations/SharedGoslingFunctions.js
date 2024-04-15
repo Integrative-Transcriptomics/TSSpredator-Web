@@ -154,7 +154,6 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
 }
 
 export const createDetailTSSTrack = (filePath, strand, filterTSS, TSS_DETAIL_LEVEL_ZOOM, viewType, genomeName) => {
-    console.log("genomeName", genomeName)
     return {
         "data": {
             "type": "csv",
@@ -203,7 +202,6 @@ export const createDetailTSSTrack = (filePath, strand, filterTSS, TSS_DETAIL_LEV
 export const createGFFTrack = (filePath, genomeName, strand) => {
     const TSS_DETAIL_LEVEL_ZOOM = 50000;
     let transitionPadding = 5000;
-    console.log("/api/getGFFData/" + filePath + "/" + genomeName + "/" + (strand === "+" ? "Plus" : "Minus"))
     return [{
         "alignment": "overlay",
         "height": 60,
@@ -212,9 +210,6 @@ export const createGFFTrack = (filePath, genomeName, strand) => {
             "url": "/api/getGFFData/" + filePath + "/" + genomeName + "/" + (strand === "+" ? "Plus" : "Minus"),
             "genomicFields": ["start", "end"],
         },
-        // "dataTransform": [
-        //     { "type": "filter", "field": "strand", "oneOf": [strand] }
-        // ],
         "mark": "rect",
         "x": { "field": "start", "type": "genomic", "axis": "none" },
         "xe": { "field": "end", "type": "genomic", "axis": "none" },

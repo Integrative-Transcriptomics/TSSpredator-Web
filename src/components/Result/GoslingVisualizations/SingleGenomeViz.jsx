@@ -101,7 +101,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
 
     let specTest = {
         "title": "Visualization of TSSs and Genes grouped by genome/condition",
-        "subtitle": "The TSSs are aggregated by their main class and their strand location. At higher genomic zoom levels, the TSSs are binned and the number of TSSs per bin is shown. In deeper zoom levels, the individual TSSs and the respective transcriptomic data are shown.",
+        "subtitle": "The TSSs are aggregated by their main class and their strand location. At higher genomic zoom levels, the TSSs are binned and the number of TSSs per bin is shown. \n At lower zoom levels, the individual TSSs and the respective transcriptomic data are shown.",
         "arrangement": "horizontal",
         "spacing": 50,
         "linkingId": "detail", // linkingId is used to enable zooming and panning across views

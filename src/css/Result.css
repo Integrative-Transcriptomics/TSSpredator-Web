@@ -82,11 +82,23 @@
     margin-top: -1%;
     margin-right: 1.1%;
     border: 1px solid transparent;
-    min-width: fit-content;
+
+    min-width: max-content;
   }
  
 .button-results:hover {
     box-shadow: 0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
     background-color: var(--complement);
     color: white;
+}
+
+.button-results:disabled {
+    cursor: not-allowed;
+    box-shadow:0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
+    background-color: #8d8c8c;
+    color: rgba(255, 255, 255, 0.8);
+  /* box-shadow: 
+  background-color: var(--complement);
+  color: white;
+} */
 }

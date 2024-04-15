@@ -305,10 +305,11 @@ def returnBigWigMax(filePath, start, end):
             fivePrime = sorted_files[genome][strand]['FivePrime']
             normal = sorted_files[genome][strand]['Normal']
             maxTemp = max(fivePrime, normal)
+            stepValue = 100
+            if maxTemp < 50:
+                stepValue = 50
             # number to the next integer in 100 steps
-            maxValues[genome][strand] = math.ceil(maxTemp/ 100) * 100
-
-    print(maxValues)
+            maxValues[genome][strand] = math.ceil(maxTemp/ stepValue) * stepValue
     return maxValues
 
 @app.route('/api/provideFasta/<filePath>/<genome>/<strand>')

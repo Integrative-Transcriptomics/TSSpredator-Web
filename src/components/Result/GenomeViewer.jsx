@@ -77,7 +77,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
                     </select>
                 </div>
                 <div className='button-container'>
-                    <button className='button-results' disabled={!enableUpdate} style={{ "cursor": enableUpdate ? "pointer" : "not-allowed" }} onClick={() => {
+                    <button className='button-results' disabled={!enableUpdate} style={{ "cursor": enableUpdate ? "pointer" : "not-allowed", "maxWidth": "auto" }} onClick={() => {
                         getMaximaFromPositions()
                     }}>Update Y-Axes for wiggle files</button>
                 </div>

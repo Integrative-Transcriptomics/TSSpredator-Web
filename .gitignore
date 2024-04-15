@@ -42,3 +42,4 @@ bin
 .yarnrc.yml
 image_tsspredator_celery_app.tar.gz
 image_tsspredator_web.tar.gz
+server_tsspredator/redisdb/dump-tsspredator.rdb

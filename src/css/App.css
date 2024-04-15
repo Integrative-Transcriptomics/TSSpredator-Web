@@ -503,6 +503,7 @@ a.open-results {
 
 [data-title] {
     position: relative;
+    color: rgb(0, 0, 0, 0.5) !important;
 }
 
 [data-tabs-title]:hover:after {

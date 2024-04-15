@@ -343,6 +343,34 @@ def getTSSViewer(filePath):
         return resp
 
 
+
+def getFile(filename): 
+    completePath = filename
+    if os.path.exists(completePath):
+        return send_file(completePath, mimetype='text/csv')  
+    else:
+        resp = Flask.make_response(app, rv="File not found")
+        resp.status_code = 404
+        resp.headers['Error'] = 'File Not found'
+        # if file not found, send error message
+        return resp
+    
+@app.route('/api/getAggregated/<filePath>/<genome>/<binSize>')
+def getAggregated(filePath, genome, binSize):
+    return getFile(tempfile.gettempdir().replace('\\', '/') + '/' + filePath + f'/aggregated_data_temp_{genome}_{binSize}.csv')  
+
+@app.route('/api/getSingleTSS/<filePath>/<genome>')
+def getSingleTSS(filePath, genome):
+    return getFile(tempfile.gettempdir().replace('\\', '/') + '/' + filePath + f'/tss_data_temp_{genome}.csv')
+    
+
+@app.route('/api/getGFFData/<filePath>/<genome>/<strand>')
+def getGFFData(filePath, genome, strand):
+    return getFile(tempfile.gettempdir().replace('\\', '/') + '/' + filePath + f'/gene_data_temp_{genome}_{strand}.csv')
+
+
+
+
 @app.route('/api/input-test/', methods=['POST', 'GET'])
 def getInputTest():
     return {'result': 'success', 'filePath': "filePath"}

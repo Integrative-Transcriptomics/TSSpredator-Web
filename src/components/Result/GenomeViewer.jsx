@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SingleGenomeViz from './GoslingVisualizations/SingleGenomeViz';
 import AlignedGenomeViz from './GoslingVisualizations/AlignedGenomeViz';
 
@@ -7,6 +7,11 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
     const [currentType, setCurrentType] = useState('single'); // single or aligned
     const [maxValueWiggleDict, setMaxValueWiggleDict] = useState({});
     const [currentPosition, setCurrentPosition] = useState([0, 0]);
+    const [enableUpdate, setEnableUpdate] = useState(false);
+
+    useEffect(() => {
+        setEnableUpdate(Math.abs(currentPosition[0] - currentPosition[1]) < 5500)
+    }, [currentPosition])
 
     const deepEqual = (obj1, obj2) => {
         // Base case: If both objects are identical, return true.
@@ -39,16 +44,14 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
             if (dataOfTrack.id.includes('detail_tss')) {
                 let start = parseInt(dataOfTrack.genomicRange[0].position);
                 let end = parseInt(dataOfTrack.genomicRange[1].position);
-                if (Math.abs(start - end) < 5000) {
-                    setCurrentPosition((previousPosition) => {
-                        console.log("update position")
-                        if (previousPosition[0] !== start || previousPosition[1] !== end) {
-                            return [start, end];
-                        }
-                        return previousPosition;
-                    });
 
-                }
+                setCurrentPosition((previousPosition) => {
+                    if (previousPosition[0] !== start || previousPosition[1] !== end) {
+                        return [start, end];
+                    }
+                    return previousPosition;
+                });
+
             }
         });
     }
@@ -74,7 +77,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
                     </select>
                 </div>
                 <div className='button-container'>
-                    <button className='button-results' onClick={() => {
+                    <button className='button-results' disabled={!enableUpdate} style={{ "cursor": enableUpdate ? "pointer" : "not-allowed" }} onClick={() => {
                         getMaximaFromPositions()
                     }}>Update Y-Axes for wiggle files</button>
                 </div>
@@ -103,6 +106,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
                                 gosRef={gosRef}
                             /> :
                             <AlignedGenomeViz
+                                maxValueWiggleDict={maxValueWiggleDict}
                                 dataGosling={dataGosling}
                                 filePath={filePath}
                                 filter={filter}

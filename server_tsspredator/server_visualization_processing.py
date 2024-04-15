@@ -276,6 +276,10 @@ def expandTSSPositions(tss_set, expansion):
 
     
 def process_results(tempDir, resultsDir): 
+    orderTSS = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
+   
+
+
     masterTablePath = tempDir + '/MasterTable.tsv'
     # copy config file to resultsDir
     configPath = tempDir + '/config.json'
@@ -285,13 +289,28 @@ def process_results(tempDir, resultsDir):
     rnaData = {}
     for genomeKey in masterTable.keys():
         masterTable[genomeKey]['TSS'] = list(masterTable[genomeKey]['TSS'].values())
+        subdfTSS = pd.DataFrame.from_dict(masterTable[genomeKey]['TSS'])
+        subdfTSS.to_csv(resultsDir + f'/tss_data_temp_{genomeKey}.csv', index=False)
         # get path of SuperGFF
         superGFFPath = tempDir + '/' + genomeKey + '_super.gff'
         # read SuperGFF
         masterTable[genomeKey]["superGFF"], maxValue = parseSuperGFF(superGFFPath)
-        # masterTable[genomeKey]['super'] = maxValue
+        subdf = pd.DataFrame.from_dict(masterTable[genomeKey]["superGFF"])
+        for strand in ['Plus', 'Minus']:
+            strandTest = "+" if strand == "Plus" else "-"
+            subdfStrand = subdf[subdf['strand'] == strandTest]
+            subdfStrand.to_csv(resultsDir + f'/gene_data_temp_{genomeKey}_{strand}.csv', index=False)
+        # subdf.to_csv(resultsDir + f'/gene_data_temp_{genomeKey}.csv', index=False)
         masterTable[genomeKey]['lengthGenome'] = maxValue
         masterTable[genomeKey]['aggregatedTSS'], maxValueTSS = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
+        for key in masterTable[genomeKey]['aggregatedTSS'].keys():
+            subdfAgg = pd.DataFrame.from_dict(masterTable[genomeKey]['aggregatedTSS'][key])
+            # sort by mainClass following orderTSS
+            subdfAgg.sort_values(by=['mainClass'], key=lambda series: series.apply( lambda x: orderTSS.index(x)), inplace=True)
+            subdfAgg.to_csv(resultsDir + f'/aggregated_data_temp_{genomeKey}_{key}.csv', index=False)
+        del masterTable[genomeKey]['TSS']
+        del masterTable[genomeKey]['aggregatedTSS']
+        del masterTable[genomeKey]['superGFF']
         masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
         rnaData[genomeKey] = {}
         rnaData[genomeKey] = parseRNAGraphs(tempDir, genomeKey, resultsDir)

@@ -1,0 +1,48 @@
+name: Build and Push Docker Image
+
+# when to run the workflow
+on:
+  push:
+    branches: [main]
+
+# the jobs to run
+jobs:
+  build:
+    # the os to run the job on
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # build the image now
+      - name: Build Docker image
+        env:
+          YARNRC: ${{secrets.YARNRC}}
+        run: |
+          echo "$YARNRC" > .yarnrc.yml
+          docker compose --env-file variables_tsspredator.env build
+
+      - name: save images
+        run: |
+          docker save tsspredator_web:latest | gzip > image_tsspredator_web.tar.gz
+          docker save tsspredator_celery_app:latest | gzip > image_tsspredator_celery_app.tar.gz
+
+      - name: Release WebImage to Repo
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: image_tsspredator_web.tar.gz
+          asset_name: TSSpredatorWeb
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "The image for the web interface of TSSpredator"
+
+      - name: Release CeleryImage to Repo
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: image_tsspredator_celery_app.tar.gz
+          asset_name: TSSpredatorCelery
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "The image for the celery app of TSSpredator"

@@ -321,7 +321,7 @@ def create_genome_entry(index, file_data, parameters, default_placeholder):
         f"genome{index}": {
             "name": genome_name,
             "placeholder": default_placeholder,
-            "alignmentid": get_value(file_data['idList'], index),
+            "alignmentid": file_data['idList'][index-1], # This id list is 0-indexed and contains sorted the genome ids
             "outputid": get_value(file_data['outputID'], f'outputID_{index}'),
             "genomefasta": get_value(file_data['genome'], f'genome_{index}'),
             "genomeannotation": get_value(file_data['annotation'], f'annotation_{index}')

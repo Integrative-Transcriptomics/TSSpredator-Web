@@ -31,12 +31,74 @@
 }
 
 .gosling-component{
-    padding: 0 0 0 0 !important; /* remove padding */
-    /* center elements */
+    padding: 0 !important; /* remove padding if necessary */
     display: flex;
-    justify-content: center;
+    justify-content: center; 
+    align-items: center;   
+    flex-direction: column; 
+  }
+  
+  .genome-viewer {
+    width: 100%;           /* Occupy full container width */
+    text-align: center;     /* Center content within the viewer */
+  }
+
+.genome-viewer-select {
+    width: 100%;
+    display: flex;
+    justify-content: space-around; /* Aligns items on opposite ends */
+    align-items: center;          /* Vertically centers items */
+  }
+  
+  .select-container { 
+    display: flex;               /* Enables flex for label and select */
     align-items: center;
-    flex-direction: column;
-    margin: 0 0 0 0;
-    
+  }
+
+  .select-container { 
+    display: flex;               /* Enables flex for label and select */
+    align-items: center;
+    justify-content: space-around; /* Aligns items on opposite ends */
+
+  }
+  
+  .select-container label {
+    margin-right: 10px;          /* Adds some space between label and select */
+  } 
+  .button-results {
+    display: inline-block; /* Required for text-align */
+    text-align: center;    /* Centers the text within the button */
+    padding: 10px 20px;    /* Add padding as desired */
+    margin: 10px;          /* Add margin as desired */
+    cursor: pointer;
+    color: rgb(0, 0, 0, 0.8);
+    background-color: #e0e0e0;
+    max-height: 2.2rem;
+    font-size: 0.8rem;
+    padding: 1% 1.4%;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.1rem 0.3rem rgb(0, 0, 0, 0.5);
+    text-transform: uppercase;
+    margin-top: -1%;
+    margin-right: 1.1%;
+    border: 1px solid transparent;
+
+    min-width: max-content;
+  }
+ 
+.button-results:hover {
+    box-shadow: 0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
+    background-color: var(--complement);
+    color: white;
+}
+
+.button-results:disabled {
+    cursor: not-allowed;
+    box-shadow:0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
+    background-color: #8d8c8c;
+    color: rgba(255, 255, 255, 0.8);
+  /* box-shadow: 
+  background-color: var(--complement);
+  color: white;
+} */
 }

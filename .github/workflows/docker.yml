@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 # when to run the workflow
 on:
   push:
-    branches: [main]
+    branches: [main_2]
 
 # the jobs to run
 jobs:

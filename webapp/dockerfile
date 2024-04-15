@@ -1,16 +1,23 @@
 # first stage build the frontend
-FROM node:20-alpine3.18 as build
+FROM node:21-alpine3.18 as build
+
+
 WORKDIR /build
 COPY src/ src/
 COPY public/ public/
 COPY package.json .
-COPY package-lock.json .
+COPY vite.config.mjs .
+COPY .yarnrc.yml .
+COPY index.html .
 
-# build using npm 
-RUN npm install
-RUN npm run build
 
-FROM --platform=linux/amd64 alpine:3.18
+# build using yarn 
+RUN corepack enable yarn
+RUN yarn set version berry
+RUN yarn install
+RUN yarn build
+
+FROM --platform=linux/x86_64 alpine:latest
 
 # Set the working directory in the container to /app
 
@@ -19,16 +26,21 @@ FROM --platform=linux/amd64 alpine:3.18
 WORKDIR /app
 
 # copy the server directory and dist from previous buildstage into the container at /app
-COPY --from=build /build/build /app/build
+COPY --from=build /build/dist /app/dist
 COPY server_tsspredator /app/server_tsspredator
 COPY requirements.txt /app
 COPY setup.py /app
-# COPY /TSSpredator.jar /app
+RUN apk add gcompat libbz2 libcurl libstdc++ krb5-dev zlib gcc zlib g++  curl-dev
+RUN wget https://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig -P /app
+RUN chmod +x /app/bedGraphToBigWig
 
 # Install python3.11
-RUN apk add --update --no-cache python3 py3-pip
+RUN apk add --update --no-cache python3-dev py3-pip
+RUN python3 -m venv /app/env_tss_predator_web
+ENV PATH="/app/env_tss_predator_web/bin:$PATH"
+RUN python3 -m pip install --upgrade pip
 # install python dependencies
-RUN pip install -r requirements.txt
+RUN python3 -m pip install -r requirements.txt
 
 # Install the server package
 RUN pip install -e .

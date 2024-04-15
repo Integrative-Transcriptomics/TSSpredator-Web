@@ -1,0 +1,37 @@
+.main-header {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  /* align-items: center; */
+  margin: auto;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-right {
+  flex: 1;
+  max-width: 30%;
+}
+
+
+.header-left h1 {
+  margin: 0;
+  flex: 1;
+}
+
+.header-left div {
+  margin-left: 20px;
+}
+
+.small-url {
+  font-size: 0.6em;
+  /* Add URL appearance */
+}
+
+.url {
+  text-decoration: underline;
+  cursor: pointer;
+}

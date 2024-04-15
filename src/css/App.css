@@ -189,10 +189,22 @@ input:focus {
     display: flex;
 }
 
+.form-group { 
+    margin-bottom: 10px;  /* Spacing between form elements */
+    display: flex;        /* Align form elements horizontally */
+    align-items: baseline;  /* Center form elements vertically */
+  }
+  
+  .project-name-label {
+    font-weight: bold;    /* Make label text bold */
+    /* display: block;       Place label on its own line */
+    margin-bottom: 5px;   /* Space between label and input */
+    margin-right: 5px;     /* Space between label and input */
+  }
 .text-field-box {
     width: 100%;
     display: grid;
-    grid-template-columns: 16% 84%;
+    grid-template-columns: 16% 4% 80%;
     align-items: center;
 }
 
@@ -418,7 +430,16 @@ a.open-results {
     justify-content: space-around;
 
 }
-
+.close-popup {
+    position: absolute; /* Position absolutely to break the flow and place it over the corner */
+    right: 2em; /* Align to the right side */
+    top: 1em; /* Align to the top */
+    cursor: pointer; /* Keep the pointer cursor as you have */
+  }
+  .text-popup-inner {
+  /* Your existing styles */
+  position: relative; /* Ensure this is positioned relatively for absolute positioning inside */
+}
 .error-popup-header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.3);
     height: 15%;
@@ -482,6 +503,7 @@ a.open-results {
 
 [data-title] {
     position: relative;
+    color: rgb(0, 0, 0, 0.5) !important;
 }
 
 [data-tabs-title]:hover:after {
@@ -511,6 +533,13 @@ a.open-results {
     position: relative;
 }
 
+#upload-zip-button:hover {
+    color: var(--mainColor);
+    background-color: white;
+    border: 1px solid var(--mainColor);
+
+}
+
 .loading {
     margin-left: 65%;
 }
@@ -527,12 +556,13 @@ a.open-results {
 .dropbtn {
     background-color: var(--mainColor);
     font-size: 1rem;
-    padding: 1.5% 0;
+    padding: 0.25em 0.5rem 0.25em 0.5rem;
     text-align: center;
     min-width: 100%;
     color: white;
     border: 1px solid white;
     cursor: pointer;
+
 }
 
 .dropdown-content {
@@ -564,6 +594,7 @@ a.open-results {
 .dropdown:hover .dropdown-content {
     display: block;
 }
+
 
 
 @media only screen and (max-width: 1450px) {

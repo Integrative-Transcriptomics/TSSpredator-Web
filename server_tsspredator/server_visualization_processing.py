@@ -1,13 +1,14 @@
+from typing import Any, Literal
 import pandas as pd
 import os 
 import collections
 import json
 import subprocess
 import shutil
-from asyncio.subprocess import PIPE
+ORDER_TSS = ['Primary', 'Secondary', 'Internal', 'Antisense', 'Orphan']
 
 
-def getHeaderIndices(header):
+def getHeaderIndices(header) -> dict[str, int]:
     return {
         'genome': header.index('Genome') if 'Genome' in header else header.index('Condition'),
         'superPos': header.index('SuperPos'),
@@ -19,7 +20,8 @@ def getHeaderIndices(header):
         'internal': header.index('Internal'),
         'antisense': header.index('Antisense')
     }
-def getTSSClass(line, headerIndices):
+
+def getTSSClass(line, headerIndices) -> Literal['Primary'] | Literal['Secondary'] | Literal['Internal'] | Literal['Antisense'] | Literal['Orphan']:
     '''get TSS class from MasterTable'''
     classesIndices = [headerIndices['primary'], headerIndices['secondary'], headerIndices['internal'], headerIndices['antisense']]
     classLine = ",".join([ line[indexUsed] for indexUsed in classesIndices ])
@@ -35,7 +37,7 @@ def getTSSClass(line, headerIndices):
         case _:
             return "Orphan"
         
-def getTSSType(line, headerIndices):
+def getTSSType(line, headerIndices) -> Literal['Detected'] | Literal['Enriched'] | Literal['Undetected']:
     '''get TSS type from MasterTable'''
     tssClass = ",".join([line[indexUsed] for indexUsed in [headerIndices['detected'], headerIndices['enriched']]])
     match tssClass:
@@ -46,15 +48,14 @@ def getTSSType(line, headerIndices):
         case _:
             return "Undetected"
         
-def decideMainClass(newClass, oldClass):
-    orderTSS = ['Primary', 'Secondary', 'Internal', 'Antisense', 'Orphan']
-    if orderTSS.index(newClass) < orderTSS.index(oldClass):
+def decideMainClass(newClass, oldClass)-> Literal['Primary'] | Literal['Secondary'] | Literal['Internal'] | Literal['Antisense'] | Literal['Orphan']:
+    if ORDER_TSS.index(newClass) < ORDER_TSS.index(oldClass):
         return newClass
     else:
         return oldClass
     
-def readMasterTable(path):
-    '''read MasterTable and return as JSON'''
+def readMasterTable(path) -> tuple[dict, set]:
+    '''read MasterTable and return as JSON. Return also a set of unique TSS'''
     data_per_genome = {}
     tss_unique = set()
     with open(path, 'r') as f:
@@ -72,7 +73,6 @@ def readMasterTable(path):
             superStrand = line[headerIndices['superStrand']]
             tss_unique.add((superPos, superStrand))
             tss_key = f"{superPos}_{superStrand}"
-
             classesTSS = getTSSClass(line, headerIndices)
             if tss_key not in data_per_genome[genome]["TSS"]:
                 typeTSS = getTSSType(line, headerIndices)
@@ -91,63 +91,98 @@ def readMasterTable(path):
                 data_per_genome[genome]["TSS"][tss_key]['mainClass'] = decideMainClass(classesTSS, data_per_genome[genome]["TSS"][tss_key]['mainClass'])   
     return data_per_genome, tss_unique
 
-def aggregateTSS(tssList, maxGenome):
+def aggregateTSS(tssList, maxGenome, outputDir, genomeName):
     '''aggregate TSS'''
-    aggregatedTSS = {}
     binSizes = [5000,10000,50000]
     binSizeMax = {}
     for binSize in binSizes:
-        aggregatedTSS[binSize] = []
+        aggregated_data_for_bin = []
         maxBinCount = {"+": 0, "-": 0}
         for i in range(0, maxGenome, binSize):
             binStart = i
             binEnd = i + binSize
+            # Filter TSS found in bin and return their main class, strand and type
             filteredTSS = [(tss["mainClass"],tss["superStrand"], tss["typeTSS"]) for tss in tssList if binStart <= int(tss["superPos"]) < binEnd]
             countedTSS = dict(collections.Counter(filteredTSS))
             expanded_countedTSS = []
             binSum = {"+": 0, "-": 0}
+            # Counted TSS is a dictionary with keys (mainClass, strand, typeTSS) and values are the count of TSS
             for key in countedTSS.keys():
-
                 binSum[key[1]] += countedTSS[key]
-                tempValue = {}
-                tempValue['mainClass'] = key[0]
-                tempValue['strand'] = key[1]
-                tempValue['typeTSS'] = key[2]
-                tempValue['count'] = countedTSS[key]
-                
-                tempValue['binStart'] = binStart
-
-                tempValue['binEnd'] = min(binEnd, maxGenome)
+                tempValue = split_summarized_TSS(maxGenome, binStart, binEnd, countedTSS, key)
                 expanded_countedTSS.append(tempValue)
             maxBinCount = {"+": max(maxBinCount["+"], binSum["+"]), "-": max(maxBinCount["-"], binSum["-"])}
-            aggregatedTSS[binSize].extend(expanded_countedTSS)
+            aggregated_data_for_bin.extend(expanded_countedTSS)
+        # Export for faster interaction with Gosling.js
+        subdfAgg = pd.DataFrame.from_dict(aggregated_data_for_bin)
+        # sort by mainClass following orderTSS
+        subdfAgg.sort_values(by=['mainClass'], key=lambda series: series.apply( lambda x: ORDER_TSS.index(x)), inplace=True)
+        subdfAgg.to_csv(outputDir + f'/aggregated_data_temp_{genomeName}_{binSize}.csv', index=False)
         binSizeMax[binSize] = maxBinCount
-       
-    return aggregatedTSS, binSizeMax
+    return binSizeMax
+
+def split_summarized_TSS(maxGenome, binStart, binEnd, countedTSS, key):
+    """
+    Splits the summarized TSS data into a dictionary with specific attributes.
+
+    Args:
+        maxGenome (int): The maximum genome value.
+        binStart (int): The starting bin value.
+        binEnd (int): The ending bin value.
+        countedTSS (dict): A dictionary containing the counted TSS data.
+        key (tuple): A tuple containing the mainClass, strand, and typeTSS values.
+
+    Returns:
+        dict: A dictionary containing the split summarized TSS data with attributes.
+
+    """
+    return {
+        'mainClass': key[0],
+        'strand': key[1],
+        'typeTSS': key[2],
+        'count': countedTSS[key],
+        'binStart': binStart,
+        'binEnd': min(binEnd, maxGenome)
+    }
 
 
-def adaptWiggleFile(inputDir, genome, strand, resultsDir):
-    '''adapt wiggle file and return path'''
-    results_per_filetype = {}
-    ## TODO: from file to df
+def adaptWiggleFile(inputDir, genome, strand, resultsDir) -> dict[str, dict]:
+    '''Adapt wiggle file and return path.
+
+    Args:
+        inputDir (str): The input directory containing the wiggle file.
+        genome (str): The genome name.
+        strand (str): The strand type.
+        resultsDir (str): The directory to store the output files.
+
+    Returns:
+        dict[str, dict]: A dictionary containing the adapted file paths.
+
+    '''
     file_names = {}
     for fileType in ["superFivePrime", "superNormal"]:
-        file, df, maxEnd, min_val, max_val = from_bedgraph_to_df(inputDir, genome, fileType, strand)
-        # results_per_filetype[fileType] = {"file": file, "df": df, "maxEnd": maxEnd, "min": min_val, "max": max_val}
-   ## TODO: Normalize both files using the max and min from both files
-    # min_value = min(results_per_filetype[fileType]["min"] for fileType in results_per_filetype)
-    # max_value = max(results_per_filetype[fileType]["max"] for fileType in results_per_filetype)
-    # for fileType in ["superFivePrime", "superNormal"]:
-        # df = results_per_filetype[fileType]["df"]
-        # df['value'] = (df['value'] - min_value) / (max_value - min_value)
-        # results_per_filetype[fileType]["df"] = df
-        # file = results_per_filetype[fileType]["file"]
-        # maxEnd = results_per_filetype[fileType]["maxEnd"]
+        file, df, maxEnd = from_bedgraph_to_df(inputDir, genome, fileType, strand)   
         outputBigWig = from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df, maxEnd)
         file_names[fileType] = outputBigWig
-    return {"filename":file_names}
+    return {"filename": file_names}
 
-def from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df, maxEnd):
+def from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df, maxEnd) -> str:
+    """
+    Convert a bedGraph file to a BigWig file.
+
+    Args:
+        inputDir (str): The input directory path.
+        genome (str): The name of the genome.
+        fileType (str): The file type.
+        strand (str): The strand information.
+        resultsDir (str): The directory to store the output files.
+        file (str): The input file name.
+        df (pandas.DataFrame): The DataFrame containing the bedGraph data.
+        maxEnd (int): The maximum end position.
+
+    Returns:
+        str: The path to the output BigWig file.
+    """
     df["chrom"] = genome
     chromSizes = os.path.join(inputDir, f'{genome}.chromsizes')
     with open(chromSizes, 'w') as f:
@@ -159,7 +194,8 @@ def from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df
     outputBigWig = os.path.join(resultsDir, f'{genome}_{fileType}{strand}.bw')
     serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
     bedGraphPath = os.path.join(serverLocation, 'bedGraphToBigWig')
-    result = subprocess.run([bedGraphPath, adaptedFile, chromSizes, outputBigWig], stdout=subprocess.PIPE, 
+    result = subprocess.run([bedGraphPath, adaptedFile, chromSizes, outputBigWig], 
+                                stdout=subprocess.PIPE, 
                                 stderr=subprocess.PIPE, 
                                 text=True)
     if len(result.stderr) > 0:
@@ -167,6 +203,19 @@ def from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df
     return outputBigWig
 
 def from_bedgraph_to_df(inputDir, genome, fileType, strand):
+    """
+    Convert a bedgraph file to a pandas DataFrame.
+
+    Args:
+        inputDir (str): The directory where the bedgraph file is located.
+        genome (str): The name of the genome.
+        fileType (str): The type of the file (fivePrime or Normal).
+        strand (str): The strand of the file.
+
+    Returns:
+        tuple: A tuple containing the file path, the pandas DataFrame, and the maximum end value.
+
+    """
     file = os.path.join(inputDir, f'{genome}_{fileType}{strand}_avg.bigwig')
     df = pd.read_csv(file, sep='\t')
     df["end"] = df["end"] + 1
@@ -175,11 +224,20 @@ def from_bedgraph_to_df(inputDir, genome, fileType, strand):
         df['value'] = df['value'] * -1
         # if negative change to zero
         df['value'] = df['value'].apply(lambda x: 0 if x < 0 else x)
-    # get mix max of value
-    min, max = df['value'].min(), df['value'].max()
-    return file,df,maxEnd,min,max
+    return file, df, maxEnd
+
 def parseRNAGraphs(tmpdir, genomeKey, resultsDir):
-    '''parse RNA graphs and return path as json. Only send path, not the whole file.'''
+    '''Parse RNA graphs and return path as JSON. Only send path, not the whole file.
+
+    Args:
+        tmpdir (str): The temporary directory path.
+        genomeKey (str): The genome key.
+        resultsDir (str): The results directory path.
+
+    Returns:
+        dict: A dictionary containing the path for the RNA graph data.
+
+    '''
     # get only last part of tmpdir
     lastPart = tmpdir.split('/')[-1]
     dataRNA = {}
@@ -190,14 +248,23 @@ def parseRNAGraphs(tmpdir, genomeKey, resultsDir):
             dataRNA[fileType] = {
             'path': lastPart, 
             'filename': bw_name["filename"][fileType],
-            # 'normalization': bw_name["normalization"]
         }
-
     return dataRNA
 
 
 def descriptionToObject(description):
-    '''convert description to object'''
+    '''Converts a description string from a GFF file to a dictionary object.
+
+    Args:
+        description (list): A list of strings in the format "key=value".
+
+    Returns:
+        dict: A dictionary object with keys and values extracted from the description.
+
+    Example:
+        >>> descriptionToObject(['gene_name=gene_name1', 'locus_tag=tag_1', 'description=doingsomehting'])
+        {'gene_name': 'gene_name1', 'locust_tag': 'tag_1', 'description': 'doingsomething'}
+    '''
     data = {}
     for entry in description:
         entry = entry.split('=')
@@ -205,10 +272,11 @@ def descriptionToObject(description):
     return data
 
 
-def parseSuperGFF (path):
-    '''parse SuperGFF and return as JSON'''
+def parseSuperGFF (inputDir, genomeKey, resultsDir):
+    '''Parse SuperGFF, save it as a CSV and return the maximal value'''
     data_per_gene = []
     maxValue = 0
+    path = os.path.join(inputDir, f'{genomeKey}_super.gff')
     with open(path, 'r') as f:
         for line in f:
             if line.startswith('#'):
@@ -224,8 +292,12 @@ def parseSuperGFF (path):
                 "product": description.get('product', ''),
             })
             maxValue = max(maxValue, int(line[4]))
-            
-    return data_per_gene, maxValue
+    subdf = pd.DataFrame.from_dict(data_per_gene)
+    for strand in ['Plus', 'Minus']:
+        strandTest = "+" if strand == "Plus" else "-"
+        subdfStrand = subdf[subdf['strand'] == strandTest]
+        subdfStrand.to_csv(resultsDir + f'/gene_data_temp_{genomeKey}_{strand}.csv', index=False)
+    return  maxValue
 
 def from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss):
     '''convert fasta to tsv'''
@@ -250,7 +322,7 @@ def from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss):
                 output.write(f'{pos}\t{base}\n')
        
 
-def reverse_base(base):
+def reverse_base(base) -> str | Literal['T', 'A', 'G', 'C']:
     '''reverse base'''
     match base:
         case 'A':
@@ -263,8 +335,17 @@ def reverse_base(base):
             return 'C'
         case _:
             return base
+        
 def expandTSSPositions(tss_set, expansion):
-    '''expand TSS positions'''
+    '''Expand TSS positions to visualize the positions in the genome
+
+    Args:
+        tss_set (set): A set of TSS positions represented as tuples (tss, strand).
+        expansion (int): The expansion value to expand the TSS positions.
+
+    Returns:
+        set: A set of expanded TSS positions represented as tuples (tss, strand).
+    '''
     expandedTSS = set()
     for tss_pair in tss_set:
         tss = int(tss_pair[0])
@@ -272,14 +353,21 @@ def expandTSSPositions(tss_set, expansion):
         rangeIteration = range(-expansion, 1) if strand == "+" else range(expansion, -1, -1)
         for i in rangeIteration:
             expandedTSS.add((int(tss + i),strand))
-    return expandedTSS  
+    return expandedTSS
 
-    
+
 def process_results(tempDir, resultsDir): 
-    orderTSS = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
-   
+    """
+    Process the results of TSSpredator analysis for a better visualization. 
+    The results are stored in the resultsDir directory.
 
+    Args:
+        tempDir (str): The path to the temporary directory containing the analysis files.
+        resultsDir (str): The path to the directory where the processed results will be saved.
 
+    Returns:
+        None
+    """
     masterTablePath = tempDir + '/MasterTable.tsv'
     # copy config file to resultsDir
     configPath = tempDir + '/config.json'
@@ -288,35 +376,23 @@ def process_results(tempDir, resultsDir):
     unique_tss_expanded = expandTSSPositions(unique_tss, 50)
     rnaData = {}
     for genomeKey in masterTable.keys():
-        masterTable[genomeKey]['TSS'] = list(masterTable[genomeKey]['TSS'].values())
-        subdfTSS = pd.DataFrame.from_dict(masterTable[genomeKey]['TSS'])
+        list_tss = list(masterTable[genomeKey]['TSS'].values())
+        # Save data into a csv for better interaction with Gosling.js
+        subdfTSS = pd.DataFrame.from_dict(list_tss)
         subdfTSS.to_csv(resultsDir + f'/tss_data_temp_{genomeKey}.csv', index=False)
-        # get path of SuperGFF
-        superGFFPath = tempDir + '/' + genomeKey + '_super.gff'
-        # read SuperGFF
-        masterTable[genomeKey]["superGFF"], maxValue = parseSuperGFF(superGFFPath)
-        subdf = pd.DataFrame.from_dict(masterTable[genomeKey]["superGFF"])
-        for strand in ['Plus', 'Minus']:
-            strandTest = "+" if strand == "Plus" else "-"
-            subdfStrand = subdf[subdf['strand'] == strandTest]
-            subdfStrand.to_csv(resultsDir + f'/gene_data_temp_{genomeKey}_{strand}.csv', index=False)
-        # subdf.to_csv(resultsDir + f'/gene_data_temp_{genomeKey}.csv', index=False)
-        masterTable[genomeKey]['lengthGenome'] = maxValue
-        masterTable[genomeKey]['aggregatedTSS'], maxValueTSS = aggregateTSS(masterTable[genomeKey]['TSS'], maxValue)
-        for key in masterTable[genomeKey]['aggregatedTSS'].keys():
-            subdfAgg = pd.DataFrame.from_dict(masterTable[genomeKey]['aggregatedTSS'][key])
-            # sort by mainClass following orderTSS
-            subdfAgg.sort_values(by=['mainClass'], key=lambda series: series.apply( lambda x: orderTSS.index(x)), inplace=True)
-            subdfAgg.to_csv(resultsDir + f'/aggregated_data_temp_{genomeKey}_{key}.csv', index=False)
         del masterTable[genomeKey]['TSS']
-        del masterTable[genomeKey]['aggregatedTSS']
-        del masterTable[genomeKey]['superGFF']
+        # read SuperGFF and adapt for interaction with Gosling.js
+        # Return length of genome to adapt the visualization
+        maxValue = parseSuperGFF(tempDir, genomeKey, resultsDir)
+        masterTable[genomeKey]['lengthGenome'] = maxValue
+        # Aggregate TSS and save into a csv for better interaction with Gosling.js
+        # Return max value of each bin to visualize
+        maxValueTSS = aggregateTSS(list_tss, maxValue, resultsDir, genomeKey)
         masterTable[genomeKey]['maxAggregatedTSS'] = maxValueTSS
         rnaData[genomeKey] = {}
         rnaData[genomeKey] = parseRNAGraphs(tempDir, genomeKey, resultsDir)
         from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss_expanded)
-    #write compressed json in resultsDir
+    # write compressed json in resultsDir
     with open(resultsDir + '/aggregated_data.json', 'w') as f:
         f.write(json.dumps(masterTable))
-        
-    return 
+    

@@ -37,7 +37,7 @@ function LoadingBanner({ statusID, listDocumentStatus, readyLoaded, closePopup }
                         }
                     }} size="xl" icon={faCircleXmark} />
                 </div>
-                <h3 className='header error-popup-header'>{readyLoaded === "loading" ? "Loading your data" :
+                <h3 className='header error-popup-header'>{readyLoaded === "loading" ? "Uploading your data" :
                     "Succesfull upload"}</h3>
 
 

@@ -9,6 +9,7 @@ import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
 import Header from "./Main/Header";
 import GenomeViewerWrapper from "./Result/GenomeViewerWrapper";
+import ResultNotFoundPage from "./404Result";
 import ConfigList from "./Main/ConfigList";
 
 /**
@@ -52,7 +53,6 @@ function Result() {
     const col = headers.map((h, i) => {
       return { Header: h, accessor: i.toString() };
     });
-
     const searchFor = headers.indexOf("Genome") !== -1 ? "Genome" : "Condition";
     const genomeIdx = headers.indexOf(searchFor);
 
@@ -80,7 +80,7 @@ function Result() {
 
   useEffect(() => {
     fetch(`/api/result/${filePath}/`)
-      .then((res) => {
+      .then((res) => { // Check if file is found
         if (res.status === 404) {
           console.log("404");
           setZipBlobFile(404);
@@ -88,15 +88,16 @@ function Result() {
         }
         return res.blob();
       })
-      .then((blob) => {
+      .then((blob) => { // Load zip file
         setZipBlobFile(blob);
         return JSZip.loadAsync(blob);
       })
-      .then((zip) => zip.file("MasterTable.tsv").async("string"))
+      .then((zip) => zip.file("MasterTable.tsv").async("string"))       // Read File and handle Master Table
       .then(handleMasterTable)
       .then(() => setProcessedMasterTable(true))
       .catch(handleFetchError);
 
+    // Get Configuration used
     fetch(`/api/getConfig/${filePath}/`)
       .then((res) => res.json())
       .then(setConfigData)
@@ -104,36 +105,38 @@ function Result() {
   }, [filePath]);
 
   /**
-   * download files action, after clicking on link
+   * Downloads the files as a zip.
    */
   const downloadFiles = () => {
-    // blob url to download files
-    const url = window.URL.createObjectURL(new Blob([zipBlobFile]));
     const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `TSSpredator-prediction.zip`);
-    document.body.appendChild(link);
-
-    // Start download
-    link.click();
-
-    // remove link
-    link.parentNode.removeChild(link);
+    try {
+      const url = window.URL.createObjectURL(new Blob([zipBlobFile]));
+      link.href = url;
+      link.setAttribute("download", `TSSpredator-prediction.zip`);
+      document.body.appendChild(link);
+      // Start download
+      link.click();
+    } catch (error) {
+      console.error("Error during file download:", error);
+    } finally {
+      // Ensure the link is removed from the document body
+      // even if an error occurs during the download
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 0);
+    }
   };
 
   /**
    * update plots for selected genome/condition
    */
-
-
   return (
     <>
       <Header />
       { // if file not found
         // TODO: improve 404 page
         zipBlobFile === 404 ? <>
-          <h2>404: File not found</h2>
-          <h3>File {filePath} not found on server. Results are only available for seven days after creation. Please upload the corresponding zip for visualization or redo your analysis. </h3>
+          <ResultNotFoundPage filePath={filePath} />
         </> :
           <div className='result-container'>
 

@@ -38,4 +38,4 @@ function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, s
     );
 }
 
-export default GenomeViewerWrapper;
+export default React.memo(GenomeViewerWrapper);

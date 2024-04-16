@@ -2,7 +2,7 @@ import ClipLoader from "react-spinners/ClipLoader";
 import React from "react";
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook, faCircleInfo } from '@fortawesome/pro-light-svg-icons';
+import { faBook } from '@fortawesome/pro-light-svg-icons';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import '../../css/Header.css';
 

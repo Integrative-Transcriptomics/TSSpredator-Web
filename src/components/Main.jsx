@@ -443,65 +443,50 @@ function Main() {
       .catch((err) => console.log(err));
   };
 
+  const updateReplicateGenomes = (key) => {
+    let functionUpdates = {
+      "numberofreplicates": updateReplicates,
+      "numberofgenomes": updateGenomes
+    }
+    return functionUpdates[key]
+
+  }
   /**
    * update useState of changed paramter p
    * if other parameters are dependend on p they are also updated
    */
   const handleParameters = (event) => {
-    const name = event.target.name;
-    const directParent = event.target.id;
-    let val;
+    const { name, id: directParent } = event.target;
+    const { value, valueAsNumber } = event.target;
+    const checkingTypeOrCluster = ["typeofstudy", "clustermethod"].includes(name)
+    let val = checkingTypeOrCluster ? value : valueAsNumber;
+    if (!checkingTypeOrCluster)
+      if (isNaN(val)) return;
 
-    // combobox
-    if (name === "typeofstudy" || name === "clustermethod") {
-      val = event.target.value;
-      // input=number -> save value as number
-    } else {
-      val = event.target.valueAsNumber;
-      if (isNaN(val)) {
-        return;
-      }
+    if (["numberofreplicates", "numberofgenomes"].includes(name)) {
+      updateReplicateGenomes(name)(val)
     }
-
-    if (directParent === "setup") {
-      updateSetupBox(name, "value", val);
-    } else {
-      updateParameterBox(directParent, name, "value", val);
-      checkPreset(val, name);
-    }
-    if (name === "numberofreplicates") {
-      updateReplicates(val);
-    }
-    if (name === "numberofgenomes") {
-      updateGenomes(val);
-    }
-    if (name === "stepfactor") {
-      updateParameterBox(directParent, "stepfactorreduction", "max", val);
-      if (parameters.parameterBox["Prediction"]["stepfactorreduction"]["value"] > val) {
-        parameters.parameterBox["Prediction"]["stepfactorreduction"]["value"] = val;
-      }
-    }
-    if (name === "stepheight") {
-      updateParameterBox(directParent, "stepheightreduction", "max", val);
-      if (parameters.parameterBox["Prediction"]["stepheightreduction"]["value"] > val) {
-        parameters.parameterBox["Prediction"]["stepheightreduction"]["value"] = val;
-      }
-    }
-    // update Genome/Condition label
-    if (name === "typeofstudy") {
-      if (val === "condition") {
-        setShowGName(false);
+    else if (["stepfactor", "stepheight"].includes(name)) {
+      let keyValue = name === "stepfactor" ? "stepfactorreduction" : "stepheightreduction"
+      updateParameterBox("Prediction", keyValue, "max", val);
+      if (parameters.parameterBox["Prediction"][keyValue]["value"] > val) {
+        parameters.parameterBox["Prediction"][keyValue]["value"] = val;
       }
 
-      const newName = "Number of " + val.charAt(0).toUpperCase() + val.slice(1) + "s";
+    }
+    else if (name === "typeofstudy") { // update Genome/Condition label
+      setShowGName(!(val === "condition"));
+      const placeholderGenomeOrReplicate = `${val.charAt(0).toUpperCase()}${val.slice(1)}`;
+      const newName = `Number of ${placeholderGenomeOrReplicate}s`;
       // Number of Genomes/Conditions
       updateSetupBox("numberofgenomes", "name", newName);
-
       // Genome/Condition Tabs
       genomes.forEach((g, i) => {
-        g["genome" + (i + 1)].placeholder =
-          val.charAt(0).toUpperCase() + val.slice(1) + "_" + (i + 1);
-        g["genome" + (i + 1)].name = val.charAt(0).toUpperCase() + val.slice(1) + "_" + (i + 1);
+        let index = i + 1;
+        let genomeKey = `genome${index}`;
+        let defaultName = `${placeholderGenomeOrReplicate}_${index}`;
+        g[genomeKey].placeholder = defaultName
+        g[genomeKey].name = defaultName
       });
       setGenomes([...genomes]);
 
@@ -510,9 +495,16 @@ function Main() {
         "Comparative",
         "allowedcrossgenomeshift",
         "name",
-        "allowed cross-" + val + " shift"
+        `allowed cross-${val} shift`
       );
     }
+    if (directParent === "setup") {
+      updateSetupBox(name, "value", val);
+    } else {
+      updateParameterBox(directParent, name, "value", val);
+      checkPreset(val, name);
+    }
+
   };
 
   /**

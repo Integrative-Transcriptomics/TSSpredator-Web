@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import GenomeViewer from "./GenomeViewer";
 
-function GenomeViewerWrapper({ filePath, filterSelected, gosRef }) {
-    const [showGFFViewer, setGFFViewer] = useState(false);
+function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, showGFFViewer }) {
     const [dataGosling, setDataGosling] = useState(null);
 
     const fetchDataGosling = async (filePath) => {

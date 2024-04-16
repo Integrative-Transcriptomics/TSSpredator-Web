@@ -39,12 +39,11 @@ function Result() {
   // GoslingRef
   const gosRef = useRef();
 
-  // histograms
+  // Data ready for Visualization
   const [processedMasterTable, setProcessedMasterTable] = useState(false);
 
   // Genome Viewer
-  const [showGFFViewer, setGFFViewer] = useState(false);
-
+  const [showGenomeViewer, setShowGenomeViewer] = useState(false);
 
   /**
    * get all files from TSS prediction as .zip from server
@@ -93,9 +92,6 @@ function Result() {
       });
       setTableData([...dataRows]);
       setAllGenomes(allG);
-
-
-
     };
 
     // Fetch files from server and handle MasterTable
@@ -207,7 +203,7 @@ function Result() {
               </select>
             </div>
 
-            <GenomeViewerWrapper filePath={filePath} filterSelected={filterForPlots} gosRef={gosRef} />
+            <GenomeViewerWrapper filePath={filePath} filterSelected={filterForPlots} gosRef={gosRef} showGFFViewer={showGenomeViewer} setGFFViewer={setShowGenomeViewer} />
 
             <div className='result-margin-left'>
               <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
@@ -234,7 +230,7 @@ function Result() {
                 {showTable ? "-" : "+"} Master Table
               </h3>
               {tableColumns.length > 0 ? (
-                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGFFViewer} />
+                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGenomeViewer} />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}

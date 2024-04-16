@@ -560,28 +560,36 @@ function Main() {
    * @param data: object with genome names and ids from the alignment file
    */
   const updateGenomes = (val, data) => {
-    parameters.setup.numberofgenomes.value = val;
+    setParameters(prevParameters => ({
+      ...prevParameters,
+      setup: {
+        ...prevParameters.setup,
+        numberofgenomes: {
+          ...prevParameters.setup.numberofgenomes,
+          value: val,
+        },
+      },
+    }));
 
-    var tmpGenome = [...genomes];
-    var tmpReplicate = [...replicates];
+    const numGenomes = genomes.length;
 
-    // add genom tab
-    const numGenomes = Object.keys(genomes).length;
+    // add genome tab
     if (val > numGenomes) {
-      // add all needed genomes
-      for (let i = numGenomes + 1; i <= val; i++) {
+      const newGenomes = Array.from({ length: val - numGenomes }, (_, i) => {
+        const index = numGenomes + i + 1;
         const { value: studyType } = parameters.setup.typeofstudy;
         const studyTypeCapitalized = `${studyType.charAt(0).toUpperCase()}${studyType.slice(1)}`;
-        let genomeName = `${studyTypeCapitalized}_${i}`;
-        const placeholder = `${studyTypeCapitalized}_${i}`;
+        const placeholder = `${studyTypeCapitalized}_${index}`;
+        let genomeName = placeholder;
 
-        var alignmentID = "";
+        let alignmentID = "";
         if (data) {
-          genomeName = data["genome_" + i];
-          alignmentID = data["id_" + i];
+          genomeName = data[`genome_${index}`];
+          alignmentID = data[`id_${index}`];
         }
-        tmpGenome.push({
-          ["genome" + i]: {
+
+        return {
+          [`genome${index}`]: {
             name: genomeName,
             placeholder: placeholder,
             alignmentid: alignmentID,
@@ -589,58 +597,37 @@ function Main() {
             genomefasta: "",
             genomeannotation: [],
           },
-        });
-        multiFasta.push(false);
-        // add new genome to replicates
-        tmpReplicate.push({ ["genome" + i]: [...replicateTemplate] });
-      }
-      // update genome names and alignmetn ids
-      if (typeof data !== "undefined") {
-        for (let i = 0; i < numGenomes; i++) {
-          tmpGenome[i]["genome" + (i + 1)]["name"] = data["genome_" + (i + 1)];
-          tmpGenome[i]["genome" + (i + 1)]["alignmentid"] = data["id_" + (i + 1)];
-        }
-      }
+        };
+      });
 
-      // remove genome tab
-    } else if (val < numGenomes && val > 0) {
-      // remove all genomes
-      const difference = numGenomes - val;
-      for (let i = 0; i < difference; i++) {
-        // remove last genome
-        tmpGenome.pop();
-        multiFasta.pop();
-        // remove genome from replicates
-        tmpReplicate.pop();
-      }
-      // update genome names and alignment ids
-      if (data) {
-        for (let i = 0; i < numGenomes; i++) {
-          const genomeKey = `genome${i + 1}`;
-          const dataKey = `genome_${i + 1}`;
-          if (tmpGenome[i][genomeKey]) {
-            tmpGenome[i][genomeKey].name = data[dataKey];
-            tmpGenome[i][genomeKey].alignmentid = data[dataKey];
-          }
-        }
-      }
-      // data from alignment file
-    } else if (val === numGenomes) {
-      // update genome names and alignment ids
-      if (data) {
-        for (let i = 0; i < numGenomes; i++) {
-          const genomeKey = `genome${i + 1}`;
-          const dataKey = `genome_${i + 1}`;
-          if (tmpGenome[i][genomeKey]) {
-            tmpGenome[i][genomeKey].name = data[dataKey];
-            tmpGenome[i][genomeKey].alignmentid = data[dataKey];
-          }
-        }
-      }
+      setGenomes(prevGenomes => [...prevGenomes, ...newGenomes]);
+      setMultiFasta(prevMultiFasta => [...prevMultiFasta, ...new Array(val - numGenomes).fill(false)]);
+      setReplicates(prevReplicates => [...prevReplicates, ...newGenomes.map(() => ({ [`genome${numGenomes + 1}`]: [...replicateTemplate] }))]);
     }
-    setGenomes([...tmpGenome]);
-    setMultiFasta([...multiFasta]);
-    setReplicates([...tmpReplicate]);
+    // remove genome tab
+    else if (val < numGenomes && val > 0) {
+      setGenomes(prevGenomes => prevGenomes.slice(0, val));
+      setMultiFasta(prevMultiFasta => prevMultiFasta.slice(0, val));
+      setReplicates(prevReplicates => prevReplicates.slice(0, val));
+    }
+    // data from alignment file
+    else if (val === numGenomes && data) {
+      setGenomes(prevGenomes => prevGenomes.map((genome, i) => {
+        const genomeKey = `genome${i + 1}`;
+        const dataKey = `genome_${i + 1}`;
+        if (genome[genomeKey]) {
+          return {
+            ...genome,
+            [genomeKey]: {
+              ...genome[genomeKey],
+              name: data[dataKey],
+              alignmentid: data[dataKey],
+            },
+          };
+        }
+        return genome;
+      }));
+    }
   };
   /**
    * update parameter value in setup box (type of study, number of conditions, number of replicates)

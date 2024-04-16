@@ -42,7 +42,7 @@ function Header({ loading, onLoadExampleData, showExamples = false, statusID = n
           <div className='dropdown'>
             <label htmlFor="upload-zip-button"
               style={{
-                "cursor": "pointer", "position": "relative", "margin-right": "10px", "margin-top": "10px", color: "black", "display": "flex",
+                "cursor": "pointer", "position": "relative", marginRight: "10px", marginTop: "10px", color: "black", "display": "flex",
               }}
               data-title="Uploading results of TSSpredator-Web allow to directly visualize and explore the results without reanalyzing the data. " >
               <button className='dropbtn' id="upload-zip-button"

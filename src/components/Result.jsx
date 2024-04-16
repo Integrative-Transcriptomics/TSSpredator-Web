@@ -8,7 +8,7 @@ import "../css/MasterTable.css";
 import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
 import Header from "./Main/Header";
-import GenomeViewer from "./Result/GenomeViewer";
+import GenomeViewerWrapper from "./Result/GenomeViewerWrapper";
 import ConfigList from "./Main/ConfigList";
 
 /**
@@ -32,7 +32,6 @@ function Result() {
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(true);
   const [filterForPlots, setFilterForPlots] = useState("enriched");
-  const [dataGosling, setDataGosling] = useState(null);
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
@@ -46,11 +45,6 @@ function Result() {
   // Genome Viewer
   const [showGFFViewer, setGFFViewer] = useState(false);
 
-  const fetchDataGosling = async (filePath) => {
-    const dataPerGenome = await fetch(`/api/TSSViewer/${filePath}/`);
-    const data = await dataPerGenome.json();
-    return data;
-  };
 
   /**
    * get all files from TSS prediction as .zip from server
@@ -136,12 +130,9 @@ function Result() {
             console.log("Error loading MasterTable file:", error);
           });
       });
-    const dataGosling = fetchDataGosling(filePath);
-    dataGosling.then((data) => {
-      setDataGosling(data);
-    });
 
-    const configReader = fetch(`/api/getConfig/${filePath}/`)
+
+    fetch(`/api/getConfig/${filePath}/`)
       .then((res) => res.json())
       .then((data) => {
         setConfigData(data);
@@ -168,10 +159,6 @@ function Result() {
     link.parentNode.removeChild(link);
   };
 
-
-
-
-
   /**
    * update plots for selected genome/condition
    */
@@ -194,7 +181,7 @@ function Result() {
                 <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>
                   {showDownload ? "-" : "+"} Download result of TSS prediction
                 </h3>
-                <div className={!showDownload && " hidden"} >
+                <div className={!showDownload ? "hidden" : null} >
 
                   <p style={{ marginLeft: "1em", marginBottom: "0.5em" }} className="info-text"> Results are only available online for seven days after their computation.
                     Please download the files for later usage.</p>
@@ -214,27 +201,13 @@ function Result() {
             </div>
             <div className='result-select'>
               <h3 className='select-header'>Show the following TSS in plots: </h3>
-              <select onChange={(e) => setFilterForPlots(e.target.value)} defaultValue={"enriched"} value={filterForPlots}>
+              <select onChange={(e) => setFilterForPlots(e.target.value)} value={filterForPlots}>
                 <option value='enriched'>Only enriched TSSs</option>
                 <option value='detected'>All detected TSSs</option>
               </select>
             </div>
-            <div className='result-margin-left'>
-              <h3 className='header click-param' onClick={() => setGFFViewer(!showGFFViewer)}>
-                {showGFFViewer ? "-" : "+"} TSS positions with genome viewer
-              </h3>
-              {
-                showGFFViewer &&
-                <GenomeViewer
-                  dataGosling={dataGosling}
-                  filePath={filePath}
-                  filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
-                  gosRef={gosRef}
-                />
 
-              }
-
-            </div>
+            <GenomeViewerWrapper filePath={filePath} filterSelected={filterForPlots} gosRef={gosRef} />
 
             <div className='result-margin-left'>
               <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>

@@ -6,12 +6,14 @@ import AlignedGenomeViz from './GoslingVisualizations/AlignedGenomeViz';
 function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
     const [currentType, setCurrentType] = useState('single'); // single or aligned
     const [maxValueWiggleDict, setMaxValueWiggleDict] = useState({});
-    const [currentPosition, setCurrentPosition] = useState([0, 0]);
+    const [currentPosition, setCurrentPosition] = useState([null, null]);
     const [enableUpdate, setEnableUpdate] = useState(false);
 
     useEffect(() => {
         setEnableUpdate(Math.abs(currentPosition[0] - currentPosition[1]) < 5500)
     }, [currentPosition])
+
+
 
     const deepEqual = (obj1, obj2) => {
         // Base case: If both objects are identical, return true.
@@ -128,4 +130,4 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
 
 }
 
-export default GenomeViewer;
+export default React.memo(GenomeViewer);

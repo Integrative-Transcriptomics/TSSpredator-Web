@@ -369,12 +369,20 @@ def getSingleTSS(filePath, genome):
 def getGFFData(filePath, genome, strand):
     return getFile(tempfile.gettempdir().replace('\\', '/') + '/' + filePath + f'/gene_data_temp_{genome}_{strand}.csv')
 
-
-
-
-@app.route('/api/input-test/', methods=['POST', 'GET'])
-def getInputTest():
-    return {'result': 'success', 'filePath': "filePath"}
+@app.route('/api/getConfig/<filePath>/')
+def getConfig(filePath):
+    '''send config file to frontend'''
+    completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/config.json'
+    if os.path.exists(completePath):
+        with open(completePath) as f:
+            data = json.load(f)
+            return jsonify(data)
+    else:
+        resp = Flask.make_response(app, rv="File not found")
+        resp.status_code = 404
+        resp.headers['Error'] = 'File Not found'
+        # if file not found, send error message
+        return resp
 
 
 @app.route('/api/runAsync/', methods=['POST', 'GET'])

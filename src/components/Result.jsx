@@ -9,6 +9,7 @@ import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
 import Header from "./Main/Header";
 import GenomeViewer from "./Result/GenomeViewer";
+import ConfigList from "./Main/ConfigList";
 
 /**
  * creates page that displays result of TSS prediction
@@ -21,6 +22,7 @@ function Result() {
   // save files
   const [zipBlobFile, setZipBlobFile] = useState(new Blob());
   const [showDownload, setShowDownload] = useState(true);
+  const [configData, setConfigData] = useState(null);
 
   // all genomes/conditions names
   const [allGenomes, setAllGenomes] = useState([]);
@@ -139,6 +141,12 @@ function Result() {
       setDataGosling(data);
     });
 
+    const configReader = fetch(`/api/getConfig/${filePath}/`)
+      .then((res) => res.json())
+      .then((data) => {
+        setConfigData(data);
+      });
+
 
   }, [filePath]);
 
@@ -174,19 +182,35 @@ function Result() {
       <Header />
       { // if file not found
         // TODO: improve 404 page
-        zipBlobFile === 404 ? <h2>404: File not found</h2> :
+        zipBlobFile === 404 ? <>
+          <h2>404: File not found</h2>
+          <h3>File {filePath} not found on server. Results are only available for seven days after creation. Please upload the corresponding zip for visualization or redo your analysis. </h3>
+        </> :
           <div className='result-container'>
 
-            <div>
-              <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>
-                {showDownload ? "-" : "+"} Download result of TSS prediction
-              </h3>
-              <div
-                className={showDownload ? "download-link" : " hidden"}
-                onClick={() => downloadFiles()}
-              >
-                TSSpredator-prediction.zip
+            <div className="two-columns">
+              <div style={{ maxWidth: "30%" }}>
+
+                <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>
+                  {showDownload ? "-" : "+"} Download result of TSS prediction
+                </h3>
+                <div className={!showDownload && " hidden"} >
+
+                  <p style={{ marginLeft: "1em", marginBottom: "0.5em" }} className="info-text"> Results are only available online for seven days after their computation.
+                    Please download the files for later usage.</p>
+
+                  <div
+                    className={"download-link"}
+                    onClick={() => downloadFiles()}
+                  >
+                    TSSpredator-prediction.zip
+
+                  </div>
+                </div>
+
               </div>
+              <ConfigList configData={configData} />
+
             </div>
             <div className='result-select'>
               <h3 className='select-header'>Show the following TSS in plots: </h3>

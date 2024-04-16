@@ -521,41 +521,36 @@ function Main() {
    */
   const updateReplicates = (val) => {
     setnumRep(val);
-    // update maximum of Parameter 'matching replicates'
     updateParameterBox("Comparative", "matchingreplicates", "max", val);
 
     const numRep = replicateTemplate.length;
 
     // replicate added
     if (val > numRep) {
-      // add all needed replicates
-      for (let i = numRep + 1; i <= val; i++) {
-        const repLetter = String.fromCharCode(96 + i);
-        const newRep = JSON.parse(repTemplate.replaceAll("0", repLetter));
+      const newReplicates = Array.from({ length: val - numRep }, (_, i) => {
+        const repLetter = String.fromCharCode(97 + numRep + i);
+        return JSON.parse(repTemplate.replaceAll("0", repLetter));
+      });
 
-        // update replicate template
-        replicateTemplate.push(newRep);
-        setReplicateTemplate(replicateTemplate);
-        // update replicates
-        for (let j = 0; j < replicates.length; j++) {
-          replicates[j]["genome" + (j + 1)].push(newRep);
-        }
-        setReplicates(replicates);
-      }
+      setReplicateTemplate(prevTemplate => [...prevTemplate, ...newReplicates]);
 
-      // replicate removed
-    } else if (val < numRep && val > 0) {
-      const difference = numRep - val;
-      for (let i = 0; i < difference; i++) {
-        // update replicate template
-        replicateTemplate.pop();
-        setReplicateTemplate(replicateTemplate);
-        // update replicates
-        for (var j = 0; j < replicates.length; j++) {
-          replicates[j]["genome" + (j + 1)].pop();
-        }
-        setReplicates(replicates);
-      }
+      setReplicates(prevReplicates => prevReplicates.map(replicate => {
+        return {
+          ...replicate,
+          ["genome" + (prevReplicates.indexOf(replicate) + 1)]: [...replicate["genome" + (prevReplicates.indexOf(replicate) + 1)], ...newReplicates]
+        };
+      }));
+    }
+    // replicate removed
+    else if (val < numRep && val > 0) {
+      setReplicateTemplate(prevTemplate => prevTemplate.slice(0, val));
+
+      setReplicates(prevReplicates => prevReplicates.map(replicate => {
+        return {
+          ...replicate,
+          ["genome" + (prevReplicates.indexOf(replicate) + 1)]: replicate["genome" + (prevReplicates.indexOf(replicate) + 1)].slice(0, val)
+        };
+      }));
     }
   };
 
@@ -679,48 +674,31 @@ function Main() {
    * checks if parameter preset for current parameter values exists
    */
   const checkPreset = (value, parameterName) => {
-
-    const values = [
+    const preset_names = [
       "default",
       "more sensitive",
       "more specific",
       "very sensitive",
       "very specific",
     ];
-    const match = [];
 
     if (!PARAMETER_NAMES.includes(parameterName)) {
       return;
     }
+    // Find if any of the preset values match the current values
+    let match = preset_names.filter(val => parameters.parameterBox.Prediction[parameterName][val.replace(" ", "")] === value);
 
-    values.forEach((val) => {
-      const v = val.replace(" ", "");
-      // matches changed parameter value with parameter preset
-      if (parameters.parameterBox.Prediction[parameterName][v] === value) {
-        match.push(val);
-      }
-    });
-
-    // check remaining parameters
     if (match.length === 0) {
       setParameterPreset("custom");
     } else {
-      PARAMETER_NAMES.forEach((name) => {
+      // For the other values, check if they match the current values of the preset
+      PARAMETER_NAMES.forEach(name => {
         if (name !== parameterName) {
-          match.forEach((mat) => {
-            const v = mat.replace(" ", "");
-            if (
-              parameters.parameterBox.Prediction[name][v] !==
-              parameters.parameterBox.Prediction[name].value
-            ) {
-              match.pop(mat);
-            }
-          });
+          match = match.filter(mat => parameters.parameterBox.Prediction[name][mat.replace(" ", "")] === parameters.parameterBox.Prediction[name].value);
         }
       });
-    }
-    if (match.length !== 0) {
-      setParameterPreset(match[0]);
+      if (match.length !== 0)
+        setParameterPreset(match[0]);
     }
   };
 
@@ -1006,14 +984,15 @@ function Main() {
 
     // assign uploaded files to genomes
     for (let i = 0; i < new_genomes.length; i++) {
-      let currentObject = new_genomes[i]["genome" + (i + 1)];
+      let genomeID = "genome" + (i + 1);
+      let currentObject = new_genomes[i][genomeID];
       var tmpFasta = currentObject["genomefasta"];
       var tmpAnnotation = currentObject["genomeannotation"];
-      new_genomes[i]["genome" + (i + 1)]["genomeannotation"] = [];
+      new_genomes[i][genomeID]["genomeannotation"] = [];
 
       for (let j = 0; j < allFiles.length; j++) {
         if (allFiles[j].name === tmpFasta) {
-          new_genomes[i]["genome" + (i + 1)]["genomefasta"] = allFiles[j];
+          new_genomes[i][genomeID]["genomefasta"] = allFiles[j];
           // annotation file
         } else {
           // multiFasta file -> annotation folder with all annotation files for this genome
@@ -1027,11 +1006,11 @@ function Main() {
 
             // check if gff_folder_name is the same as tmpAnnotation(= folder name from contig file)
             if (str.split("/")[0] + "/" === tmpAnnotation) {
-              new_genomes[i]["genome" + (i + 1)]["genomeannotation"].push(allFiles[j]);
+              new_genomes[i][genomeID]["genomeannotation"].push(allFiles[j]);
             }
             // single annotation file
           } else if (allFiles[j].name === tmpAnnotation) {
-            new_genomes[i]["genome" + (i + 1)]["genomeannotation"] = [allFiles[j]];
+            new_genomes[i][genomeID]["genomeannotation"] = [allFiles[j]];
           }
         }
       }
@@ -1121,11 +1100,11 @@ function Main() {
       return blobFiles(zip["files"]);
     })
     const genomeData = jsonConfig["genomes"].map((genome, i) => getGenomeFiles(genome, i, zipFile))
-    const replicateData = jsonConfig["replicates"].map((replicate, i) => getReplicateFiles(replicate, zipFile));
+    const replicateData = jsonConfig["replicates"].map((replicate) => getReplicateFiles(replicate, zipFile));
     // Fetch alignment file if provided
     if (jsonConfig["alignmentFile"]) {
       const alignmentFileName = jsonConfig["alignmentFile"];
-      const alignmentFile = zipFile[`${alignmentFileName}`];
+      const alignmentFile = zipFile[alignmentFileName];
       setAlignmentFile(new File([alignmentFile], alignmentFileName));
     }
     return { "genomes": genomeData, "replicates": replicateData }
@@ -1172,24 +1151,20 @@ function Main() {
   };
 
   function getGenomeFiles(genome, index, zipFile) {
-    // Deep copy genome object
-    let genomeNew = Object.assign({}, genome);
-    let genomeID = "genome" + (index + 1)
-    console.log('Fetching genome files for', genome);
-    console.log('Genome index:', index);
-    let genomefileName = genome[genomeID]["genomefasta"];
-    let annotationfileName = genome[genomeID]["genomeannotation"];
-    let genomeFiles;
-    let annotationFiles;
-    const responseGenome = zipFile[`${genomefileName}`];
-    const responseAnnotation = zipFile[`${annotationfileName}`];
+    const genomeID = "genome" + (index + 1);
+    const { genomefasta: genomefileName, genomeannotation: annotationfileName } = genome[genomeID];
 
-    genomeFiles = new File([responseGenome], genomefileName)
-    annotationFiles = new File([responseAnnotation], annotationfileName)
+    const responseGenome = zipFile[genomefileName];
+    const responseAnnotation = zipFile[annotationfileName];
 
-    genomeNew[genomeID]["genomefasta"] = genomeFiles;
-    genomeNew[genomeID]["genomeannotation"] = [annotationFiles];
-    return genomeNew;
+    return {
+      ...genome,
+      [genomeID]: {
+        ...genome[genomeID],
+        genomefasta: new File([responseGenome], genomefileName),
+        genomeannotation: [new File([responseAnnotation], annotationfileName)],
+      },
+    };
   }
 
   function getReplicateFiles(replicate, zipFile) {

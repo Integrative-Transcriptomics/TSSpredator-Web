@@ -139,14 +139,18 @@ function Main() {
         let genomeAnnotation = resultsFiltered.filter((file) => file.fileCategory.includes("genomeannotation"))[0]
         tempGenome[genomeID].genomefasta = genomeFiles[0].fileName
         tempGenome[genomeID].genomeannotation = genomeAnnotation.fileName
+        const getFileName = (files, category) => files.find(file => file.fileCategory.includes(category))?.fileName;
+
         for (let j = 0; j < replicates[i][genomeID].length; j++) {
-          const replicateID = `replicate${String.fromCharCode(97 + j)}`
-          tempReplicate[replicateID] = {}
-          let replicateFiles = resultsFiltered.filter((file) => file.fileCategory.includes(replicateID))
-          tempReplicate[replicateID].enrichedforward = replicateFiles.filter((file) => file.fileCategory.includes("enrichedforward"))[0].fileName
-          tempReplicate[replicateID].enrichedreverse = replicateFiles.filter((file) => file.fileCategory.includes("enrichedreverse"))[0].fileName
-          tempReplicate[replicateID].normalforward = replicateFiles.filter((file) => file.fileCategory.includes("normalforward"))[0].fileName
-          tempReplicate[replicateID].normalreverse = replicateFiles.filter((file) => file.fileCategory.includes("normalreverse"))[0].fileName
+          const replicateID = `replicate${String.fromCharCode(97 + j)}`;
+          const replicateFiles = resultsFiltered.filter(file => file.fileCategory.includes(replicateID));
+
+          tempReplicate[replicateID] = {
+            enrichedforward: getFileName(replicateFiles, "enrichedforward"),
+            enrichedreverse: getFileName(replicateFiles, "enrichedreverse"),
+            normalforward: getFileName(replicateFiles, "normalforward"),
+            normalreverse: getFileName(replicateFiles, "normalreverse"),
+          };
         }
         modifiedGenomes.push(tempGenome)
         let replicateObj = {}
@@ -179,17 +183,10 @@ function Main() {
           if (data.result === "success") {
             setStatusID(data.id);
             setReadyLoaded("loaded");
-
-
-
           } else {
             console.log(data);
           }
         })
-
-
-
-
     }
   };
 
@@ -230,7 +227,7 @@ function Main() {
     // Project Name Check
     if (!projectName) return showErrorWithHeader("Project Name is missing.");
 
-    let studyType = parameters.setup.typeofstudy.value === "genome" ? "Genome" : "Condition";
+    const studyType = parameters.setup.typeofstudy.value === "genome" ? "Genome" : "Condition";
 
     // Genome Specific Checks
     if (studyType === "Genome" && genomes.length < 2)
@@ -244,20 +241,19 @@ function Main() {
     const alignmentIds = new Set();
     const fastaFormats = ["fasta", "fna", "ffn", "faa", "frn", "fa"];
 
-    for (let i = 0; i < genomes.length; i++) {
-      const genomeNumber = i + 1;
-      const genome = genomes[i][`genome${genomeNumber}`];
-      if (!Boolean(genome.name))
-        return showErrorWithHeader(`Missing name for ${studyType} ${genomeNumber}. Click in the tab header and choose a unique name.`);
+    for (const [i, genomeObj] of genomes.entries()) {
+      const genome = genomeObj[`genome${i + 1}`];
+      if (!genome.name)
+        return showErrorWithHeader(`Missing name for ${studyType} ${i + 1}. Click in the tab header and choose a unique name.`);
 
       if (!genome.alignmentid)
-        return showErrorWithHeader(`Missing Alignment ID for ${studyType} ${genomeNumber}.`);
+        return showErrorWithHeader(`Missing Alignment ID for ${studyType} ${i + 1}.`);
 
       if (!genome.outputid)
-        return showErrorWithHeader(`Missing OutputID for ${studyType} ${genomeNumber}.`);
+        return showErrorWithHeader(`Missing OutputID for ${studyType} ${i + 1}.`);
 
       if (!genome.genomefasta || isInvalidFileFormat(genome.genomefasta, fastaFormats))
-        return showErrorWithHeader(`Missing or incorrect 'Genome FASTA' file format for ${studyType} ${genomeNumber}.`);
+        return showErrorWithHeader(`Missing or incorrect 'Genome FASTA' file format for ${studyType} ${i + 1}.`);
 
       names.add(genome.name);
       alignmentIds.add(parseInt(genome.alignmentid));
@@ -271,8 +267,8 @@ function Main() {
       return showErrorWithHeader("Alignment IDs are not unique.");
 
     // Validate Annotation Files
-    for (let i = 0; i < genomes.length; i++) {
-      const annotations = genomes[i][`genome${i + 1}`].genomeannotation;
+    for (const [i, genomeObj] of genomes.entries()) {
+      const annotations = genomeObj[`genome${i + 1}`].genomeannotation;
 
       if (!annotations.length)
         return showErrorWithHeader(`Missing 'Genome Annotation' file for ${studyType} ${i + 1}. This file is not required, but if no annotation file is given, all TSS will be classified as orphan.`, "WARNING");
@@ -280,51 +276,33 @@ function Main() {
       if (annotations.some(annotation => isInvalidFileFormat(annotation, ["gff", "gtf", "gff3"])))
         return showErrorWithHeader(`Incorrect 'Genome Annotation' file format for ${studyType} ${i + 1}. Annotation file format (.gff, .gtf, .gff3) is needed.`);
     }
-    /**
-   * check if replicate files are given and in the correct format
-   */
+
     const checkReplicateFiles = (file, errorName, studyType, idxGenome, idxRep) => {
+      const replicateID = String.fromCharCode(97 + idxRep);
       const repFormats = ["gr", "wig"];
       if (file.length <= 0) {
         showError(
-          "Missing '" +
-          errorName +
-          "' graph file for Replicate " +
-          String.fromCharCode(97 + idxRep) +
-          " in " +
-          studyType +
-          " " +
-          (idxGenome + 1) +
-          "."
+          `Missing '${errorName}' graph file for Replicate ${replicateID} in ${studyType} ${idxGenome + 1}.`
         );
         return false;
       } else {
         const split = file.name.split(".");
         if (!repFormats.includes(split[split.length - 1])) {
           showError(
-            errorName +
-            " graph file for Replicate  " +
-            String.fromCharCode(97 + idxRep) +
-            " in " +
-            studyType +
-            " " +
-            (idxGenome + 1) +
-            " has the wrong format. Wiggle file format (.gr, .wig) is needed."
+            `${errorName} graph file for Replicate ${replicateID} in ${studyType} ${idxGenome + 1} has the wrong format. Wiggle file format (.gr, .wig) is needed.`
           );
           return false;
         }
       }
       return true;
     };
+
     // Check Replicate Files
-    // Assuming checkReplicateFiles is an existing function that returns a boolean
-    for (let i = 0; i < replicates.length; i++) {
-      const genomeReplicates = replicates[i][`genome${i + 1}`];
-      for (let j = 0; j < genomeReplicates.length; j++) {
+    for (const [i, genomeReplicates] of replicates.entries()) {
+      for (const [j, replicate] of genomeReplicates[`genome${i + 1}`].entries()) {
+        let filesReplicate = replicate[`replicate${String.fromCharCode(97 + j)}`];
         const letter = String.fromCharCode(97 + j);
-        const replicate = genomeReplicates[j][`replicate${letter}`];
-        if (!["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"]
-          .every(key => checkReplicateFiles(replicate[key], `Replicate ${letter.toUpperCase()}`, studyType, i, j))) {
+        if (!["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"].every(key => checkReplicateFiles(filesReplicate[key], `Replicate ${letter.toUpperCase()}`, studyType, i, j))) {
           return false;
         }
       }
@@ -372,9 +350,6 @@ function Main() {
         console.log(err);
         updateLoadingFiles(fileName, "error")
       });
-
-
-
   }
 
   /**
@@ -458,7 +433,6 @@ function Main() {
       "numberofgenomes": updateGenomes
     }
     return functionUpdates[key]
-
   }
   /**
    * update useState of changed paramter p
@@ -513,7 +487,6 @@ function Main() {
       updateParameterBox(directParent, name, "value", val);
       checkPreset(val, name);
     }
-
   };
 
   /**
@@ -970,59 +943,45 @@ function Main() {
     setMultiFasta([...tmpMultiF]);
 
     // assign uploaded files to genomes
-    for (let i = 0; i < new_genomes.length; i++) {
-      let genomeID = "genome" + (i + 1);
-      let currentObject = new_genomes[i][genomeID];
-      var tmpFasta = currentObject["genomefasta"];
-      var tmpAnnotation = currentObject["genomeannotation"];
-      new_genomes[i][genomeID]["genomeannotation"] = [];
+    new_genomes.forEach((genomeObj, i) => {
+      const genomeID = `genome${i + 1}`;
+      const currentObject = genomeObj[genomeID];
+      const tmpFasta = currentObject["genomefasta"];
+      const tmpAnnotation = currentObject["genomeannotation"];
+      currentObject["genomeannotation"] = [];
 
-      for (let j = 0; j < allFiles.length; j++) {
-        if (allFiles[j].name === tmpFasta) {
-          new_genomes[i][genomeID]["genomefasta"] = allFiles[j];
-          // annotation file
+      allFiles.forEach((file) => {
+        if (file.name === tmpFasta) {
+          currentObject["genomefasta"] = file;
         } else {
-          // multiFasta file -> annotation folder with all annotation files for this genome
           if (tmpMultiF[i]) {
-            // get entire path inclusive the parent folder and gff folder that contains the file
-            var str = allFiles[j].webkitRelativePath;
-            // get the parent folder name of all files
-            var name = str.split("/")[0];
-            // remove the parent folder name from the string -> get: gff_folder_name/file_name.gff
-            str = str.replace(name + "/", "");
+            const str = file.webkitRelativePath;
+            const name = str.split("/")[0];
+            const newPath = str.replace(`${name}/`, "");
 
-            // check if gff_folder_name is the same as tmpAnnotation(= folder name from contig file)
-            if (str.split("/")[0] + "/" === tmpAnnotation) {
-              new_genomes[i][genomeID]["genomeannotation"].push(allFiles[j]);
+            if (`${newPath.split("/")[0]}/` === tmpAnnotation) {
+              currentObject["genomeannotation"].push(file);
             }
-            // single annotation file
-          } else if (allFiles[j].name === tmpAnnotation) {
-            new_genomes[i][genomeID]["genomeannotation"] = [allFiles[j]];
+          } else if (file.name === tmpAnnotation) {
+            currentObject["genomeannotation"] = [file];
           }
         }
-      }
-    }
-
+      });
+    });
     // assign uploaded files to replicates
-    for (let i = 0; i < new_replicates.length; i++) {
-      var tmpG = new_replicates[i]["genome" + (i + 1)];
-      console.log(tmpG)
-      for (let k = 0; k < tmpG.length; k++) {
-        const letter = String.fromCharCode(97 + k);
-        const replicateKey = "replicate" + letter;
-        let listKeys = ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"];
-        listKeys.forEach((key) => {
-          let tmpFile = tmpG[k][replicateKey][key];
-          // find index of file in allFiles with matching and assign it to the replicate
-          let file = allFiles.find((f) => f.name === tmpFile);
+    new_replicates.forEach((replicateObj, i) => {
+      const genomeKey = `genome${i + 1}`;
+      replicateObj[genomeKey].forEach((replicate, k) => {
+        const replicateKey = `replicate${String.fromCharCode(97 + k)}`;
+        ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"].forEach((key) => {
+          const fileName = replicate[replicateKey][key];
+          const file = allFiles.find((f) => f.name === fileName);
           if (file) {
-            tmpG[k][replicateKey][key] = file;
+            replicate[replicateKey][key] = file;
           }
         });
-      }
-      new_replicates[i]["genome" + (i + 1)] = tmpG;
-    }
-
+      });
+    });
     // update replicate template
     updateReplicateTemplate(parseInt(new_replicateNum));
 
@@ -1182,10 +1141,6 @@ function Main() {
     });
   }
 
-  useEffect(() => {
-  }, [loadingFiles]);
-
-
   return (
     <div>
       {ePopup && (
@@ -1222,7 +1177,8 @@ function Main() {
 
       <Header loading={loading} startZipUpload={(x) => setUploadZip(x)} onLoadExampleData={loadExampleData} showExamples={true} statusID={!statusID ? null : statusID} allowZipUpload={true} />
 
-      <FormConfig projectName={projectName}
+      <FormConfig
+        projectName={projectName}
         setProjectName={setProjectName}
         parameters={parameters}
         handleParameters={handleParameters}

@@ -87,6 +87,15 @@ function Main() {
   const [statusID, setStatusID] = useState(false);
   const [readyLoaded, setReadyLoaded] = useState(false);
 
+
+  const PARAMETER_NAMES = [
+    "stepheight",
+    "stepheightreduction",
+    "stepfactor",
+    "stepfactorreduction",
+    "enrichmentfactor",
+    "processingsitefactor",
+  ];
   /**
    * GETs Parameters from flask
    */
@@ -670,14 +679,7 @@ function Main() {
    * checks if parameter preset for current parameter values exists
    */
   const checkPreset = (value, parameterName) => {
-    const names = [
-      "stepheight",
-      "stepheightreduction",
-      "stepfactor",
-      "stepfactorreduction",
-      "enrichmentfactor",
-      "processingsitefactor",
-    ];
+
     const values = [
       "default",
       "more sensitive",
@@ -687,7 +689,7 @@ function Main() {
     ];
     const match = [];
 
-    if (!names.includes(parameterName)) {
+    if (!PARAMETER_NAMES.includes(parameterName)) {
       return;
     }
 
@@ -703,7 +705,7 @@ function Main() {
     if (match.length === 0) {
       setParameterPreset("custom");
     } else {
-      names.forEach((name) => {
+      PARAMETER_NAMES.forEach((name) => {
         if (name !== parameterName) {
           match.forEach((mat) => {
             const v = mat.replace(" ", "");
@@ -728,17 +730,8 @@ function Main() {
   const handleParameterPreset = (event) => {
     setParameterPreset(event.target.value);
     const preset = event.target.value.replace(" ", "");
-
     if (typeof parameters.parameterBox !== "undefined" && event.target.value !== "custom") {
-      const names = [
-        "stepheight",
-        "stepheightreduction",
-        "stepfactor",
-        "stepfactorreduction",
-        "enrichmentfactor",
-        "processingsitefactor",
-      ];
-      names.forEach((name) => {
+      PARAMETER_NAMES.forEach((name) => {
         updateParameterBox(
           "Prediction",
           name,

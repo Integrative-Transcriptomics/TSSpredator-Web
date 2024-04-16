@@ -45,96 +45,62 @@ function Result() {
   // Genome Viewer
   const [showGenomeViewer, setShowGenomeViewer] = useState(false);
 
-  /**
-   * get all files from TSS prediction as .zip from server
-   */
+  const handleMasterTable = (masterTable) => {
+    const allRows = masterTable.trim().split("\n"); // trim() removes trailing newline
+    const headers = allRows[0].split("\t");
+
+    const col = headers.map((h, i) => {
+      return { Header: h, accessor: i.toString() };
+    });
+
+    const searchFor = headers.indexOf("Genome") !== -1 ? "Genome" : "Condition";
+    const genomeIdx = headers.indexOf(searchFor);
+
+    const allG = new Set();
+    const dataRows = allRows.slice(1).map(row => {
+      const tmp = row.split("\t");
+      allG.add(tmp[genomeIdx]);
+      return tmp.reduce((acc, content, j) => {
+        acc[j.toString()] = content;
+        return acc;
+      }, {});
+    });
+
+    setTableColumns(col);
+    setTableData(dataRows);
+    setAllGenomes(allG);
+  };
+
+
+
+  // Extracted function for handling fetch errors
+  const handleFetchError = (error) => {
+    console.error("Fetch error:", error);
+  };
+
   useEffect(() => {
-    /**
-     * extract info from mastertable string
-     */
-    const handleMasterTable = (masterTable) => {
-      const allRows = masterTable.split("\n");
-      // remove last empty row
-      allRows.pop();
-
-      // get column headers
-      const headers = allRows[0].split("\t");
-      // columns for the table
-      const col = [];
-      let genomeIdx;
-      headers.forEach((h, i) => {
-        const char = i.toString();
-        col.push({ Header: h, accessor: char });
-        if (h === "Genome" || h === "Condition") {
-          genomeIdx = char;
-        }
-      });
-
-      let allG = new Set();
-      setTableColumns([...col]);
-
-      // save rows
-      const dataRows = [];
-      allRows.forEach((row, i) => {
-        if (i > 0) {
-          const tmp = row.split("\t");
-          var tmpRow = {};
-          tmp.forEach((content, j) => {
-            const char = j.toString();
-            tmpRow[char] = content;
-          });
-          const tmpGenome = tmp[genomeIdx];
-          // add genome to all genomes
-          allG.add(tmpGenome);
-
-          dataRows.push(tmpRow);
-        }
-      });
-      setTableData([...dataRows]);
-      setAllGenomes(allG);
-    };
-
-    // Fetch files from server and handle MasterTable
     fetch(`/api/result/${filePath}/`)
       .then((res) => {
         if (res.status === 404) {
           console.log("404");
-          return 404
-        }
-        else {
-          return res.blob();
-        }
-      }
-
-      )
-      .then((blob) => {
-        if (blob === 404) {
           setZipBlobFile(404);
-          return
+          throw new Error("404");
         }
+        return res.blob();
+      })
+      .then((blob) => {
         setZipBlobFile(blob);
-
-        JSZip.loadAsync(blob)
-          .then((zip) => {
-            return zip.file("MasterTable.tsv").async("string");
-          })
-          .then((data) => {
-            handleMasterTable(data);
-            setProcessedMasterTable(true);
-          })
-          .catch((error) => {
-            console.log("Error loading MasterTable file:", error);
-          });
-      });
-
+        return JSZip.loadAsync(blob);
+      })
+      .then((zip) => zip.file("MasterTable.tsv").async("string"))
+      .then(handleMasterTable)
+      .then(() => setProcessedMasterTable(true))
+      .catch(handleFetchError);
 
     fetch(`/api/getConfig/${filePath}/`)
       .then((res) => res.json())
-      .then((data) => {
-        setConfigData(data);
-      });
-
-
+      .then(setConfigData)
+      .catch(handleFetchError);
   }, [filePath]);
 
   /**

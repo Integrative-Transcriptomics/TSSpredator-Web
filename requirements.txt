@@ -2,7 +2,7 @@ Flask==2.3.3
 python-dotenv==0.20.0
 celery==5.3.4
 redis==5.0.2
-gunicorn==21.2.0
+gunicorn==22.0.0
 werkzeug==2.3.8
 pandas==2.2.1
 pyBigWig==0.3.22

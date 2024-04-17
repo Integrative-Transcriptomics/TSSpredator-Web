@@ -112,7 +112,7 @@ function Result() {
     try {
       const url = window.URL.createObjectURL(new Blob([zipBlobFile]));
       link.href = url;
-      link.setAttribute("download", `TSSpredator-prediction.zip`);
+      link.setAttribute("download", `TSSpredator-prediction_${configData?.projectName?.replace(/ /g, "-")}.zip`);
       document.body.appendChild(link);
       // Start download
       link.click();
@@ -155,7 +155,7 @@ function Result() {
                     className={"download-link"}
                     onClick={() => downloadFiles()}
                   >
-                    TSSpredator-prediction.zip
+                    {`TSSpredator-prediction_${configData?.projectName.replace(/ /g, "-")}.zip`}
 
                   </div>
                 </div>

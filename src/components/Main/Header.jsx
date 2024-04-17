@@ -71,6 +71,9 @@ function Header({ loading, onLoadExampleData, showExamples = false, statusID = n
                   <button name='pseudomonas' type='button' onClick={(e) => onLoadExampleData(e)}>
                     Pseudomonas aeruginosa
                   </button>
+                  <button name='saureus' type='button' onClick={(e) => onLoadExampleData(e)}>
+                    Staphylococcus aureus
+                  </button>
                 </div>
               </>
             )}

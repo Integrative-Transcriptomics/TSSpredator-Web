@@ -516,7 +516,6 @@ def saveConfig():
 def exampleData(organism, type,filename):
     '''send config file (json) or zip directory to load example data'''
     data_path = os.getenv('TSSPREDATOR_DATA_PATH', "./exampleData")
-    print(data_path)
     json_path = '{}/{}/{}_config.json'.format(data_path,organism, organism)
     files_path =  '{}/{}/Archive'.format(data_path,organism)
     if type == 'json':
@@ -531,5 +530,4 @@ def fetchZipExample(organism):
     '''send config file (json) or zip directory to load example data'''
     data_path = os.getenv('TSSPREDATOR_DATA_PATH', "./exampleData")
     files_path =  '{}/{}'.format(data_path,organism)
-    print(files_path)
     return send_from_directory(files_path, "files.zip")

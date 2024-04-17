@@ -471,46 +471,52 @@ def loadConfig():
         return {'result': 'error', 'data': f'Something went wrong. Do you have all keys in the config file? Missing: {str(e)}'}
        
      
-
 @app.route('/api/saveConfig/', methods=['POST', 'GET'])
 def saveConfig():
     '''save input configuration as config file'''
-
-    # get all inputs
-    projectName = request.form['projectname']
-    alignmentFile = ""
     try:
-        alignmentFile = json.loads(request.form['alignmentFile'])
-    except:
-        print('no alignment file')
-    parameters = json.loads(request.form['parameters'])
-    rnaGraph = request.form['rnagraph']
-    genomes = json.loads(request.form['genomes'])
-    replicates = json.loads(request.form['replicates'])
-    replicateNum = json.loads(request.form['replicateNum'])
-    multiFasta = json.loads(request.form['multiFasta'])
+        # get all inputs
+        projectName = request.form['projectname']
+        alignmentFile = ""
+        try:
+            alignmentFile = json.loads(request.form['alignmentFile'])
+        except:
+            print('no alignment file')
+        
+        parameters = json.loads(request.form['parameters'])
+        rnaGraph = request.form['rnagraph']
+        genomes = json.loads(request.form['genomes'])
+        replicates = json.loads(request.form['replicates'])
+        replicateNum = json.loads(request.form['replicateNum'])
+        multiFasta = json.loads(request.form['multiFasta'])
 
-    tmpdir = tempfile.mkdtemp()
-    newTmpDir = tmpdir.replace('\\', '/')
+        tmpdir = tempfile.mkdtemp()
+        newTmpDir = tmpdir.replace('\\', '/')
 
-    # save config file
-    configFilename = newTmpDir + '/configFile.config'
-    # write JSON string 
-    jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", 'false', 'true', configFilename, multiFasta)
-    serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
-    # join server Location to find TSSpredator
-    tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
-    # call jar file for to write config file
-    subprocess.run(['java', '-jar', tsspredatorLocation, jsonString])
+        # save config file
+        configFilename = newTmpDir + '/configFile.config'
+        # write JSON string 
+        jsonString = sf.create_json_for_jar(genomes, replicates, replicateNum, alignmentFile, projectName, parameters, rnaGraph, "", 'false', 'true', configFilename, multiFasta)
+        serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
+        # join server Location to find TSSpredator
+        tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
+        # call jar file for to write config file
+        result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString],stdout=subprocess.PIPE, 
+                                stderr=subprocess.PIPE, 
+                                text=True)  # Ensures stdout and stderr are strings
+        if len(result.stderr) > 0:
+            raise subprocess.CalledProcessError(result.returncode, result.args, stderr=result.stderr, output=result.stdout)
 
-    # remove "" from config file
-    with open(configFilename, 'r') as file:
-        data = file.read()
-    data = data.replace('"', '')
-    with open(configFilename, 'w') as file:
-        file.write(data)
+        # remove "" from config file
+        with open(configFilename, 'r') as file:
+            data = file.read()
+        data = data.replace('"', '')
+        with open(configFilename, 'w') as file:
+            file.write(data)
 
-    return send_file(configFilename, as_attachment=True)
+        return send_file(configFilename, as_attachment=True)
+    except Exception as e:
+        return jsonify(error=str(e)), 500
 
 @app.route('/api/exampleData/<organism>/<type>/<filename>/')
 def exampleData(organism, type,filename):

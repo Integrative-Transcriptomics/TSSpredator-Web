@@ -221,8 +221,15 @@ function Main() {
       return false;
     };
 
-    const isInvalidFileFormat = (file, validFormats) =>
-      !validFormats.includes(file.name.split(".").pop());
+    const isInvalidFileFormat = (file, validFormats) => {
+      if (file.length <= 0)
+        showErrorWithHeader("Missing file.");
+      let { name } = file;
+      if (name)
+        return !validFormats.includes(name.split(".").pop())
+      else
+        showErrorWithHeader("Invalid Name.");;
+    }
 
     // Project Name Check
     if (!projectName) return showErrorWithHeader("Project Name is missing.");
@@ -286,6 +293,13 @@ function Main() {
         );
         return false;
       } else {
+        if (file.length > 1) {
+          showError(
+            `Too many '${errorName}' graph files for Replicate ${replicateID} in ${studyType} ${idxGenome + 1}.`
+          );
+          return false;
+        }
+
         const split = file.name.split(".");
         if (!repFormats.includes(split[split.length - 1])) {
           showError(

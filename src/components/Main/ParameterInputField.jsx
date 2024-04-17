@@ -43,141 +43,91 @@ function FormConfig({
   * save input to config file and download given config file
   */
   const saveConfigFile = () => {
-    // if studytype condition: fill out alignment and output id
     fillGenomes();
 
-    if (checkInput()) {
-      // save filenames from genomes
-      const tmpGenome = [...genomes];
+    if (!checkInput()) return;
 
-      for (let i = 0; i < genomes.length; i++) {
-        var tmpFasta = "";
-        var tmpAnn = "";
-
-        // genomeFasta file
-        try {
-          tmpFasta = genomes[i]["genome" + (i + 1)]["genomefasta"].name;
-        } catch {
-          console.log("Wrong fasta file");
-        }
-        tmpGenome[i]["genome" + (i + 1)]["genomefasta"] = tmpFasta;
-
-        // genomeAnnotation file
-        try {
-          // multiFasta -> gff file in folder, else single file
-          if (multiFasta[i]) {
-            tmpAnn = genomes[i]["genome" + (i + 1)]["genomeannotation"][0].webkitRelativePath;
-            var name = tmpAnn.split("/");
-            tmpAnn = name[name.length - 2] + "/";
-          } else {
-            tmpAnn = genomes[i]["genome" + (i + 1)]["genomeannotation"][0].name;
-          }
-        } catch {
-          console.log("Wrong annotation file");
-        }
-        tmpGenome[i]["genome" + (i + 1)]["genomeannotation"] = tmpAnn;
-      }
-
-      // save file names from replicates
-      const tmpRep = [...replicates];
-
-      for (let i = 0; i < tmpRep.length; i++) {
-        var tmpG = tmpRep[i]["genome" + (i + 1)];
-
-        for (let k = 0; k < tmpG.length; k++) {
-          const letter = String.fromCharCode(97 + k);
-
-          var tmpEF = "";
-          var tmpER = "";
-          var tmpNF = "";
-          var tmpNR = "";
-
-          try {
-            tmpEF = tmpG[k]["replicate" + letter]["enrichedforward"].name;
-          } catch {
-            console.log("Wrong enriched forward file");
-          }
-          tmpG[k]["replicate" + letter]["enrichedforward"] = tmpEF;
-
-          try {
-            tmpER = tmpG[k]["replicate" + letter]["enrichedreverse"].name;
-          } catch {
-            console.log("Wrong enriched reverse file");
-          }
-          tmpG[k]["replicate" + letter]["enrichedreverse"] = tmpER;
-
-          try {
-            tmpNF = tmpG[k]["replicate" + letter]["normalforward"].name;
-          } catch {
-            console.log("Wrong normal forward file");
-          }
-          tmpG[k]["replicate" + letter]["normalforward"] = tmpNF;
-
-          try {
-            tmpNR = tmpG[k]["replicate" + letter]["normalreverse"].name;
-          } catch {
-            console.log("Wrong normal reverse file");
-          }
-          tmpG[k]["replicate" + letter]["normalreverse"] = tmpNR;
-        }
-        tmpRep[i]["genome" + (i + 1)] = tmpG;
-      }
-
-      // alignmentFile
-      var tmpAlignFile = " ";
+    const getFileName = (obj, key) => {
       try {
-        tmpAlignFile = alignmentFile.name;
+        return obj[key].name;
       } catch {
-        console.log("no alignment file");
+        console.log(`Wrong ${key} file`);
+        return "";
+      }
+    };
+
+    const tmpGenome = genomes.map((genome, i) => {
+      const genomeKey = `genome${i + 1}`;
+      console.log(genome[genomeKey])
+      const genomeObj = { ...genome[genomeKey] };
+
+      genomeObj.genomefasta = getFileName(genomeObj, "genomefasta");
+      console.log(genomeObj)
+      console.log(multiFasta[i])
+      if (multiFasta[i]) {
+        console.log(genomeObj.genomeannotation[0])
+        const path = genomeObj.genomeannotation[0].webkitRelativePath;
+        genomeObj.genomeannotation = path.split("/").slice(0, -1).join("/");
+      } else {
+        genomeObj.genomeannotation = genomeObj.genomeannotation[0].name;
       }
 
-      // multiFasta files?
-      let multiFastaString = String(multiFasta);
+      return { [genomeKey]: genomeObj };
+    });
 
-      // send input parameters to server
-      const formData = new FormData();
-      formData.append("projectname", JSON.stringify(projectName));
-      formData.append("parameters", JSON.stringify(parameters));
-      formData.append("rnagraph", JSON.stringify(rnaGraph));
-      formData.append("replicateNum", JSON.stringify({ num: numRep }));
-      formData.append("genomes", JSON.stringify(tmpGenome));
-      formData.append("replicates", JSON.stringify(tmpRep));
-      formData.append("alignmentFile", JSON.stringify(tmpAlignFile));
-      formData.append("multiFasta", JSON.stringify(multiFastaString));
-      fetch("/api/saveConfig/", {
-        method: "POST",
-        body: formData,
+    const tmpRep = replicates.map((replicate, i) => {
+      const genomeKey = `genome${i + 1}`;
+      const genomeObj = replicate[genomeKey].map((rep, k) => {
+        const replicateKey = `replicate${String.fromCharCode(97 + k)}`;
+        const repObj = { ...rep[replicateKey] };
+
+        ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"].forEach((key) => {
+          repObj[key] = getFileName(repObj, key);
+        });
+
+        return { [replicateKey]: repObj };
+      });
+
+      return { [genomeKey]: genomeObj };
+    });
+
+    const tmpAlignFile = alignmentFile.name || " ";
+
+    const formData = new FormData();
+    formData.append("projectname", JSON.stringify(projectName));
+    formData.append("parameters", JSON.stringify(parameters));
+    formData.append("rnagraph", JSON.stringify(rnaGraph));
+    formData.append("replicateNum", JSON.stringify({ num: numRep }));
+    formData.append("genomes", JSON.stringify(tmpGenome));
+    formData.append("replicates", JSON.stringify(tmpRep));
+    formData.append("alignmentFile", JSON.stringify(tmpAlignFile));
+    formData.append("multiFasta", JSON.stringify(String(multiFasta)));
+
+    fetch("/api/saveConfig/", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.blob())
+      .then((blob) => {
+        const name = `${projectName.replace(" ", "_")}.config`;
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", name);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
       })
-        .then((response) => response.blob())
-        .then((blob) => {
-          var name = projectName.replace(" ", "_") + ".config";
-
-          // Create blob link to download
-          const url = window.URL.createObjectURL(new Blob([blob]));
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", name);
-
-          // Append to html link element page
-          document.body.appendChild(link);
-
-          // Start download
-          link.click();
-
-          // Clean up and remove the link
-          link.parentNode.removeChild(link);
-        })
-        .catch((err) => console.log(err));
-    }
+      .catch((err) => console.log(err));
   };
   return <div className='form-container'>
     <div>
-      <div class="form-group">
-        <label for="project-name" class="project-name-label">
+      <div className="form-group">
+        <label htmlFor="project-name" className="project-name-label">
           <h3 className='header'>Project Name:</h3></label>
         <input
           id="project-name"
-          class="project-name"
+          className="project-name"
           type="text"
           name="project-name"
           placeholder="Your Project Name"

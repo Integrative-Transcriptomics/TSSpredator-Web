@@ -47,6 +47,10 @@ RUN pip install -e .
 RUN rm -rf /app/requirements.txt 
 RUN rm -rf /app/setup.py
 
+# Install java 17
+COPY server_tsspredator/TSSpredator.jar /app
+RUN apk add --update --no-cache openjdk17-jre-headless
+
 # Make port 5001 available to the world outside this container
 EXPOSE 5001
 ENV TSSPREDATOR_DATA_PATH="/data"
@@ -55,4 +59,4 @@ ENV TSSPREDATOR_TEMPDATA="/tmpData"
 ENV TSSPREDATOR_REDIS_HOST="redis"
 
 # The command that will be executed when the container is run
-CMD ["gunicorn","--workers", "3","--timeout","500","--graceful-timeout", "500", "--bind", "0.0.0.0:5001", "--log-level", "debug", "server_tsspredator.wsgi:tsspredator"]
+CMD ["gunicorn","--workers", "3","--timeout","500","--graceful-timeout", "500", "--bind", "0.0.0.0:5001", "--log-level='debug'", "server_tsspredator.wsgi:tsspredator"]

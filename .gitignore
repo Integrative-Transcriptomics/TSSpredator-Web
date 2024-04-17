@@ -7,7 +7,7 @@ node_modules
 .pnp.js
 env
 /.vite
-
+/.vite/***/
 # testing
 /coverage
 
@@ -43,3 +43,4 @@ bin
 image_tsspredator_celery_app.tar.gz
 image_tsspredator_web.tar.gz
 server_tsspredator/redisdb/dump-tsspredator.rdb
+server_tsspredator/exampleData/saureus/files.zip

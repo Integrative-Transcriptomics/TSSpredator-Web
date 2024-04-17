@@ -2,7 +2,7 @@ import ClipLoader from "react-spinners/ClipLoader";
 import React from "react";
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook, faCircleInfo } from '@fortawesome/pro-light-svg-icons';
+import { faBook } from '@fortawesome/pro-light-svg-icons';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import '../../css/Header.css';
 
@@ -42,7 +42,7 @@ function Header({ loading, onLoadExampleData, showExamples = false, statusID = n
           <div className='dropdown'>
             <label htmlFor="upload-zip-button"
               style={{
-                "cursor": "pointer", "position": "relative", "margin-right": "10px", "margin-top": "10px", color: "black", "display": "flex",
+                "cursor": "pointer", "position": "relative", marginRight: "10px", marginTop: "10px", color: "black", "display": "flex",
               }}
               data-title="Uploading results of TSSpredator-Web allow to directly visualize and explore the results without reanalyzing the data. " >
               <button className='dropbtn' id="upload-zip-button"
@@ -70,6 +70,9 @@ function Header({ loading, onLoadExampleData, showExamples = false, statusID = n
                   </button>
                   <button name='pseudomonas' type='button' onClick={(e) => onLoadExampleData(e)}>
                     Pseudomonas aeruginosa
+                  </button>
+                  <button name='saureus' type='button' onClick={(e) => onLoadExampleData(e)}>
+                    Staphylococcus aureus
                   </button>
                 </div>
               </>

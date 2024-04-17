@@ -369,12 +369,20 @@ def getSingleTSS(filePath, genome):
 def getGFFData(filePath, genome, strand):
     return getFile(tempfile.gettempdir().replace('\\', '/') + '/' + filePath + f'/gene_data_temp_{genome}_{strand}.csv')
 
-
-
-
-@app.route('/api/input-test/', methods=['POST', 'GET'])
-def getInputTest():
-    return {'result': 'success', 'filePath': "filePath"}
+@app.route('/api/getConfig/<filePath>/')
+def getConfig(filePath):
+    '''send config file to frontend'''
+    completePath = tempfile.gettempdir().replace('\\', '/') + '/' + filePath + '/config.json'
+    if os.path.exists(completePath):
+        with open(completePath) as f:
+            data = json.load(f)
+            return jsonify(data)
+    else:
+        resp = Flask.make_response(app, rv="File not found")
+        resp.status_code = 404
+        resp.headers['Error'] = 'File Not found'
+        # if file not found, send error message
+        return resp
 
 
 @app.route('/api/runAsync/', methods=['POST', 'GET'])
@@ -423,40 +431,44 @@ def loadConfig():
     parameters = json.loads(request.form['parameters'])
     genomes = json.loads(request.form['genomes'])
     replicates = json.loads(request.form['replicates'])
-    with tempfile.TemporaryDirectory() as tmpdir:
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
 
-        newTmpDir = tmpdir.replace('\\', '/')
-        # Check extension of file
-        if not configFile.filename.endswith('.json'):
-            # save config file
-            configFilename = newTmpDir + '/' + secure_filename(configFile.filename)
-            configFile.save(configFilename)
-            # write JSON string 
-            jsonString = '{"loadConfig": "true",' + '"saveConfig": "false", "loadAlignment": "false",' + '"configFile": "' + configFilename + '"}'
-            
-            serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
-            # join server Location to find TSSpredator
-            tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
-            # call jar file for to extract genome names & ids
-            result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)        
-        if configFile.filename.endswith('.json'):
-            config = json.loads(configFile.read())
-        elif (len(result.stderr) == 0):
-            config = json.loads((result.stdout).decode())
-        else:
-            return {'result': 'error', 'data': json.loads((result.stderr).decode())}
-        parameters, genomes, replicates, alignmentFile, multiFasta = sf.handle_config_file(parameters, config, genomes, replicates)
+            newTmpDir = tmpdir.replace('\\', '/')
+            # Check extension of file
+            if not configFile.filename.endswith('.json'):
+                # save config file
+                configFilename = newTmpDir + '/' + secure_filename(configFile.filename)
+                configFile.save(configFilename)
+                # write JSON string 
+                jsonString = '{"loadConfig": "true",' + '"saveConfig": "false", "loadAlignment": "false",' + '"configFile": "' + configFilename + '"}'
+                
+                serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
+                # join server Location to find TSSpredator
+                tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
+                # call jar file for to extract genome names & ids
+                result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)        
+            if configFile.filename.endswith('.json'):
+                config = json.loads(configFile.read())
+            elif (len(result.stderr) == 0):
+                config = json.loads((result.stdout).decode())
+            else:
+                return {'result': 'error', 'data': json.loads((result.stderr).decode())}
+            parameters, genomes, replicates, alignmentFile, multiFasta = sf.handle_config_file(parameters, config, genomes, replicates)
 
-        projectName = sf.get_value(config, 'projectName')
+            projectName = sf.get_value(config, 'projectName')
 
-        rnaGraph = 'false'
-        if int(sf.get_value(config, 'writeGraphs')) == 1:
-            rnaGraph = "true"
+            rnaGraph = 'false'
+            if int(sf.get_value(config, 'writeGraphs')) == 1:
+                rnaGraph = "true"
 
-        # use json.dumps() to keep order            
-        return {'result': 'success', 'data': {'parameters': json.dumps(parameters), 'genomes': json.dumps(genomes), 
-                'replicates': json.dumps(replicates), 'projectName': projectName, 'rnaGraph': rnaGraph, 'alignmentFile': alignmentFile, 
-                'numReplicate': parameters['setup']['numberofreplicates']['value'], 'multiFasta': multiFasta}}
+            # use json.dumps() to keep order            
+            return {'result': 'success', 'data': {'parameters': json.dumps(parameters), 'genomes': json.dumps(genomes), 
+                    'replicates': json.dumps(replicates), 'projectName': projectName, 'rnaGraph': rnaGraph, 'alignmentFile': alignmentFile, 
+                    'numReplicate': parameters['setup']['numberofreplicates']['value'], 'multiFasta': multiFasta}}
+    except Exception as e:
+        print(e)
+        return {'result': 'error', 'data': f'Something went wrong. Do you have all keys in the config file? Missing: {str(e)}'}
        
      
 
@@ -504,7 +516,6 @@ def saveConfig():
 def exampleData(organism, type,filename):
     '''send config file (json) or zip directory to load example data'''
     data_path = os.getenv('TSSPREDATOR_DATA_PATH', "./exampleData")
-    print(data_path)
     json_path = '{}/{}/{}_config.json'.format(data_path,organism, organism)
     files_path =  '{}/{}/Archive'.format(data_path,organism)
     if type == 'json':
@@ -519,5 +530,4 @@ def fetchZipExample(organism):
     '''send config file (json) or zip directory to load example data'''
     data_path = os.getenv('TSSPREDATOR_DATA_PATH', "./exampleData")
     files_path =  '{}/{}'.format(data_path,organism)
-    print(files_path)
     return send_from_directory(files_path, "files.zip")

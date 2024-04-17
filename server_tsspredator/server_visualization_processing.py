@@ -90,10 +90,29 @@ def readMasterTable(path) -> tuple[dict, set]:
                 data_per_genome[genome]["TSS"][tss_key]['classesTSS'].append(classesTSS)
                 data_per_genome[genome]["TSS"][tss_key]['mainClass'] = decideMainClass(classesTSS, data_per_genome[genome]["TSS"][tss_key]['mainClass'])   
     return data_per_genome, tss_unique
+def get_bin_sizes(maxGenome):
+    """
+    Given the max genome size, return the bin size to have at most 50 bins.
+    The next values should increase the number of bins by 5, and the last by 10.
+
+    Args:
+        maxGenome (int): The maximum genome size.
+
+    Returns:
+        list: A list of bin sizes
+    """
+
+    binsize_50 = maxGenome // 50
+    # Cap number to be a multiple of 50.000
+    binsize_50 = max((binsize_50 // 50000),1) * 50000
+    binsize_5 = binsize_50 // 10
+    binsize_10 = binsize_50 // 5
+    return [binsize_5, binsize_10, binsize_50]
 
 def aggregateTSS(tssList, maxGenome, outputDir, genomeName):
     '''aggregate TSS'''
-    binSizes = [5000,10000,50000]
+
+    binSizes = get_bin_sizes(maxGenome)
     binSizeMax = {}
     for binSize in binSizes:
         aggregated_data_for_bin = []

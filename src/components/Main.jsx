@@ -87,6 +87,15 @@ function Main() {
   const [statusID, setStatusID] = useState(false);
   const [readyLoaded, setReadyLoaded] = useState(false);
 
+
+  const PARAMETER_NAMES = [
+    "stepheight",
+    "stepheightreduction",
+    "stepfactor",
+    "stepfactorreduction",
+    "enrichmentfactor",
+    "processingsitefactor",
+  ];
   /**
    * GETs Parameters from flask
    */
@@ -130,14 +139,18 @@ function Main() {
         let genomeAnnotation = resultsFiltered.filter((file) => file.fileCategory.includes("genomeannotation"))[0]
         tempGenome[genomeID].genomefasta = genomeFiles[0].fileName
         tempGenome[genomeID].genomeannotation = genomeAnnotation.fileName
+        const getFileName = (files, category) => files.find(file => file.fileCategory.includes(category))?.fileName;
+
         for (let j = 0; j < replicates[i][genomeID].length; j++) {
-          const replicateID = `replicate${String.fromCharCode(97 + j)}`
-          tempReplicate[replicateID] = {}
-          let replicateFiles = resultsFiltered.filter((file) => file.fileCategory.includes(replicateID))
-          tempReplicate[replicateID].enrichedforward = replicateFiles.filter((file) => file.fileCategory.includes("enrichedforward"))[0].fileName
-          tempReplicate[replicateID].enrichedreverse = replicateFiles.filter((file) => file.fileCategory.includes("enrichedreverse"))[0].fileName
-          tempReplicate[replicateID].normalforward = replicateFiles.filter((file) => file.fileCategory.includes("normalforward"))[0].fileName
-          tempReplicate[replicateID].normalreverse = replicateFiles.filter((file) => file.fileCategory.includes("normalreverse"))[0].fileName
+          const replicateID = `replicate${String.fromCharCode(97 + j)}`;
+          const replicateFiles = resultsFiltered.filter(file => file.fileCategory.includes(replicateID));
+
+          tempReplicate[replicateID] = {
+            enrichedforward: getFileName(replicateFiles, "enrichedforward"),
+            enrichedreverse: getFileName(replicateFiles, "enrichedreverse"),
+            normalforward: getFileName(replicateFiles, "normalforward"),
+            normalreverse: getFileName(replicateFiles, "normalreverse"),
+          };
         }
         modifiedGenomes.push(tempGenome)
         let replicateObj = {}
@@ -170,17 +183,10 @@ function Main() {
           if (data.result === "success") {
             setStatusID(data.id);
             setReadyLoaded("loaded");
-
-
-
           } else {
             console.log(data);
           }
         })
-
-
-
-
     }
   };
 
@@ -221,7 +227,7 @@ function Main() {
     // Project Name Check
     if (!projectName) return showErrorWithHeader("Project Name is missing.");
 
-    let studyType = parameters.setup.typeofstudy.value === "genome" ? "Genome" : "Condition";
+    const studyType = parameters.setup.typeofstudy.value === "genome" ? "Genome" : "Condition";
 
     // Genome Specific Checks
     if (studyType === "Genome" && genomes.length < 2)
@@ -235,20 +241,19 @@ function Main() {
     const alignmentIds = new Set();
     const fastaFormats = ["fasta", "fna", "ffn", "faa", "frn", "fa"];
 
-    for (let i = 0; i < genomes.length; i++) {
-      const genomeNumber = i + 1;
-      const genome = genomes[i][`genome${genomeNumber}`];
-      if (!Boolean(genome.name))
-        return showErrorWithHeader(`Missing name for ${studyType} ${genomeNumber}. Click in the tab header and choose a unique name.`);
+    for (const [i, genomeObj] of genomes.entries()) {
+      const genome = genomeObj[`genome${i + 1}`];
+      if (!genome.name)
+        return showErrorWithHeader(`Missing name for ${studyType} ${i + 1}. Click in the tab header and choose a unique name.`);
 
       if (!genome.alignmentid)
-        return showErrorWithHeader(`Missing Alignment ID for ${studyType} ${genomeNumber}.`);
+        return showErrorWithHeader(`Missing Alignment ID for ${studyType} ${i + 1}.`);
 
       if (!genome.outputid)
-        return showErrorWithHeader(`Missing OutputID for ${studyType} ${genomeNumber}.`);
+        return showErrorWithHeader(`Missing OutputID for ${studyType} ${i + 1}.`);
 
       if (!genome.genomefasta || isInvalidFileFormat(genome.genomefasta, fastaFormats))
-        return showErrorWithHeader(`Missing or incorrect 'Genome FASTA' file format for ${studyType} ${genomeNumber}.`);
+        return showErrorWithHeader(`Missing or incorrect 'Genome FASTA' file format for ${studyType} ${i + 1}.`);
 
       names.add(genome.name);
       alignmentIds.add(parseInt(genome.alignmentid));
@@ -262,8 +267,8 @@ function Main() {
       return showErrorWithHeader("Alignment IDs are not unique.");
 
     // Validate Annotation Files
-    for (let i = 0; i < genomes.length; i++) {
-      const annotations = genomes[i][`genome${i + 1}`].genomeannotation;
+    for (const [i, genomeObj] of genomes.entries()) {
+      const annotations = genomeObj[`genome${i + 1}`].genomeannotation;
 
       if (!annotations.length)
         return showErrorWithHeader(`Missing 'Genome Annotation' file for ${studyType} ${i + 1}. This file is not required, but if no annotation file is given, all TSS will be classified as orphan.`, "WARNING");
@@ -271,51 +276,33 @@ function Main() {
       if (annotations.some(annotation => isInvalidFileFormat(annotation, ["gff", "gtf", "gff3"])))
         return showErrorWithHeader(`Incorrect 'Genome Annotation' file format for ${studyType} ${i + 1}. Annotation file format (.gff, .gtf, .gff3) is needed.`);
     }
-    /**
-   * check if replicate files are given and in the correct format
-   */
+
     const checkReplicateFiles = (file, errorName, studyType, idxGenome, idxRep) => {
+      const replicateID = String.fromCharCode(97 + idxRep);
       const repFormats = ["gr", "wig"];
       if (file.length <= 0) {
         showError(
-          "Missing '" +
-          errorName +
-          "' graph file for Replicate " +
-          String.fromCharCode(97 + idxRep) +
-          " in " +
-          studyType +
-          " " +
-          (idxGenome + 1) +
-          "."
+          `Missing '${errorName}' graph file for Replicate ${replicateID} in ${studyType} ${idxGenome + 1}.`
         );
         return false;
       } else {
         const split = file.name.split(".");
         if (!repFormats.includes(split[split.length - 1])) {
           showError(
-            errorName +
-            " graph file for Replicate  " +
-            String.fromCharCode(97 + idxRep) +
-            " in " +
-            studyType +
-            " " +
-            (idxGenome + 1) +
-            " has the wrong format. Wiggle file format (.gr, .wig) is needed."
+            `${errorName} graph file for Replicate ${replicateID} in ${studyType} ${idxGenome + 1} has the wrong format. Wiggle file format (.gr, .wig) is needed.`
           );
           return false;
         }
       }
       return true;
     };
+
     // Check Replicate Files
-    // Assuming checkReplicateFiles is an existing function that returns a boolean
-    for (let i = 0; i < replicates.length; i++) {
-      const genomeReplicates = replicates[i][`genome${i + 1}`];
-      for (let j = 0; j < genomeReplicates.length; j++) {
+    for (const [i, genomeReplicates] of replicates.entries()) {
+      for (const [j, replicate] of genomeReplicates[`genome${i + 1}`].entries()) {
+        let filesReplicate = replicate[`replicate${String.fromCharCode(97 + j)}`];
         const letter = String.fromCharCode(97 + j);
-        const replicate = genomeReplicates[j][`replicate${letter}`];
-        if (!["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"]
-          .every(key => checkReplicateFiles(replicate[key], `Replicate ${letter.toUpperCase()}`, studyType, i, j))) {
+        if (!["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"].every(key => checkReplicateFiles(filesReplicate[key], `Replicate ${letter.toUpperCase()}`, studyType, i, j))) {
           return false;
         }
       }
@@ -363,9 +350,6 @@ function Main() {
         console.log(err);
         updateLoadingFiles(fileName, "error")
       });
-
-
-
   }
 
   /**
@@ -443,65 +427,49 @@ function Main() {
       .catch((err) => console.log(err));
   };
 
+  const updateReplicateGenomes = (key) => {
+    let functionUpdates = {
+      "numberofreplicates": updateReplicates,
+      "numberofgenomes": updateGenomes
+    }
+    return functionUpdates[key]
+  }
   /**
    * update useState of changed paramter p
    * if other parameters are dependend on p they are also updated
    */
   const handleParameters = (event) => {
-    const name = event.target.name;
-    const directParent = event.target.id;
-    let val;
+    const { name, id: directParent } = event.target;
+    const { value, valueAsNumber } = event.target;
+    const checkingTypeOrCluster = ["typeofstudy", "clustermethod"].includes(name)
+    let val = checkingTypeOrCluster ? value : valueAsNumber;
+    if (!checkingTypeOrCluster)
+      if (isNaN(val)) return;
 
-    // combobox
-    if (name === "typeofstudy" || name === "clustermethod") {
-      val = event.target.value;
-      // input=number -> save value as number
-    } else {
-      val = event.target.valueAsNumber;
-      if (isNaN(val)) {
-        return;
-      }
+    if (["numberofreplicates", "numberofgenomes"].includes(name)) {
+      updateReplicateGenomes(name)(val)
     }
-
-    if (directParent === "setup") {
-      updateSetupBox(name, "value", val);
-    } else {
-      updateParameterBox(directParent, name, "value", val);
-      checkPreset(val, name);
-    }
-    if (name === "numberofreplicates") {
-      updateReplicates(val);
-    }
-    if (name === "numberofgenomes") {
-      updateGenomes(val);
-    }
-    if (name === "stepfactor") {
-      updateParameterBox(directParent, "stepfactorreduction", "max", val);
-      if (parameters.parameterBox["Prediction"]["stepfactorreduction"]["value"] > val) {
-        parameters.parameterBox["Prediction"]["stepfactorreduction"]["value"] = val;
-      }
-    }
-    if (name === "stepheight") {
-      updateParameterBox(directParent, "stepheightreduction", "max", val);
-      if (parameters.parameterBox["Prediction"]["stepheightreduction"]["value"] > val) {
-        parameters.parameterBox["Prediction"]["stepheightreduction"]["value"] = val;
-      }
-    }
-    // update Genome/Condition label
-    if (name === "typeofstudy") {
-      if (val === "condition") {
-        setShowGName(false);
+    else if (["stepfactor", "stepheight"].includes(name)) {
+      let keyValue = name === "stepfactor" ? "stepfactorreduction" : "stepheightreduction"
+      updateParameterBox("Prediction", keyValue, "max", val);
+      if (parameters.parameterBox["Prediction"][keyValue]["value"] > val) {
+        parameters.parameterBox["Prediction"][keyValue]["value"] = val;
       }
 
-      const newName = "Number of " + val.charAt(0).toUpperCase() + val.slice(1) + "s";
+    }
+    else if (name === "typeofstudy") { // update Genome/Condition label
+      setShowGName(!(val === "condition"));
+      const placeholderGenomeOrReplicate = `${val.charAt(0).toUpperCase()}${val.slice(1)}`;
+      const newName = `Number of ${placeholderGenomeOrReplicate}s`;
       // Number of Genomes/Conditions
       updateSetupBox("numberofgenomes", "name", newName);
-
       // Genome/Condition Tabs
       genomes.forEach((g, i) => {
-        g["genome" + (i + 1)].placeholder =
-          val.charAt(0).toUpperCase() + val.slice(1) + "_" + (i + 1);
-        g["genome" + (i + 1)].name = val.charAt(0).toUpperCase() + val.slice(1) + "_" + (i + 1);
+        let index = i + 1;
+        let genomeKey = `genome${index}`;
+        let defaultName = `${placeholderGenomeOrReplicate}_${index}`;
+        g[genomeKey].placeholder = defaultName
+        g[genomeKey].name = defaultName
       });
       setGenomes([...genomes]);
 
@@ -510,8 +478,14 @@ function Main() {
         "Comparative",
         "allowedcrossgenomeshift",
         "name",
-        "allowed cross-" + val + " shift"
+        `allowed cross-${val} shift`
       );
+    }
+    if (directParent === "setup") {
+      updateSetupBox(name, "value", val);
+    } else {
+      updateParameterBox(directParent, name, "value", val);
+      checkPreset(val, name);
     }
   };
 
@@ -520,41 +494,36 @@ function Main() {
    */
   const updateReplicates = (val) => {
     setnumRep(val);
-    // update maximum of Parameter 'matching replicates'
     updateParameterBox("Comparative", "matchingreplicates", "max", val);
 
     const numRep = replicateTemplate.length;
 
     // replicate added
     if (val > numRep) {
-      // add all needed replicates
-      for (let i = numRep + 1; i <= val; i++) {
-        const repLetter = String.fromCharCode(96 + i);
-        const newRep = JSON.parse(repTemplate.replaceAll("0", repLetter));
+      const newReplicates = Array.from({ length: val - numRep }, (_, i) => {
+        const repLetter = String.fromCharCode(97 + numRep + i);
+        return JSON.parse(repTemplate.replaceAll("0", repLetter));
+      });
 
-        // update replicate template
-        replicateTemplate.push(newRep);
-        setReplicateTemplate(replicateTemplate);
-        // update replicates
-        for (let j = 0; j < replicates.length; j++) {
-          replicates[j]["genome" + (j + 1)].push(newRep);
-        }
-        setReplicates(replicates);
-      }
+      setReplicateTemplate(prevTemplate => [...prevTemplate, ...newReplicates]);
 
-      // replicate removed
-    } else if (val < numRep && val > 0) {
-      const difference = numRep - val;
-      for (let i = 0; i < difference; i++) {
-        // update replicate template
-        replicateTemplate.pop();
-        setReplicateTemplate(replicateTemplate);
-        // update replicates
-        for (var j = 0; j < replicates.length; j++) {
-          replicates[j]["genome" + (j + 1)].pop();
-        }
-        setReplicates(replicates);
-      }
+      setReplicates(prevReplicates => prevReplicates.map(replicate => {
+        return {
+          ...replicate,
+          ["genome" + (prevReplicates.indexOf(replicate) + 1)]: [...replicate["genome" + (prevReplicates.indexOf(replicate) + 1)], ...newReplicates]
+        };
+      }));
+    }
+    // replicate removed
+    else if (val < numRep && val > 0) {
+      setReplicateTemplate(prevTemplate => prevTemplate.slice(0, val));
+
+      setReplicates(prevReplicates => prevReplicates.map(replicate => {
+        return {
+          ...replicate,
+          ["genome" + (prevReplicates.indexOf(replicate) + 1)]: replicate["genome" + (prevReplicates.indexOf(replicate) + 1)].slice(0, val)
+        };
+      }));
     }
   };
 
@@ -564,28 +533,36 @@ function Main() {
    * @param data: object with genome names and ids from the alignment file
    */
   const updateGenomes = (val, data) => {
-    parameters.setup.numberofgenomes.value = val;
+    setParameters(prevParameters => ({
+      ...prevParameters,
+      setup: {
+        ...prevParameters.setup,
+        numberofgenomes: {
+          ...prevParameters.setup.numberofgenomes,
+          value: val,
+        },
+      },
+    }));
 
-    var tmpGenome = [...genomes];
-    var tmpReplicate = [...replicates];
+    const numGenomes = genomes.length;
 
-    // add genom tab
-    const numGenomes = Object.keys(genomes).length;
+    // add genome tab
     if (val > numGenomes) {
-      // add all needed genomes
-      for (let i = numGenomes + 1; i <= val; i++) {
+      const newGenomes = Array.from({ length: val - numGenomes }, (_, i) => {
+        const index = numGenomes + i + 1;
         const { value: studyType } = parameters.setup.typeofstudy;
         const studyTypeCapitalized = `${studyType.charAt(0).toUpperCase()}${studyType.slice(1)}`;
-        let genomeName = `${studyTypeCapitalized}_${i}`;
-        const placeholder = `${studyTypeCapitalized}_${i}`;
+        const placeholder = `${studyTypeCapitalized}_${index}`;
+        let genomeName = placeholder;
 
-        var alignmentID = "";
+        let alignmentID = "";
         if (data) {
-          genomeName = data["genome_" + i];
-          alignmentID = data["id_" + i];
+          genomeName = data[`genome_${index}`];
+          alignmentID = data[`id_${index}`];
         }
-        tmpGenome.push({
-          ["genome" + i]: {
+
+        return {
+          [`genome${index}`]: {
             name: genomeName,
             placeholder: placeholder,
             alignmentid: alignmentID,
@@ -593,58 +570,37 @@ function Main() {
             genomefasta: "",
             genomeannotation: [],
           },
-        });
-        multiFasta.push(false);
-        // add new genome to replicates
-        tmpReplicate.push({ ["genome" + i]: [...replicateTemplate] });
-      }
-      // update genome names and alignmetn ids
-      if (typeof data !== "undefined") {
-        for (let i = 0; i < numGenomes; i++) {
-          tmpGenome[i]["genome" + (i + 1)]["name"] = data["genome_" + (i + 1)];
-          tmpGenome[i]["genome" + (i + 1)]["alignmentid"] = data["id_" + (i + 1)];
-        }
-      }
+        };
+      });
 
-      // remove genome tab
-    } else if (val < numGenomes && val > 0) {
-      // remove all genomes
-      const difference = numGenomes - val;
-      for (let i = 0; i < difference; i++) {
-        // remove last genome
-        tmpGenome.pop();
-        multiFasta.pop();
-        // remove genome from replicates
-        tmpReplicate.pop();
-      }
-      // update genome names and alignment ids
-      if (data) {
-        for (let i = 0; i < numGenomes; i++) {
-          const genomeKey = `genome${i + 1}`;
-          const dataKey = `genome_${i + 1}`;
-          if (tmpGenome[i][genomeKey]) {
-            tmpGenome[i][genomeKey].name = data[dataKey];
-            tmpGenome[i][genomeKey].alignmentid = data[dataKey];
-          }
-        }
-      }
-      // data from alignment file
-    } else if (val === numGenomes) {
-      // update genome names and alignment ids
-      if (data) {
-        for (let i = 0; i < numGenomes; i++) {
-          const genomeKey = `genome${i + 1}`;
-          const dataKey = `genome_${i + 1}`;
-          if (tmpGenome[i][genomeKey]) {
-            tmpGenome[i][genomeKey].name = data[dataKey];
-            tmpGenome[i][genomeKey].alignmentid = data[dataKey];
-          }
-        }
-      }
+      setGenomes(prevGenomes => [...prevGenomes, ...newGenomes]);
+      setMultiFasta(prevMultiFasta => [...prevMultiFasta, ...new Array(val - numGenomes).fill(false)]);
+      setReplicates(prevReplicates => [...prevReplicates, ...newGenomes.map(() => ({ [`genome${numGenomes + 1}`]: [...replicateTemplate] }))]);
     }
-    setGenomes([...tmpGenome]);
-    setMultiFasta([...multiFasta]);
-    setReplicates([...tmpReplicate]);
+    // remove genome tab
+    else if (val < numGenomes && val > 0) {
+      setGenomes(prevGenomes => prevGenomes.slice(0, val));
+      setMultiFasta(prevMultiFasta => prevMultiFasta.slice(0, val));
+      setReplicates(prevReplicates => prevReplicates.slice(0, val));
+    }
+    // data from alignment file
+    else if (val === numGenomes && data) {
+      setGenomes(prevGenomes => prevGenomes.map((genome, i) => {
+        const genomeKey = `genome${i + 1}`;
+        const dataKey = `genome_${i + 1}`;
+        if (genome[genomeKey]) {
+          return {
+            ...genome,
+            [genomeKey]: {
+              ...genome[genomeKey],
+              name: data[dataKey],
+              alignmentid: data[dataKey],
+            },
+          };
+        }
+        return genome;
+      }));
+    }
   };
   /**
    * update parameter value in setup box (type of study, number of conditions, number of replicates)
@@ -678,55 +634,31 @@ function Main() {
    * checks if parameter preset for current parameter values exists
    */
   const checkPreset = (value, parameterName) => {
-    const names = [
-      "stepheight",
-      "stepheightreduction",
-      "stepfactor",
-      "stepfactorreduction",
-      "enrichmentfactor",
-      "processingsitefactor",
-    ];
-    const values = [
+    const preset_names = [
       "default",
       "more sensitive",
       "more specific",
       "very sensitive",
       "very specific",
     ];
-    const match = [];
 
-    if (!names.includes(parameterName)) {
+    if (!PARAMETER_NAMES.includes(parameterName)) {
       return;
     }
+    // Find if any of the preset values match the current values
+    let match = preset_names.filter(val => parameters.parameterBox.Prediction[parameterName][val.replace(" ", "")] === value);
 
-    values.forEach((val) => {
-      const v = val.replace(" ", "");
-      // matches changed parameter value with parameter preset
-      if (parameters.parameterBox.Prediction[parameterName][v] === value) {
-        match.push(val);
-      }
-    });
-
-    // check remaining parameters
     if (match.length === 0) {
       setParameterPreset("custom");
     } else {
-      names.forEach((name) => {
+      // For the other values, check if they match the current values of the preset
+      PARAMETER_NAMES.forEach(name => {
         if (name !== parameterName) {
-          match.forEach((mat) => {
-            const v = mat.replace(" ", "");
-            if (
-              parameters.parameterBox.Prediction[name][v] !==
-              parameters.parameterBox.Prediction[name].value
-            ) {
-              match.pop(mat);
-            }
-          });
+          match = match.filter(mat => parameters.parameterBox.Prediction[name][mat.replace(" ", "")] === parameters.parameterBox.Prediction[name].value);
         }
       });
-    }
-    if (match.length !== 0) {
-      setParameterPreset(match[0]);
+      if (match.length !== 0)
+        setParameterPreset(match[0]);
     }
   };
 
@@ -736,17 +668,8 @@ function Main() {
   const handleParameterPreset = (event) => {
     setParameterPreset(event.target.value);
     const preset = event.target.value.replace(" ", "");
-
     if (typeof parameters.parameterBox !== "undefined" && event.target.value !== "custom") {
-      const names = [
-        "stepheight",
-        "stepheightreduction",
-        "stepfactor",
-        "stepfactorreduction",
-        "enrichmentfactor",
-        "processingsitefactor",
-      ];
-      names.forEach((name) => {
+      PARAMETER_NAMES.forEach((name) => {
         updateParameterBox(
           "Prediction",
           name,
@@ -1020,58 +943,45 @@ function Main() {
     setMultiFasta([...tmpMultiF]);
 
     // assign uploaded files to genomes
-    for (let i = 0; i < new_genomes.length; i++) {
-      let currentObject = new_genomes[i]["genome" + (i + 1)];
-      var tmpFasta = currentObject["genomefasta"];
-      var tmpAnnotation = currentObject["genomeannotation"];
-      new_genomes[i]["genome" + (i + 1)]["genomeannotation"] = [];
+    new_genomes.forEach((genomeObj, i) => {
+      const genomeID = `genome${i + 1}`;
+      const currentObject = genomeObj[genomeID];
+      const tmpFasta = currentObject["genomefasta"];
+      const tmpAnnotation = currentObject["genomeannotation"];
+      currentObject["genomeannotation"] = [];
 
-      for (let j = 0; j < allFiles.length; j++) {
-        if (allFiles[j].name === tmpFasta) {
-          new_genomes[i]["genome" + (i + 1)]["genomefasta"] = allFiles[j];
-          // annotation file
+      allFiles.forEach((file) => {
+        if (file.name === tmpFasta) {
+          currentObject["genomefasta"] = file;
         } else {
-          // multiFasta file -> annotation folder with all annotation files for this genome
           if (tmpMultiF[i]) {
-            // get entire path inclusive the parent folder and gff folder that contains the file
-            var str = allFiles[j].webkitRelativePath;
-            // get the parent folder name of all files
-            var name = str.split("/")[0];
-            // remove the parent folder name from the string -> get: gff_folder_name/file_name.gff
-            str = str.replace(name + "/", "");
+            const str = file.webkitRelativePath;
+            const name = str.split("/")[0];
+            const newPath = str.replace(`${name}/`, "");
 
-            // check if gff_folder_name is the same as tmpAnnotation(= folder name from contig file)
-            if (str.split("/")[0] + "/" === tmpAnnotation) {
-              new_genomes[i]["genome" + (i + 1)]["genomeannotation"].push(allFiles[j]);
+            if (`${newPath.split("/")[0]}/` === tmpAnnotation) {
+              currentObject["genomeannotation"].push(file);
             }
-            // single annotation file
-          } else if (allFiles[j].name === tmpAnnotation) {
-            new_genomes[i]["genome" + (i + 1)]["genomeannotation"] = [allFiles[j]];
+          } else if (file.name === tmpAnnotation) {
+            currentObject["genomeannotation"] = [file];
           }
         }
-      }
-    }
-
+      });
+    });
     // assign uploaded files to replicates
-    for (let i = 0; i < new_replicates.length; i++) {
-      var tmpG = new_replicates[i]["genome" + (i + 1)];
-      console.log(tmpG)
-      for (let k = 0; k < tmpG.length; k++) {
-        const letter = String.fromCharCode(97 + k);
-        const replicateKey = "replicate" + letter;
-        let listKeys = ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"];
-        listKeys.forEach((key) => {
-          let tmpFile = tmpG[k][replicateKey][key];
-          // find index of file in allFiles with matching and assign it to the replicate
-          let file = allFiles.find((f) => f.name === tmpFile);
+    new_replicates.forEach((replicateObj, i) => {
+      const genomeKey = `genome${i + 1}`;
+      replicateObj[genomeKey].forEach((replicate, k) => {
+        const replicateKey = `replicate${String.fromCharCode(97 + k)}`;
+        ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"].forEach((key) => {
+          const fileName = replicate[replicateKey][key];
+          const file = allFiles.find((f) => f.name === fileName);
           if (file) {
-            tmpG[k][replicateKey][key] = file;
+            replicate[replicateKey][key] = file;
           }
         });
-      }
-      new_replicates[i]["genome" + (i + 1)] = tmpG;
-    }
-
+      });
+    });
     // update replicate template
     updateReplicateTemplate(parseInt(new_replicateNum));
 
@@ -1136,11 +1046,11 @@ function Main() {
       return blobFiles(zip["files"]);
     })
     const genomeData = jsonConfig["genomes"].map((genome, i) => getGenomeFiles(genome, i, zipFile))
-    const replicateData = jsonConfig["replicates"].map((replicate, i) => getReplicateFiles(replicate, zipFile));
+    const replicateData = jsonConfig["replicates"].map((replicate) => getReplicateFiles(replicate, zipFile));
     // Fetch alignment file if provided
     if (jsonConfig["alignmentFile"]) {
       const alignmentFileName = jsonConfig["alignmentFile"];
-      const alignmentFile = zipFile[`${alignmentFileName}`];
+      const alignmentFile = zipFile[alignmentFileName];
       setAlignmentFile(new File([alignmentFile], alignmentFileName));
     }
     return { "genomes": genomeData, "replicates": replicateData }
@@ -1187,24 +1097,20 @@ function Main() {
   };
 
   function getGenomeFiles(genome, index, zipFile) {
-    // Deep copy genome object
-    let genomeNew = Object.assign({}, genome);
-    let genomeID = "genome" + (index + 1)
-    console.log('Fetching genome files for', genome);
-    console.log('Genome index:', index);
-    let genomefileName = genome[genomeID]["genomefasta"];
-    let annotationfileName = genome[genomeID]["genomeannotation"];
-    let genomeFiles;
-    let annotationFiles;
-    const responseGenome = zipFile[`${genomefileName}`];
-    const responseAnnotation = zipFile[`${annotationfileName}`];
+    const genomeID = "genome" + (index + 1);
+    const { genomefasta: genomefileName, genomeannotation: annotationfileName } = genome[genomeID];
 
-    genomeFiles = new File([responseGenome], genomefileName)
-    annotationFiles = new File([responseAnnotation], annotationfileName)
+    const responseGenome = zipFile[genomefileName];
+    const responseAnnotation = zipFile[annotationfileName];
 
-    genomeNew[genomeID]["genomefasta"] = genomeFiles;
-    genomeNew[genomeID]["genomeannotation"] = [annotationFiles];
-    return genomeNew;
+    return {
+      ...genome,
+      [genomeID]: {
+        ...genome[genomeID],
+        genomefasta: new File([responseGenome], genomefileName),
+        genomeannotation: [new File([responseAnnotation], annotationfileName)],
+      },
+    };
   }
 
   function getReplicateFiles(replicate, zipFile) {
@@ -1234,10 +1140,6 @@ function Main() {
       return prevLoadingFiles
     });
   }
-
-  useEffect(() => {
-  }, [loadingFiles]);
-
 
   return (
     <div>
@@ -1275,7 +1177,8 @@ function Main() {
 
       <Header loading={loading} startZipUpload={(x) => setUploadZip(x)} onLoadExampleData={loadExampleData} showExamples={true} statusID={!statusID ? null : statusID} allowZipUpload={true} />
 
-      <FormConfig projectName={projectName}
+      <FormConfig
+        projectName={projectName}
         setProjectName={setProjectName}
         parameters={parameters}
         handleParameters={handleParameters}

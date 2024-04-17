@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React from 'react';
 import { GoslingComponent } from "gosling.js";
 import { ClipLoader } from "react-spinners";
 import { createWiggleTracks, createGenomeTrack, createDetailTSSTrack, createGFFTrack, createBinnedView } from "./SharedGoslingFunctions.js";

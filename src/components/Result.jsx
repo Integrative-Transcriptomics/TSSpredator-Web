@@ -8,7 +8,9 @@ import "../css/MasterTable.css";
 import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
 import Header from "./Main/Header";
-import GenomeViewer from "./Result/GenomeViewer";
+import GenomeViewerWrapper from "./Result/GenomeViewerWrapper";
+import ResultNotFoundPage from "./404Result";
+import ConfigList from "./Main/ConfigList";
 
 /**
  * creates page that displays result of TSS prediction
@@ -21,6 +23,7 @@ function Result() {
   // save files
   const [zipBlobFile, setZipBlobFile] = useState(new Blob());
   const [showDownload, setShowDownload] = useState(true);
+  const [configData, setConfigData] = useState(null);
 
   // all genomes/conditions names
   const [allGenomes, setAllGenomes] = useState([]);
@@ -30,7 +33,6 @@ function Result() {
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(true);
   const [filterForPlots, setFilterForPlots] = useState("enriched");
-  const [dataGosling, setDataGosling] = useState(null);
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
@@ -38,179 +40,139 @@ function Result() {
   // GoslingRef
   const gosRef = useRef();
 
-  // histograms
+  // Data ready for Visualization
   const [processedMasterTable, setProcessedMasterTable] = useState(false);
 
   // Genome Viewer
-  const [showGFFViewer, setGFFViewer] = useState(false);
+  const [showGenomeViewer, setShowGenomeViewer] = useState(false);
 
-  const fetchDataGosling = async (filePath) => {
-    const dataPerGenome = await fetch(`/api/TSSViewer/${filePath}/`);
-    const data = await dataPerGenome.json();
-    return data;
-  };
+  const handleMasterTable = (masterTable) => {
+    const allRows = masterTable.trim().split("\n"); // trim() removes trailing newline
+    const headers = allRows[0].split("\t");
 
-  /**
-   * get all files from TSS prediction as .zip from server
-   */
-  useEffect(() => {
-    /**
-     * extract info from mastertable string
-     */
-    const handleMasterTable = (masterTable) => {
-      const allRows = masterTable.split("\n");
-      // remove last empty row
-      allRows.pop();
+    const col = headers.map((h, i) => {
+      return { Header: h, accessor: i.toString() };
+    });
+    const searchFor = headers.indexOf("Genome") !== -1 ? "Genome" : "Condition";
+    const genomeIdx = headers.indexOf(searchFor);
 
-      // get column headers
-      const headers = allRows[0].split("\t");
-      // columns for the table
-      const col = [];
-      let genomeIdx;
-      headers.forEach((h, i) => {
-        const char = i.toString();
-        col.push({ Header: h, accessor: char });
-        if (h === "Genome" || h === "Condition") {
-          genomeIdx = char;
-        }
-      });
-
-      let allG = new Set();
-      setTableColumns([...col]);
-
-      // save rows
-      const dataRows = [];
-      allRows.forEach((row, i) => {
-        if (i > 0) {
-          const tmp = row.split("\t");
-          var tmpRow = {};
-          tmp.forEach((content, j) => {
-            const char = j.toString();
-            tmpRow[char] = content;
-          });
-          const tmpGenome = tmp[genomeIdx];
-          // add genome to all genomes
-          allG.add(tmpGenome);
-
-          dataRows.push(tmpRow);
-        }
-      });
-      setTableData([...dataRows]);
-      setAllGenomes(allG);
-
-
-
-    };
-
-    // Fetch files from server and handle MasterTable
-    fetch(`/api/result/${filePath}/`)
-      .then((res) => {
-        if (res.status === 404) {
-          console.log("404");
-          return 404
-        }
-        else {
-          return res.blob();
-        }
-      }
-
-      )
-      .then((blob) => {
-        if (blob === 404) {
-          setZipBlobFile(404);
-          return
-        }
-        setZipBlobFile(blob);
-
-        JSZip.loadAsync(blob)
-          .then((zip) => {
-            return zip.file("MasterTable.tsv").async("string");
-          })
-          .then((data) => {
-            handleMasterTable(data);
-            setProcessedMasterTable(true);
-          })
-          .catch((error) => {
-            console.log("Error loading MasterTable file:", error);
-          });
-      });
-    const dataGosling = fetchDataGosling(filePath);
-    dataGosling.then((data) => {
-      setDataGosling(data);
+    const allG = new Set();
+    const dataRows = allRows.slice(1).map(row => {
+      const tmp = row.split("\t");
+      allG.add(tmp[genomeIdx]);
+      return tmp.reduce((acc, content, j) => {
+        acc[j.toString()] = content;
+        return acc;
+      }, {});
     });
 
+    setTableColumns(col);
+    setTableData(dataRows);
+    setAllGenomes(allG);
+  };
 
+
+
+  // Extracted function for handling fetch errors
+  const handleFetchError = (error) => {
+    console.error("Fetch error:", error);
+  };
+
+  useEffect(() => {
+    fetch(`/api/result/${filePath}/`)
+      .then((res) => { // Check if file is found
+        if (res.status === 404) {
+          console.log("404");
+          setZipBlobFile(404);
+          throw new Error("404");
+        }
+        return res.blob();
+      })
+      .then((blob) => { // Load zip file
+        setZipBlobFile(blob);
+        return JSZip.loadAsync(blob);
+      })
+      .then((zip) => zip.file("MasterTable.tsv").async("string"))       // Read File and handle Master Table
+      .then(handleMasterTable)
+      .then(() => setProcessedMasterTable(true))
+      .catch(handleFetchError);
+
+    // Get Configuration used
+    fetch(`/api/getConfig/${filePath}/`)
+      .then((res) => res.json())
+      .then(setConfigData)
+      .catch(handleFetchError);
   }, [filePath]);
 
   /**
-   * download files action, after clicking on link
+   * Downloads the files as a zip.
    */
   const downloadFiles = () => {
-    // blob url to download files
-    const url = window.URL.createObjectURL(new Blob([zipBlobFile]));
     const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `TSSpredator-prediction.zip`);
-    document.body.appendChild(link);
-
-    // Start download
-    link.click();
-
-    // remove link
-    link.parentNode.removeChild(link);
+    try {
+      const url = window.URL.createObjectURL(new Blob([zipBlobFile]));
+      link.href = url;
+      link.setAttribute("download", `TSSpredator-prediction.zip`);
+      document.body.appendChild(link);
+      // Start download
+      link.click();
+    } catch (error) {
+      console.error("Error during file download:", error);
+    } finally {
+      // Ensure the link is removed from the document body
+      // even if an error occurs during the download
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 0);
+    }
   };
-
-
-
-
 
   /**
    * update plots for selected genome/condition
    */
-
-
   return (
     <>
       <Header />
       { // if file not found
         // TODO: improve 404 page
-        zipBlobFile === 404 ? <h2>404: File not found</h2> :
+        zipBlobFile === 404 ? <>
+          <ResultNotFoundPage filePath={filePath} />
+        </> :
           <div className='result-container'>
 
-            <div>
-              <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>
-                {showDownload ? "-" : "+"} Download result of TSS prediction
-              </h3>
-              <div
-                className={showDownload ? "download-link" : " hidden"}
-                onClick={() => downloadFiles()}
-              >
-                TSSpredator-prediction.zip
+            <div className="two-columns">
+              <div style={{ maxWidth: "30%" }}>
+
+                <h3 className='header click-param' onClick={() => setShowDownload(!showDownload)}>
+                  {showDownload ? "-" : "+"} Download result of TSS prediction
+                </h3>
+                <div className={!showDownload ? "hidden" : null} >
+
+                  <p style={{ marginLeft: "1em", marginBottom: "0.5em" }} className="info-text"> Results are only available online for seven days after their computation.
+                    Please download the files for later usage.</p>
+
+                  <div
+                    className={"download-link"}
+                    onClick={() => downloadFiles()}
+                  >
+                    TSSpredator-prediction.zip
+
+                  </div>
+                </div>
+
               </div>
+              <ConfigList configData={configData} />
+
             </div>
             <div className='result-select'>
               <h3 className='select-header'>Show the following TSS in plots: </h3>
-              <select onChange={(e) => setFilterForPlots(e.target.value)} defaultValue={"enriched"} value={filterForPlots}>
+              <select onChange={(e) => setFilterForPlots(e.target.value)} value={filterForPlots}>
                 <option value='enriched'>Only enriched TSSs</option>
                 <option value='detected'>All detected TSSs</option>
               </select>
             </div>
-            <div className='result-margin-left'>
-              <h3 className='header click-param' onClick={() => setGFFViewer(!showGFFViewer)}>
-                {showGFFViewer ? "-" : "+"} TSS positions with genome viewer
-              </h3>
-              {
-                showGFFViewer &&
-                <GenomeViewer
-                  dataGosling={dataGosling}
-                  filePath={filePath}
-                  filter={filterForPlots === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
-                  gosRef={gosRef}
-                />
 
-              }
-
-            </div>
+            <GenomeViewerWrapper filePath={filePath} filterSelected={filterForPlots} gosRef={gosRef} showGFFViewer={showGenomeViewer} setGFFViewer={setShowGenomeViewer} />
 
             <div className='result-margin-left'>
               <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
@@ -237,7 +199,7 @@ function Result() {
                 {showTable ? "-" : "+"} Master Table
               </h3>
               {tableColumns.length > 0 ? (
-                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGFFViewer} />
+                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGenomeViewer} />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}

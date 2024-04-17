@@ -172,12 +172,12 @@ function FormConfig({
   };
   return <div className='form-container'>
     <div>
-      <div class="form-group">
-        <label for="project-name" class="project-name-label">
+      <div className="form-group">
+        <label htmlFor="project-name" className="project-name-label">
           <h3 className='header'>Project Name:</h3></label>
         <input
           id="project-name"
-          class="project-name"
+          className="project-name"
           type="text"
           name="project-name"
           placeholder="Your Project Name"

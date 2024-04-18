@@ -82,7 +82,7 @@ function LoadingBanner({ statusID, listDocumentStatus, readyLoaded, closePopup }
                         </div>
                     )}
                     <div className='button-container'>
-                        <button className='button error' disabled={readyLoaded !== "loaded"} onClick={() => window.open("/status/" + statusID, "_blank")}>
+                        <button className='button error' style={{ "cursor": readyLoaded !== "loaded" ? "not-allowed" : "pointer" }} disabled={readyLoaded !== "loaded"} onClick={() => window.open("/status/" + statusID, "_blank")}>
                             {!readyLoaded ? "Loading" : "Go To Status Page"}
                         </button>
 

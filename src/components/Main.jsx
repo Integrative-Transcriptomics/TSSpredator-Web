@@ -171,7 +171,6 @@ function Main() {
         formBody["alignmentFile"] = alignmentFile.name
       }
       formData.append("data", JSON.stringify(formBody));
-
       fetch("/api/runAsync/", {
         method: "POST",
         body: formData,
@@ -179,7 +178,6 @@ function Main() {
         .then((response) => response.json())
         .then((data) => {
           setLoading([false, false]);
-
           if (data.result === "success") {
             setStatusID(data.id);
             setReadyLoaded("loaded");
@@ -1192,6 +1190,7 @@ function Main() {
       <Header loading={loading} startZipUpload={(x) => setUploadZip(x)} onLoadExampleData={loadExampleData} showExamples={true} statusID={!statusID ? null : statusID} allowZipUpload={true} />
 
       <FormConfig
+        showError={showError}
         projectName={projectName}
         setProjectName={setProjectName}
         parameters={parameters}

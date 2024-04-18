@@ -11,9 +11,6 @@ import { createWiggleTracks, createGenomeTrack, createDetailTSSTrack, createGFFT
  */
 function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict }) {
 
-
-
-
     const createTSSTrack = (binSizes, strand, maxGenome, title = null, filePath) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
         let sizesBins = Object.keys(binSizes).sort((a, b) => parseInt(a) - parseInt(b)).map((size, i, arr) => {

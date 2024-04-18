@@ -35,7 +35,8 @@ function FormConfig({
   fillGenomes,
   checkInput,
   loading,
-  handleSubmit
+  handleSubmit,
+  showError
 }) {
   // open/close parameters
   const [showParam, setShowParam] = useState(false);
@@ -107,7 +108,13 @@ function FormConfig({
       method: "POST",
       body: formData,
     })
-      .then((response) => response.blob())
+      .then((response) => {
+        if (!response.ok) {
+
+          throw new Error(response.statusText);
+        }
+        response.blob()
+      })
       .then((blob) => {
         const name = `${projectName.replace(" ", "_")}.config`;
         const url = window.URL.createObjectURL(new Blob([blob]));
@@ -118,7 +125,7 @@ function FormConfig({
         link.click();
         link.parentNode.removeChild(link);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => showError(`Error during saving config file: ${err}`));
   };
   return <div className='form-container'>
     <div>

@@ -481,7 +481,7 @@ a.open-results {
 /* tooltips */
 [data-title]:hover:after {
     opacity: 1;
-    transition: all 0.1s ease 0.8s;
+    transition: all 0.1s ease 0.3s;
     visibility: visible;
 }
 

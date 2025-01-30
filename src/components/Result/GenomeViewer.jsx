@@ -10,43 +10,24 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
     const [enableUpdate, setEnableUpdate] = useState(false);
 
     useEffect(() => {
-        setEnableUpdate(Math.abs(currentPosition[0] - currentPosition[1]) < 5500)
+        console.log(currentPosition)
+        if(currentPosition[0] !== null && currentPosition[1] !== null)
+            setEnableUpdate(Math.abs(currentPosition[0] - currentPosition[1]) < 5500)
+        
+        else
+            setEnableUpdate(false);
     }, [currentPosition])
 
 
 
-    const deepEqual = (obj1, obj2) => {
-        // Base case: If both objects are identical, return true.
-        if (obj1 === obj2) {
-            return true;
-        }
-        // Check if both objects are objects and not null.
-        if (typeof obj1 !== 'object' || typeof obj2 !== 'object' || obj1 === null || obj2 === null) {
-            return false;
-        }
-        // Get the keys of both objects.
-        const keys1 = Object.keys(obj1);
-        const keys2 = Object.keys(obj2);
-        // Check if the number of keys is the same.
-        if (keys1.length !== keys2.length) {
-            return false;
-        }
-        // Iterate through the keys and compare their values recursively.
-        for (const key of keys1) {
-            if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
-                return false;
-            }
-        }
-        // If all checks pass, the objects are deep equal.
-        return true;
-    }
-
     if (gosRef !== null && gosRef?.current) {
         gosRef.current.api.subscribe('location', (typeEvent, dataOfTrack) => {
-            if (dataOfTrack.id.includes('detail_tss')) {
+            let referenceTrack = gosRef.current.api.getTracks().find(track => track.id.includes('detail_tss'));
+            // console.log(dataOfTrack.id)
+            // if (dataOfTrack.id === referenceTrack.id) {
+                console.log(dataOfTrack.genomicRange)
                 let start = parseInt(dataOfTrack.genomicRange[0].position);
                 let end = parseInt(dataOfTrack.genomicRange[1].position);
-
                 setCurrentPosition((previousPosition) => {
                     if (previousPosition[0] !== start || previousPosition[1] !== end) {
                         return [start, end];
@@ -54,20 +35,17 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
                     return previousPosition;
                 });
 
-            }
+            // }
         });
     }
 
-    const getMaximaFromPositions = () => {
-        fetch(`/api/provideMax/${filePath}/${currentPosition[0]}/${currentPosition[1]}`)
-            .then(response => response.json())
-            .then(data => {
-                setMaxValueWiggleDict((prevData) => {
-                    if (!deepEqual(prevData, data))
-                        return data
-                })
-            });
-    }
+    const fetchMaxima = async () => {
+        const response = await fetch(`/api/provideMax/${filePath}/${currentPosition[0]}/${currentPosition[1]}`);
+        const data = await response.json();
+        setMaxValueWiggleDict(data);
+    };
+
+
     return (
         <div className='gosling-component'>
             <div className='genome-viewer-select' style={{ paddingBottom: "1.5em" }}>
@@ -84,7 +62,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
 
                         <button className='button-results'
                             disabled={!enableUpdate} style={{ "cursor": enableUpdate ? "pointer" : "not-allowed", "maxWidth": "auto" }} onClick={() => {
-                                getMaximaFromPositions()
+                                fetchMaxima()
                             }}>Update Y-Axes for wiggle files</button>
                     </label>
                 </div>

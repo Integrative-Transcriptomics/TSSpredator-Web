@@ -11,7 +11,7 @@ export const createWiggleTracks = (strand, genome, filePath) => {
                 "url": `/api/provideBigWig/${filePath}/${genome}/${strand === "+" ? "Plus" : "Minus"}/${type}`,
                 "type": "bigwig",
                 "binSize": 1,
-                "aggregation": "mean"
+                "aggregation": "sum"
             },
             "id": `detail_wiggle_${strand}_${genome.replace(/_/g, "-")}_${type}`,
             "mark": "bar",

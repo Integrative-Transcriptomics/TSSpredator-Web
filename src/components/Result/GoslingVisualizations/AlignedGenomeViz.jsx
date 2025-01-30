@@ -114,7 +114,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
             "views": views
         }
     }
-    const data = dataGosling
+    const data = dataGosling.current
     const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
     const [view_forward, view_reverse] = getViews(data, filePath);
     const distributedViews = [completeView(view_reverse, "lightblue", "Reverse strand"), completeView(view_forward, "#f59f95", "Forward strand")]

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import SingleGenomeViz from './GoslingVisualizations/SingleGenomeViz';
 import AlignedGenomeViz from './GoslingVisualizations/AlignedGenomeViz';
+import throttle from 'lodash/throttle';
 
 
 function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
@@ -11,20 +12,44 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
 
     useEffect(() => {
         console.log(currentPosition)
-        if(currentPosition[0] !== null && currentPosition[1] !== null)
+        // if(currentPosition[0] !== null && currentPosition[1] !== null)
             setEnableUpdate(Math.abs(currentPosition[0] - currentPosition[1]) < 5500)
         
-        else
-            setEnableUpdate(false);
+        // else
+            // setEnableUpdate(false);
     }, [currentPosition])
 
-
+    const updatePositionThrottled = throttle((start, end) => {
+        setCurrentPosition([start, end]);
+    }, 500); // Adjust the interval as needed
+    
+    useEffect(() => {
+        const subscription = gosRef.current.api.subscribe('location', (typeEvent, dataOfTrack) => {
+                let referenceTrack = gosRef.current.api.getTracks().find(track => track.id.includes('detail_tss'));
+                // console.log(dataOfTrack.id)
+                if (dataOfTrack.id === referenceTrack.id) {
+                    console.log(dataOfTrack.genomicRange)
+                    let start = parseInt(dataOfTrack.genomicRange[0].position);
+                    let end = parseInt(dataOfTrack.genomicRange[1].position);
+                    if (Math.abs(start - end) < 6000) {
+                        updatePositionThrottled(start, end);
+                    }
+    
+                }
+            });
+        // });
+    
+        return () => {
+            subscription.unsubscribe(); // Cleanup on unmount
+        };
+    }, []);
+    
 
     if (gosRef !== null && gosRef?.current) {
         gosRef.current.api.subscribe('location', (typeEvent, dataOfTrack) => {
             let referenceTrack = gosRef.current.api.getTracks().find(track => track.id.includes('detail_tss'));
             // console.log(dataOfTrack.id)
-            // if (dataOfTrack.id === referenceTrack.id) {
+            if (dataOfTrack.id === referenceTrack.id) {
                 console.log(dataOfTrack.genomicRange)
                 let start = parseInt(dataOfTrack.genomicRange[0].position);
                 let end = parseInt(dataOfTrack.genomicRange[1].position);
@@ -35,7 +60,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
                     return previousPosition;
                 });
 
-            // }
+            }
         });
     }
 

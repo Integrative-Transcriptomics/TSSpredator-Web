@@ -85,7 +85,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
         return views;
 
     }
-    const data = dataGosling
+    const data = dataGosling.current
     const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
     const allViews = getViews(data, filePath)
     const distributedViews = [{

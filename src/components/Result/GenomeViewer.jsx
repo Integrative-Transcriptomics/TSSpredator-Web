@@ -25,8 +25,8 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
     }, 500); // Adjust the interval as needed
     
     useEffect(() => {
-        gosRef.current.api.subscribe('location', (typeEvent, dataOfTrack) => {
-                let referenceTrack = gosRef.current.api.getTracks().find(track => track.id.includes('detail_tss'));
+        gosRef.current?.api?.subscribe('location', (typeEvent, dataOfTrack) => {
+                let referenceTrack = gosRef.current?.api?.getTracks().find(track => track.id.includes('detail_tss'));
                 // console.log(dataOfTrack.id)
                 if (dataOfTrack.id === referenceTrack.id) {
                     let start = parseInt(dataOfTrack.genomicRange[0].position);
@@ -51,7 +51,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
   
     
         return () => {
-            gosRef.current.api.unsubscribe('location'); // Cleanup on unmount
+            gosRef.current?.api?.unsubscribe('location'); // Cleanup on unmount
         };
     }, []);
     

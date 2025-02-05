@@ -94,6 +94,7 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
             "type": "csv",
             "url": "/api/getAggregated/" + filePath + "/" + genomeName + "/" + binSize,
             "genomicFields": ["binStart", "binEnd"],
+            "sampleLength": 2000
         },
         "dataTransform": [
             { "type": "filter", "field": "strand", "oneOf": [strand] },

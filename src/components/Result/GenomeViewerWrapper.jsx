@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import GenomeViewer from "./GenomeViewer";
 
 function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, showGFFViewer }) {
-    const [dataGosling, setDataGosling] = useState(null);
+    const dataGosling = useRef(null);
 
     const fetchDataGosling = async (filePath) => {
         const dataPerGenome = await fetch(`/api/TSSViewer/${filePath}/`);
@@ -13,7 +13,7 @@ function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, s
     useEffect(() => {
         const tempData = fetchDataGosling(filePath);
         tempData.then((data) => {
-            setDataGosling(data);
+            dataGosling.current = data;
         });
     }, [filePath]);
 

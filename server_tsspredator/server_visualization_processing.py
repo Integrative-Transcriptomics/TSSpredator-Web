@@ -134,8 +134,11 @@ def aggregateTSS(tssList, maxGenome, outputDir, genomeName):
             aggregated_data_for_bin.extend(expanded_countedTSS)
         # Export for faster interaction with Gosling.js
         subdfAgg = pd.DataFrame.from_dict(aggregated_data_for_bin)
-        # sort by mainClass following orderTSS
-        subdfAgg.sort_values(by=['mainClass'], key=lambda series: series.apply( lambda x: ORDER_TSS.index(x)), inplace=True)
+        # sort by mainClass following orderTSS, then by binStart, then by typeTSS
+        subdfAgg['mainClass'] = pd.Categorical(subdfAgg['mainClass'], categories=ORDER_TSS, ordered=True)
+        # set column binStart as integer
+        subdfAgg['binStart'] = subdfAgg['binStart'].astype(int)
+        subdfAgg = subdfAgg.sort_values(by=['mainClass', 'binStart', 'typeTSS'], ascending=[True, True, True], ignore_index=True)    
         subdfAgg.to_csv(outputDir + f'/aggregated_data_temp_{genomeName}_{binSize}.csv', index=False)
         binSizeMax[binSize] = maxBinCount
     return binSizeMax

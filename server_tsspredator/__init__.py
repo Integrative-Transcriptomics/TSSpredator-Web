@@ -277,10 +277,13 @@ def getFiles(filePath):
         # if file not found, send error message
         return resp
     
-@app.route('/api/provideBigWig/<filePath>/<genome>/<strand>/<fileType>')
-def returnBigWig(filePath, genome, strand, fileType): 
-    completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f"{genome}_super{fileType}{strand}.bw")
-    return send_file(completePath, mimetype='text/plain')
+@app.route('/api/provideBigWig/<filePath>/<genome>/<strand>/<fileType>/<allowFetch>')
+def returnBigWig(filePath, genome, strand, fileType, allowFetch):
+    if allowFetch:
+        completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f"{genome}_super{fileType}{strand}.bw")
+        return send_file(completePath, mimetype='text/plain')
+    else:
+        return jsonify({'error': 'Not allowed to fetch data'}), 403
        
 @app.route('/api/provideMax/<filePath>/<start>/<end>')
 def returnBigWigMax(filePath, start, end): 

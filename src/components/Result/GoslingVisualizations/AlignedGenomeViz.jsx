@@ -11,7 +11,7 @@ import { createGenomeTrack, createWiggleTracks, createDetailTSSTrack, createBinn
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict }) {
+function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict, allowFetch }) {
 
 
     const createTSSTrack = (binSizes, strand, maxGenome, title, filePath) => {
@@ -27,7 +27,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
             }
         })
         let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(filePath, size, maxValueBin, filter, strand, GT, LT, "aligned", title));
-        let specsWiggle = createWiggleTracks(strand, title, filePath)
+        let specsWiggle = createWiggleTracks(strand, title, filePath, allowFetch)
         specsWiggle.map(spec => {
             let [strand, genome, type] = spec["id"].split("_").slice(2)
             let genomeID = genome.replace(/-/g, "_")
@@ -114,24 +114,23 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
             "views": views
         }
     }
-    const data = dataGosling
+    const data = dataGosling.current
     const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
     const [view_forward, view_reverse] = getViews(data, filePath);
     const distributedViews = [completeView(view_reverse, "lightblue", "Reverse strand"), completeView(view_forward, "#f59f95", "Forward strand")]
 
-    const spec = {
+    const specs = React.useMemo(() => ({
         "title": "Visualization of TSSs and genes grouped by strand",
         "subtitle": "Distribution of TSSs and genes per strand. The aligned view allows for an easier comparison across genomes. At higher genomic zoom levels, the TSSs are binned and the number of TSSs per bin is shown. In deeper zoom levels, the individual TSSs and the respective transcriptomic data are shown.",
-        "arrangement": "horizontal",
-        "spacing": 50,
-        "linkingId": "detail", // linkingId is used to enable zooming and panning across views
-
-        "zoomLimits": [0, maxValue],
-        "views": distributedViews,
-    };
+            "arrangement": "horizontal",
+            "spacing": 50,
+            "linkingId": "detail", // linkingId is used to enable zooming and panning across views
+            "zoomLimits": [50, maxValue],
+            "views": distributedViews,
+        }), [dataGosling, filePath, maxValueWiggleDict,filter, allowFetch]); 
 
     return <>
-        {spec === null ? <ClipLoader color='#ffa000' size={30} /> : <GoslingComponent spec={spec} ref={gosRef} experimental={{ "reactive": true }} />}
+        {specs === null ? <ClipLoader color='#ffa000' size={30} /> : <GoslingComponent spec={specs} ref={gosRef} experimental={{ "reactive": true }} />}
     </>
         ;
 

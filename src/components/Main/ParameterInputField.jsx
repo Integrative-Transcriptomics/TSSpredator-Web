@@ -110,12 +110,12 @@ function FormConfig({
     })
       .then((response) => {
         if (!response.ok) {
-
           throw new Error(response.statusText);
         }
-        response.blob()
+        return response.blob()
       })
       .then((blob) => {
+        console.log(blob)
         const name = `${projectName.replace(" ", "_")}.config`;
         const url = window.URL.createObjectURL(new Blob([blob]));
         const link = document.createElement("a");

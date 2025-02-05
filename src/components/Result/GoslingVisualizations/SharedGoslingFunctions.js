@@ -3,14 +3,14 @@ const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
 const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
 
 
-export const createWiggleTracks = (strand, genome, filePath) => {
-
+export const createWiggleTracks = (strand, genome, filePath, allowFetch) => {
+    
     return ["Normal", "FivePrime"].map(type => {
         return {
             "data": {
-                "url": `/api/provideBigWig/${filePath}/${genome}/${strand === "+" ? "Plus" : "Minus"}/${type}`,
+                "url": `/api/provideBigWig/${filePath}/${genome}/${strand === "+" ? "Plus" : "Minus"}/${type}/${allowFetch}`,
                 "type": "bigwig",
-                "binSize": 1,
+                "binSize": 5,
                 "aggregation": "mean"
             },
             "id": `detail_wiggle_${strand}_${genome.replace(/_/g, "-")}_${type}`,
@@ -22,13 +22,11 @@ export const createWiggleTracks = (strand, genome, filePath) => {
             "color": { "value": type === "Normal" ? "gray" : "orange" },
             "stroke": { "value": "gray" },
             "opacity": { "value": 0.25 },
-
-
             "visibility": [
                 {
                     "operation": "LT",
                     "measure": "zoomLevel",
-                    "threshold": 5000,
+                    "threshold": 2500,
                     "transitionPadding": 100,
                     "target": "track"
                 }
@@ -96,6 +94,7 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
             "type": "csv",
             "url": "/api/getAggregated/" + filePath + "/" + genomeName + "/" + binSize,
             "genomicFields": ["binStart", "binEnd"],
+            "sampleLength": 2000
         },
         "dataTransform": [
             { "type": "filter", "field": "strand", "oneOf": [strand] },

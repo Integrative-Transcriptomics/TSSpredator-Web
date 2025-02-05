@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import SingleGenomeViz from './GoslingVisualizations/SingleGenomeViz';
 import AlignedGenomeViz from './GoslingVisualizations/AlignedGenomeViz';
 import throttle from 'lodash/throttle';
+import debounce from 'lodash/debounce';
 
 
 function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
     const [currentType, setCurrentType] = useState('single'); // single or aligned
     const [maxValueWiggleDict, setMaxValueWiggleDict] = useState({});
-    const [currentPosition, setCurrentPosition] = useState([null, null]);
+    const [currentPosition, setCurrentPosition] = useState([0, Number.MAX_SAFE_INTEGER]);
     const [enableUpdate, setEnableUpdate] = useState(false);
 
     useEffect(() => {
@@ -24,45 +25,36 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
     }, 500); // Adjust the interval as needed
     
     useEffect(() => {
-        const subscription = gosRef.current.api.subscribe('location', (typeEvent, dataOfTrack) => {
+        gosRef.current.api.subscribe('location', (typeEvent, dataOfTrack) => {
                 let referenceTrack = gosRef.current.api.getTracks().find(track => track.id.includes('detail_tss'));
                 // console.log(dataOfTrack.id)
                 if (dataOfTrack.id === referenceTrack.id) {
-                    console.log(dataOfTrack.genomicRange)
                     let start = parseInt(dataOfTrack.genomicRange[0].position);
                     let end = parseInt(dataOfTrack.genomicRange[1].position);
-                    if (Math.abs(start - end) < 6000) {
+                    if (Math.abs(start - end) < 7000) {
                         updatePositionThrottled(start, end);
                     }
     
                 }
             });
         // });
+        // Change the width upon resize event of the browser
+
+        window.addEventListener(
+            "resize",
+            debounce(() => {
+            // this value is used to set `width` of a track when updating spec
+            setVisPanelWidth( window.innerWidth ); 
+            console.log("resize event");
+            }, 500) // wait for 500ms instead of updating right away
+        );
+  
     
         return () => {
-            subscription.unsubscribe(); // Cleanup on unmount
+            gosRef.current.api.unsubscribe('location'); // Cleanup on unmount
         };
     }, []);
     
-
-    if (gosRef !== null && gosRef?.current) {
-        gosRef.current.api.subscribe('location', (typeEvent, dataOfTrack) => {
-            let referenceTrack = gosRef.current.api.getTracks().find(track => track.id.includes('detail_tss'));
-            // console.log(dataOfTrack.id)
-            if (dataOfTrack.id === referenceTrack.id) {
-                console.log(dataOfTrack.genomicRange)
-                let start = parseInt(dataOfTrack.genomicRange[0].position);
-                let end = parseInt(dataOfTrack.genomicRange[1].position);
-                setCurrentPosition((previousPosition) => {
-                    if (previousPosition[0] !== start || previousPosition[1] !== end) {
-                        return [start, end];
-                    }
-                    return previousPosition;
-                });
-
-            }
-        });
-    }
 
     const fetchMaxima = async () => {
         const response = await fetch(`/api/provideMax/${filePath}/${currentPosition[0]}/${currentPosition[1]}`);
@@ -113,12 +105,14 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef }) {
                                 dataGosling={dataGosling}
                                 filePath={filePath}
                                 filter={filter}
+                                allowFetch={enableUpdate}
                                 gosRef={gosRef}
                             /> :
                             <AlignedGenomeViz
                                 maxValueWiggleDict={maxValueWiggleDict}
                                 dataGosling={dataGosling}
                                 filePath={filePath}
+                                allowFetch={enableUpdate}
                                 filter={filter}
                                 gosRef={gosRef}
                             />

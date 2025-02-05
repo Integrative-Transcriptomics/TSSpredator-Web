@@ -44,3 +44,9 @@ image_tsspredator_celery_app.tar.gz
 image_tsspredator_web.tar.gz
 server_tsspredator/redisdb/dump-tsspredator.rdb
 server_tsspredator/exampleData/saureus/files.zip
+src/test/AlignedGenomeViz.jsx
+src/test/GenomeViewer.jsx
+src/test/GenomeViewerWrapper.jsx
+src/test/Result.jsx
+src/test/SharedGoslingFunctions.js
+src/test/SingleGenomeViz.jsx

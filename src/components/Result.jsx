@@ -193,22 +193,6 @@ function Result() {
               )}
             </div>
 
-            <div className='result-margin-left'>
-              <h3 className='header click-param' onClick={() => setShowUpSetConditions(!showUpSetConditions)}>
-                {showUpSetConditions ? "-" : "+"} Distribution of TSS across classes
-              </h3>
-              {processedMasterTable ? (
-                <UpSetOverConditions
-                  showUpSet={showUpSetConditions}
-                  allGenomes={allGenomes}
-                  filterForPlots={filterForPlots}
-                  tableColumns={tableColumns}
-                  tableData={tableData}
-                />
-              ) : (
-                <ClipLoader color='#ffa000' size={30} />
-              )}
-            </div>
 
 
 

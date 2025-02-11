@@ -45,6 +45,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
       const antisenseIdx = columns.findIndex((col) => col["Header"] === "Antisense");
       const superPosIdx = columns.findIndex((col) => col["Header"] === "SuperPos");
       const variableFilterTSS = columns.findIndex((col) => col["Header"] === filterForPlots);
+      const superStrandIdx = columns.findIndex((col) => col["Header"] === "SuperStrand");
 
 
 
@@ -55,42 +56,44 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
       rows.forEach((row) => {
         if (row[variableFilterTSS] === "1") {
           const tmpPos = row[superPosIdx];
+          const tmpStrand = row[superStrandIdx];
           // Get genome/condition name
           const genomeIdx = columns.findIndex(
             (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
           );
           const genomeName = row[genomeIdx];
           let tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+          const tmpTuple = [tmpPos, tmpStrand];
 
           // add tss to tssWithMultipleClasses
-          if (tmpPos in tssWithMultipleClasses) {
+          if (tmpTuple in tssWithMultipleClasses) {
             // Add once to set
-            if (!tssWithMultipleClasses[tmpPos]["set"].includes(tmpClass)) {
-              tssWithMultipleClasses[tmpPos]["set"].push(tmpClass);
+            if (!tssWithMultipleClasses[tmpTuple]["set"].includes(tmpClass)) {
+              tssWithMultipleClasses[tmpTuple]["set"].push(tmpClass);
             }
             // But also add to genome/condition
-            if (!Object.keys(tssWithMultipleClasses[tmpPos]).includes(genomeName)) {
-              tssWithMultipleClasses[tmpPos][genomeName] = [tmpClass];
+            if (!Object.keys(tssWithMultipleClasses[tmpTuple]).includes(genomeName)) {
+              tssWithMultipleClasses[tmpTuple][genomeName] = [tmpClass];
             }
-            else if (!tssWithMultipleClasses[tmpPos][genomeName].includes(tmpClass)) {
-              tssWithMultipleClasses[tmpPos][genomeName].push(tmpClass);
+            else if (!tssWithMultipleClasses[tmpTuple][genomeName].includes(tmpClass)) {
+              tssWithMultipleClasses[tmpTuple][genomeName].push(tmpClass);
             }
           } else {
-            tssWithMultipleClasses[tmpPos] = { "set": [tmpClass] }
-            tssWithMultipleClasses[tmpPos][genomeName] = [tmpClass]
+            tssWithMultipleClasses[tmpTuple] = { "set": [tmpClass] }
+            tssWithMultipleClasses[tmpTuple][genomeName] = [tmpClass]
           }
 
 
 
           // add tss to tssByClass
           if (tmpClass in tssByClass) {
-            if (!tssByClass[tmpClass].includes(tmpPos)) {
-              tssByClass[tmpClass].push(tmpPos);
+            if (!tssByClass[tmpClass].includes(tmpTuple)) {
+              tssByClass[tmpClass].push(tmpTuple);
             } else if (typeIntersection === "dedup") {
               return; // Exit the current iteration of the loop
             }
           } else {
-            tssByClass[tmpClass] = [tmpPos];
+            tssByClass[tmpClass] = [tmpTuple];
           }
 
         }
@@ -185,6 +188,10 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
     <UpSetJS className={showUpSet ? '' : 'hidden'}
       sets={sets.sort((a, b) => ORDER_TSS_CLASSES.indexOf(b["name"]) - ORDER_TSS_CLASSES.indexOf(a["name"]))}
       combinations={combinations}
+      onClick={(selection)=>{
+        console.log("clicked")
+        console.log(selection)
+      }}
       width={780} height={400} selection={selection} onHover={setSelection} />
   </div>;
 }

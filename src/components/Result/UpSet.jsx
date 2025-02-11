@@ -234,14 +234,15 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
     let filteredSet;
     if (plotSettings.classUpsetPlot === "tssClass") {
       filteredSet = sets.filter(x => ORDER_TSS_CLASSES.includes(x.name))
-      for (let key of Object.keys(color_tss)) {
-        sets.filter(x => x.name === key).forEach(x => x.color = color_tss[key])
-      }
-
+      filteredSet.forEach(x => x.color = color_tss[x.name])
       filteredSet.sort((a, b) => ORDER_TSS_CLASSES.indexOf(b["name"]) - ORDER_TSS_CLASSES.indexOf(a["name"]))
     }
     else {
       filteredSet = sets.filter(x => !ORDER_TSS_CLASSES.includes(x.name))
+      if (!["all", "dedup"].includes(plotSettings.type)) {
+        filteredSet.forEach(x => x.color = color_tss[plotSettings.type])
+      }
+      
     }
 
     setData(filteredSet);
@@ -260,12 +261,12 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
 
   return <div className={showUpSet ? '' : 'hidden'}>
         <div className='result-select'>
-      <h3 className='select-header'>Defined Classes</h3>
+      <h3 className='select-header'>Categories to analyze</h3>
       <select onChange={(e) => {
         // setType("all")
         handleClassUpsetPlotChange(e.target.value)
         }} defaultValue={"tssClass"} value={plotSettings.classUpsetPlot}>
-        <option value='tssClass'>TSS categories</option>
+        <option value='tssClass'>TSS classes</option>
         <option value='conditions'>Conditions/Genomes</option>
       </select>
     </div>

@@ -7,6 +7,7 @@ import "../css/App.css";
 import "../css/MasterTable.css";
 import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
+import UpSetOverConditions from "./Result/UpSetOverConditions";
 import Header from "./Main/Header";
 import GenomeViewerWrapper from "./Result/GenomeViewerWrapper";
 import ResultNotFoundPage from "./404Result";
@@ -36,6 +37,7 @@ function Result() {
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
+  const [showUpSetConditions, setShowUpSetConditions] = useState(false);
 
   // GoslingRef
   const gosRef = useRef();
@@ -181,6 +183,23 @@ function Result() {
               {processedMasterTable ? (
                 <UpSet
                   showUpSet={showUpSet}
+                  allGenomes={allGenomes}
+                  filterForPlots={filterForPlots}
+                  tableColumns={tableColumns}
+                  tableData={tableData}
+                />
+              ) : (
+                <ClipLoader color='#ffa000' size={30} />
+              )}
+            </div>
+
+            <div className='result-margin-left'>
+              <h3 className='header click-param' onClick={() => setShowUpSetConditions(!showUpSetConditions)}>
+                {showUpSetConditions ? "-" : "+"} Distribution of TSS across classes
+              </h3>
+              {processedMasterTable ? (
+                <UpSetOverConditions
+                  showUpSet={showUpSetConditions}
                   allGenomes={allGenomes}
                   filterForPlots={filterForPlots}
                   tableColumns={tableColumns}

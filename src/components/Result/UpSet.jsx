@@ -8,8 +8,42 @@ import { extractCombinations, UpSetJS } from '@upsetjs/react';
  * @param showUpSet: boolean for showing/hiding the plot
  */
 function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData }) {
+
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      setWindowHeight(window.innerHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  
   const [upsetClasses, setUpsetClasses] = useState([]);
-  const [type, setType] = useState("all");
+  const [data, setData] = useState([]);
+  // const [type, setType] = useState("all");
+  // const [classUpsetPlot, setClassesUpsetPlot] = useState("tssClass");
+
+  const [plotSettings, setPlotSettings] = useState({
+    classUpsetPlot: "tssClass",
+    type: "all",
+  });
+  
+  const handleClassUpsetPlotChange = (value) => {
+    setPlotSettings((prev) => ({ ...prev, classUpsetPlot: value, type: "all" }));
+  };
+
+  const handleTypeChange = (value) => {
+    setPlotSettings((prev) => ({ ...prev, type: value }));
+  };
+  
+  
 
   const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
   const ORDER_TSS_CLASSES = ["primary", "secondary", "internal", "antisense", "orphan"]
@@ -52,6 +86,9 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
       // save frequency of classes for a TSS (upset plot)
       let tssByClass = {};
       let tssWithMultipleClasses = {};
+      // For the condition
+      let tssByCondition = {};
+      let tssWithMultipleConditions = {};
 
       rows.forEach((row) => {
         if (row[variableFilterTSS] === "1") {
@@ -64,6 +101,33 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
           const genomeName = row[genomeIdx];
           let tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
           const tmpTuple = [tmpPos, tmpStrand];
+
+          if (tmpTuple in tssWithMultipleConditions) {
+            // Add once to set
+            if (!tssWithMultipleConditions[tmpTuple]["set"].includes(genomeName)) {
+              tssWithMultipleConditions[tmpTuple]["set"].push(genomeName);
+            }
+            // But also add to TSS class
+            if (!Object.keys(tssWithMultipleConditions[tmpTuple]).includes(tmpClass)) {
+              tssWithMultipleConditions[tmpTuple][tmpClass] = [genomeName];
+            }
+            else if (!tssWithMultipleConditions[tmpTuple][tmpClass].includes(genomeName)) {
+              tssWithMultipleConditions[tmpTuple][tmpClass].push(genomeName);
+            }
+          } else {
+            tssWithMultipleConditions[tmpTuple] = { "set": [genomeName] }
+            tssWithMultipleConditions[tmpTuple][tmpClass] = [genomeName]
+          }
+
+          if (genomeName in tssByCondition) {
+            if (!tssByCondition[genomeName].includes(tmpTuple)) {
+              tssByCondition[genomeName].push(tmpTuple);
+            } else if (typeIntersection === "dedup") {
+              return; // Exit the current iteration of the loop
+            }
+          } else {
+            tssByCondition[genomeName] = [tmpTuple];
+          }
 
           // add tss to tssWithMultipleClasses
           if (tmpTuple in tssWithMultipleClasses) {
@@ -98,39 +162,57 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
 
         }
       });
-      setUpsetClasses(tssWithMultipleClasses);
+      if (plotSettings.classUpsetPlot === "tssClass") {
+        return(tssWithMultipleClasses);
+      }
+      else {
+        return(tssWithMultipleConditions);
+      }
     };
-    const selectedDataToShow = type;
+    const selectedDataToShow = plotSettings.type;
+    let processedData;
     if (selectedDataToShow === "all") {
       // create new plots
-      TSSperPosition(tableData, tableColumns);
+      processedData = TSSperPosition(tableData, tableColumns);
     }
     else if (selectedDataToShow === "dedup") {
-      TSSperPosition(tableData, tableColumns, selectedDataToShow);
+      processedData = TSSperPosition(tableData, tableColumns, selectedDataToShow);
     }
     else {
       const genomeIdx = tableColumns.findIndex(
         (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
       );
+      const primaryIdx = tableColumns.findIndex((col) => col["Header"] === "Primary");
+      const secondaryIdx = tableColumns.findIndex((col) => col["Header"] === "Secondary");
+      const internalIdx = tableColumns.findIndex((col) => col["Header"] === "Internal");
+      const antisenseIdx = tableColumns.findIndex((col) => col["Header"] === "Antisense");
       // filter table
       const newData = [];
       tableData.forEach((row) => {
-        if (row[genomeIdx] === selectedDataToShow) {
+        if (plotSettings.classUpsetPlot === "tssClass") {
+          if (row[genomeIdx] === selectedDataToShow) {
+            newData.push(row);
+          }
+        }
+      else {
+        let tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+        if (tmpClass === selectedDataToShow) {
           newData.push(row);
         }
-      });
-      // create new plots
-      TSSperPosition(newData, tableColumns);
-    }
-  }, [type, filterForPlots, tableColumns, tableData]);
+      }}
 
-  let color_tss = {}
+      );
+      // create new plots
+      processedData = TSSperPosition(newData, tableColumns);
+    }
+
+    let color_tss = {}
   ORDER_TSS_CLASSES.forEach((x, i) => {
     color_tss[x] = COLORS_TSS[i]
   })
   let elems;
-  if (type === "all") {
-    elems = Object.entries(upsetClasses).reduce((accum, curr) => {
+  if (plotSettings.type === "all") {
+    elems = Object.entries(processedData).reduce((accum, curr) => {
       let tssName = curr[0]
       let mapGenomes = Object.entries(curr[1]).filter(x => x[0] !== "set").map((other) => {
         const typesOfTSS = other[1]
@@ -142,21 +224,30 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
     }, [])
   }
   else {
-    elems = Object.entries(upsetClasses).map((other) => {
+    elems = Object.entries(processedData).map((other) => {
       return { name: other[0], sets: other[1]["set"] }
     })
   }
 
-
-  let { sets } = useMemo(() => {
+ 
     const { sets } = extractCombinations(elems);
-    for (let key of Object.keys(color_tss)) {
-      sets.filter(x => x.name === key).forEach(x => x.color = color_tss[key])
+    let filteredSet;
+    if (plotSettings.classUpsetPlot === "tssClass") {
+      filteredSet = sets.filter(x => ORDER_TSS_CLASSES.includes(x.name))
+      filteredSet.forEach(x => x.color = color_tss[x.name])
+      filteredSet.sort((a, b) => ORDER_TSS_CLASSES.indexOf(b["name"]) - ORDER_TSS_CLASSES.indexOf(a["name"]))
     }
-    return { sets };
-  },
+    else {
+      filteredSet = sets.filter(x => !ORDER_TSS_CLASSES.includes(x.name))
+      if (!["all", "dedup"].includes(plotSettings.type)) {
+        filteredSet.forEach(x => x.color = color_tss[plotSettings.type])
+      }
+      
+    }
 
-    [elems]);
+    setData(filteredSet);
+  }, [plotSettings, filterForPlots, tableColumns, tableData]);
+
   const combinations = useMemo(
     () => ({
       type: 'distinctIntersection',
@@ -164,19 +255,29 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
     []
   );
   const [selection, setSelection] = useState(null);
-  if (type === "all") {
-    sets = sets.filter(x => ORDER_TSS_CLASSES.includes(x.name))
-  }
+
+
+
 
   return <div className={showUpSet ? '' : 'hidden'}>
+        <div className='result-select'>
+      <h3 className='select-header'>Categories to analyze</h3>
+      <select onChange={(e) => {
+        // setType("all")
+        handleClassUpsetPlotChange(e.target.value)
+        }} defaultValue={"tssClass"} value={plotSettings.classUpsetPlot}>
+        <option value='tssClass'>TSS classes</option>
+        <option value='conditions'>Conditions/Genomes</option>
+      </select>
+    </div>
     <div className='result-select'>
       <h3 className='select-header'>Show UpSet Plot for</h3>
-      <select onChange={(e) => setType(e.target.value)} defaultValue={"all"} value={type}>
-        <option value='all'>Union of all TSS across Conditions/Genomes</option>
-        <option value='dedup'>Intersection of all TSS across Conditions/Genomes</option>
+      <select onChange={(e) => handleTypeChange(e.target.value)} defaultValue={"all"} value={plotSettings.type}>
+        <option value='all'>Union of all TSS across {plotSettings.classUpsetPlot == "tssClass" ? "Conditions/Genomes" : "TSS classes"}</option>
+        <option value='dedup'>Intersection of all TSS across {plotSettings.classUpsetPlot == "tssClass" ? "Conditions/Genomes" : "TSS classes"}</option>
 
         { // Create a list of all genomes/conditions since Set does not have .map
-          [...allGenomes].map((col, i) => {
+          (plotSettings.classUpsetPlot == "tssClass" ?  [...allGenomes] : [...ORDER_TSS_CLASSES]).map((col, i) => {
             return (
               <option value={col} key={i}>
                 {col}
@@ -185,14 +286,16 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
           })}
       </select>
     </div>
+
     <UpSetJS className={showUpSet ? '' : 'hidden'}
-      sets={sets.sort((a, b) => ORDER_TSS_CLASSES.indexOf(b["name"]) - ORDER_TSS_CLASSES.indexOf(a["name"]))}
+      sets={data}
       combinations={combinations}
+      width={windowWidth * 0.7} height={windowHeight * 0.4} selection={selection} onHover={setSelection} 
       onClick={(selection)=>{
         console.log("clicked")
         console.log(selection)
       }}
-      width={780} height={400} selection={selection} onHover={setSelection} />
+       />
   </div>;
 }
 

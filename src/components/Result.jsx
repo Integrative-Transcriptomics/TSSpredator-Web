@@ -12,11 +12,13 @@ import GenomeViewerWrapper from "./Result/GenomeViewerWrapper";
 import ResultNotFoundPage from "./404Result";
 import ConfigList from "./Main/ConfigList";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { sortingFns } from "@tanstack/react-table";
 
 /**
  * creates page that displays result of TSS prediction
  */
 const selectHeaders = ["detected", "enriched", "Genome", "Condition", "SuperStrand","Strand", "Primary", "Secondary", "Antisense", "Internal", "contigID"]
+const cappedValues = ["enrichmentFactor", "stepHeight", "stepFactor"]
 function getFilterType(header) {
   const rangeHeaders = ["SuperPos", "Pos", "GeneLength", "UTRlength", "contigPos", "mapCount", "detCount", "classCount"]
   const nonFilterable = ["Sequence -50 nt upstream + TSS (51nt)"]
@@ -80,8 +82,8 @@ function Result() {
         meta: {
           filterVariant: filterVariant,
         },
-        filterFn: filterVariant === "range" ? 'inNumberRange' : filterVariant === "select" ? 'arrIncludesSome' : filterVariant === "none" ? 'none' : 'includesString'
-        
+        filterFn: filterVariant === "range" ? 'inNumberRange' : filterVariant === "select" ? 'arrIncludesSome' : filterVariant === "none" ? 'none' : 'includesString',
+        sortingFn: h.startsWith("rep") ? "myReplicateSorting" : cappedValues.includes(h) ? "myCappedSorting" : sortingFns.alphanumeric
       };
      });
     const searchFor = headers.indexOf("Genome") !== -1 ? "Genome" : "Condition";

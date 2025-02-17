@@ -64,79 +64,7 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
         setCurrentData(newData.slice(0, 200));
     }
 
-    // sort Table according to the given column
-    const sortTable = (column) => {
-
-        const sortData = [...allData.current];
-        // sort descending
-        var biggerA = -1;
-        var biggerB = 1;
-        // sort currenlty sorted column
-        if ((currentSortedCol.current)[0] === column) {
-
-            // currently column sorted in descending order
-            if ((currentSortedCol.current)[1] === "d") {
-                // sort in ascending order
-                biggerA = 1;
-                biggerB = -1
-                currentSortedCol.current = [column, 'a'];
-            } else {
-                currentSortedCol.current = [column, 'd'];
-            }
-        } else {
-            currentSortedCol.current = [column, 'd'];
-        }
-
-        sortData.sort((a, b) => {
-            return callSort(a[column], b[column], biggerA, biggerB);
-        });
-        setCounter(200);
-        allData.current = [...sortData];
-        setCurrentData(sortData.slice(0, 200));
-    }
-
-    /**
-     * do the sorting 
-     */
-    const callSort = (first, second, biggerA, biggerB) => {
-
-        // check if undefinde
-        if (typeof first === 'undefined') return biggerB;
-        if (typeof second === 'undefined') return biggerA;
-
-        // check if NA
-        if ((first === 'NA' && second === 'NA') || (first.length === 0 && second.length === 0) || (first === 'Infinity/Infinity' && second === 'Infinity/Infinity')) {
-            return 0;
-        }
-        if (first === 'NA' || second === 'Infinity/Infinity' || first.length === 0) return biggerB;
-        if (second === 'NA' || first === 'Infinity/Infinity' || second.length === 0) return biggerA;
-
-        // check for '/'
-        if (first.includes('/') && second.includes('/')) {
-            if (first.split('/')[0] === 'Infinity' && second.split('/')[0] === 'Infinity') {
-                first = first.split('/')[1];
-                second = second.split('/')[1];
-            } else {
-                first = first.split('/')[0];
-                second = second.split('/')[0];
-            }
-        }
-        // check for >
-        if (first[0] === '>') first = first.slice(1);
-        if (second[0] === '>') second = second.slice(1);
-
-        // check if it is a number
-        if (!isNaN(first)) first = parseFloat(first);
-        if (!isNaN(second)) second = parseFloat(second);
-
-        // compare values
-        if (first > second) return biggerA;
-        if (first < second) return biggerB;
-        return 0;
-    }
-
-
-    /**
+         /**
      * add observer to 20th last row
      */
     // const observer = useRef();
@@ -171,31 +99,73 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
         state: {
             columnFilters,
           },
-        //   filterFns:{
+sortingFns: {
+    myReplicateSorting: (row1, row2, columnID) => {
+        let a = row1.original[columnID];
+        let b = row2.original[columnID];
+        if (a === b) return 0;
+        // check if NA
+        if ((a === 'NA' && b === 'NA') || (a.length === 0 && b.length === 0) || (a === 'Infinity/Infinity' && b === 'Infinity/Infinity')) {
+            return 0;
+        }
+        if (a === 'NA' || b === 'Infinity/Infinity' || a.length === 0) return -1;
+        if (b === 'NA' || a === 'Infinity/Infinity' || b.length === 0) return 1;
 
-        //   }
+        // check for '/'
+        if (a.includes('/') && b.includes('/')) {
+            if (a.split('/')[0] === 'Infinity' && b.split('/')[0] === 'Infinity') {
+                a = a.split('/')[1];
+                b = b.split('/')[1];
+            } else {
+                a = a.split('/')[0];
+                b = b.split('/')[0];
+            }
+        }
+         // check for >
+         if (a[0] === '>') a = a.slice(1);
+         if (b[0] === '>') b = b.slice(1);
+ 
+         // check if it is a number
+         if (!isNaN(a)) a = parseFloat(a);
+         if (!isNaN(b)) b = parseFloat(b);
+ 
+         // compare values
+         if (a > b) return 1;
+         if (a < b) return -1;
+         return 0;
+        },
+    myCappedSorting: (row1, row2, columnID) => {
+        let a = row1.original[columnID];
+        let b = row2.original[columnID];
+        // if same return 0
+        if (a === b) return 0;
+        // check if NA
+        if (a === 'NA' && b === 'NA')  {
+            return 0;
+        }
+        if (a === 'NA') return -1;
+        if (b === 'NA') return 1;
+        // if any starts with >, remove it
+        if (a[0] === '>') a = a.slice(1);
+        if (b[0] === '>') b = b.slice(1);
+          // check if it is a number
+          if (!isNaN(a)) a = parseFloat(a);
+          if (!isNaN(b)) b = parseFloat(b);
+        console.log(a, b)
+        // compare values
+        if (a > b) return 1;
+        if (a < b) return -1;
+        return 0;}
+    },
+
         onColumnFiltersChange: setColumnFilters,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(), 
-        getFilteredRowModel: getFilteredRowModel() });
-
-        console.log(table.getState().columnFilters) // access the column filters state from the table instance
-
-
+        getFilteredRowModel: getFilteredRowModel() 
+    });
 
     return (
         <div className={showTable ? 'table-and-filter' : 'hidden'}>
-            {/* <div className='table-filter'>Search column
-                <select onChange={(e) => setSearchColumn(e.target.value)} value={searchColumn}>
-                    {columns.map((col, i) => {
-                        return <option value={i} key={i}>{col['header']}</option>
-                    })}
-                </select>
-                for
-                <input className='element' type='text' onChange={(e) => setSearchString(e.target.value)} value={searchString} />
-                <button className='button' onClick={() => startSearch()}>Search</button>
-                <p className='reset' onClick={() => resetTable()}>x</p>
-            </div> */}
             <div className='table-container'>
                 <table>
                 {/* <table {...getTableProps()}> */}
@@ -248,13 +218,14 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
 
                                     {showGFFViewer && <td> <button className="button-results" style={
                                         {
-                                            backgroundColor: "lightgrey",
-                                            color: "black",
-                                            padding: "2px",
+                                            backgroundColor: "#007bff",
+                                            color: "white",
+                                            padding: "0.5em",
                                             margin: "2px",
                                             border: "none",
                                             cursor: "pointer",
-                                            borderRadius: "5px"
+                                            borderRadius: "6px", 
+                                            fontFamily: "Arial",
                                         }
                                     }
                                         onClick={() => {
@@ -296,34 +267,8 @@ function Filter({ column, selectionData }) {
         <> </>
     ) : (
         <SearchInput column={column} columnFilterValue={columnFilterValue} />
-      // See faceted column filters example for datalist search suggestions
     )
   }
 
-  // A typical debounced input react component
-function DebouncedInput({
-    value: initialValue,
-    onChange,
-    debounce = 500,
-    ...props
-  }) {
-    const [value, setValue] = React.useState(initialValue)
-  
-    React.useEffect(() => {
-      setValue(initialValue)
-    }, [initialValue])
-  
-    React.useEffect(() => {
-      const timeout = setTimeout(() => {
-        onChange(value)
-      }, debounce)
-  
-      return () => clearTimeout(timeout)
-    }, [value])
-  
-    return (
-      <input {...props} value={value} onChange={e => setValue(e.target.value)} />
-    )
-  }
 
 export default MasterTable

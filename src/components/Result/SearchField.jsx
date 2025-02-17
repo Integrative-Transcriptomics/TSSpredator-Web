@@ -11,7 +11,6 @@ function SearchInput({ column, columnFilterValue }) {
         placeholder="Search..."
         className="search-input"
       />
-      <span className="search-icon">🔍</span>
     </div>
   );
 }

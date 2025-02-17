@@ -7,15 +7,31 @@ import "../css/App.css";
 import "../css/MasterTable.css";
 import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
-import UpSetOverConditions from "./Result/UpSetOverConditions";
 import Header from "./Main/Header";
 import GenomeViewerWrapper from "./Result/GenomeViewerWrapper";
 import ResultNotFoundPage from "./404Result";
 import ConfigList from "./Main/ConfigList";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 /**
  * creates page that displays result of TSS prediction
  */
+const selectHeaders = ["detected", "enriched", "Genome", "Condition", "SuperStrand","Strand", "Primary", "Secondary", "Antisense", "Internal", "contigID"]
+function getFilterType(header) {
+  const rangeHeaders = ["SuperPos", "Pos", "GeneLength", "UTRlength", "contigPos", "mapCount", "detCount", "classCount"]
+  const nonFilterable = ["Sequence -50 nt upstream + TSS (51nt)"]
+
+  if (rangeHeaders.includes(header)) {
+    return "range";
+  }
+  else if (selectHeaders.includes(header)) {
+    return "select";
+  }
+  else if (nonFilterable.includes(header)) {
+    return "none";
+  }
+  return "text";
+}
 
 function Result() {
   // filePath on server
@@ -34,10 +50,10 @@ function Result() {
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(true);
   const [filterForPlots, setFilterForPlots] = useState("enriched");
+  const dataMetadataColumns = useRef(null);
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
-  const [showUpSetConditions, setShowUpSetConditions] = useState(false);
 
   // GoslingRef
   const gosRef = useRef();
@@ -51,22 +67,43 @@ function Result() {
   const handleMasterTable = (masterTable) => {
     const allRows = masterTable.trim().split("\n"); // trim() removes trailing newline
     const headers = allRows[0].split("\t");
-
+    let IDofSelectableColumns = []
+    let tmpMetadataColumns = {}
     const col = headers.map((h, i) => {
-      return { Header: h, accessor: i.toString() };
-    });
+      if (selectHeaders.includes(h)) {
+        IDofSelectableColumns.push(i)
+      }
+      let filterVariant = getFilterType(h)
+      return { 
+        header: () => <span>{h}</span>,
+        accessorKey: i.toString(),
+        meta: {
+          filterVariant: filterVariant,
+        },
+        filterFn: filterVariant === "range" ? 'inNumberRange' : filterVariant === "select" ? 'arrIncludesSome' : filterVariant === "none" ? 'none' : 'includesString'
+        
+      };
+     });
     const searchFor = headers.indexOf("Genome") !== -1 ? "Genome" : "Condition";
     const genomeIdx = headers.indexOf(searchFor);
 
     const allG = new Set();
     const dataRows = allRows.slice(1).map(row => {
       const tmp = row.split("\t");
+
       allG.add(tmp[genomeIdx]);
       return tmp.reduce((acc, content, j) => {
+        if (IDofSelectableColumns.includes(j)) {
+          if (tmpMetadataColumns[j.toString()] === undefined) {
+            tmpMetadataColumns[j.toString()] = new Set()
+          }
+          tmpMetadataColumns[j.toString()].add(content)
+        }
         acc[j.toString()] = content;
         return acc;
       }, {});
     });
+    dataMetadataColumns.current = tmpMetadataColumns;
 
     setTableColumns(col);
     setTableData(dataRows);
@@ -128,7 +165,7 @@ function Result() {
       }, 0);
     }
   };
-
+  let queryClient = new QueryClient();
   /**
    * update plots for selected genome/condition
    */
@@ -202,8 +239,11 @@ function Result() {
                 {showTable ? "-" : "+"} Master Table
               </h3>
               {tableColumns.length > 0 ? (
-                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGenomeViewer} />
-              ) : (
+                 <QueryClientProvider client={queryClient}>
+
+                <MasterTable selectionData={dataMetadataColumns.current} tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGenomeViewer} />
+                </QueryClientProvider>
+                              ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}
             </div>

@@ -1,4 +1,5 @@
 table {
+  font-family: Arial, sans-serif;
   border-collapse: collapse;
   width: 100%;
   font-size: 80%;
@@ -20,6 +21,7 @@ table tr:hover {
 }
 
 table th {
+  
   padding: 0.5rem 1rem;
   text-align: center;
   background-color: rgb(64, 0, 255);

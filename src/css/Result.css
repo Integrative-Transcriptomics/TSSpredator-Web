@@ -112,3 +112,62 @@
   margin-top: 1%;
   margin-bottom: 1%;
 }
+
+/* Container Styling */
+.select-container {
+  position: relative;
+  display: inline-block;
+  width: 250px;
+}
+
+/* Style the Select Dropdown */
+.select-container select {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  font-size: 16px;
+  appearance: none; /* Removes default arrow */
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.3s ease-in-out;
+}
+
+/* Focus effect */
+.select-container select:focus {
+  border-color: #007bff;
+}
+
+/* Add a dropdown arrow */
+.select-container::after {
+  content: "▼";
+  font-size: 14px;
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: #888;
+  pointer-events: none;
+}
+
+/* Styling the dropdown options */
+select[multiple] option {
+  padding: 8px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+/* Hover effect on options */
+select[multiple] option:hover {
+  background: #f0f0f0;
+}
+
+/* Selected options styling */
+select[multiple] option:checked {
+  background: #007bff;
+  color: white;
+  font-weight: bold;
+}

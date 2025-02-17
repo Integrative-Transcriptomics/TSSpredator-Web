@@ -49,52 +49,36 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
         setCurrentData(tableData.slice(0, 200));
     }
 
-    // search for string in table column
-    const startSearch = () => {
-        if (filtersForTable.length === 0) return;
-
-        const newData = [];
-        tableData.forEach((row) => {
-            if (checkRow(row)) {
-                newData.push(row);
-            }
-        });
-        setCounter(200);
-        allData.current = [...newData];
-        setCurrentData(newData.slice(0, 200));
-    }
-
          /**
      * add observer to 20th last row
      */
-    // const observer = useRef();
-    // const lastRow = useCallback(node => {
-    //     if (loading) return;
-    //     if (observer.current) observer.current.disconnect();
-    //     observer.current = new IntersectionObserver(rows => {
-    //         if (rows[0].isIntersecting && moreRows) {
-    //             setLoading(true);
-    //             /**
-    //              * add new rows to current data
-    //             */
-    //             if (currentData.length - 100 <= allData.current.length) {
-    //                 setCurrentData(current => [...current, ...allData.current.slice(counter, counter + 100)]);
-    //                 setCounter(c => c + 100);
-    //             } else {
-    //                 setMoreRows(false);
-    //             }
-    //             setLoading(false);
-    //         }
-    //     });
-    //     if (node) observer.current.observe(node)
-    // }, [loading, moreRows, counter, currentData])
+    const observer = useRef();
+    const lastRow = useCallback(node => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver(rows => {
+            if (rows[0].isIntersecting && moreRows) {
+                setLoading(true);
+                /**
+                 * add new rows to current data
+                */
+                if (currentData.length - 100 <= allData.current.length) {
+                    setCurrentData(current => [...current, ...allData.current.slice(counter, counter + 100)]);
+                    setCounter(c => c + 100);
+                } else {
+                    setMoreRows(false);
+                }
+                setLoading(false);
+            }
+        });
+        if (node) observer.current.observe(node)
+    }, [loading, moreRows, counter, currentData])
 
     // prevent rerendering 
     const columns = useMemo(() => tableColumns, [tableColumns]);
     const data = useMemo(() => currentData, [currentData]);
 
     // create table instance
-    // const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useReactTable({ columns, data,    state: {
     const table = useReactTable({ columns, data,    
         state: {
             columnFilters,
@@ -105,31 +89,25 @@ sortingFns: {
         let b = row2.original[columnID];
         if (a === b) return 0;
         // check if NA
-        if ((a === 'NA' && b === 'NA') || (a.length === 0 && b.length === 0) || (a === 'Infinity/Infinity' && b === 'Infinity/Infinity')) {
+
+        if  (a.length === 0 && b.length === 0)  {
             return 0;
         }
-        if (a === 'NA' || b === 'Infinity/Infinity' || a.length === 0) return -1;
-        if (b === 'NA' || a === 'Infinity/Infinity' || b.length === 0) return 1;
+        if (a.length === 0) return -1;
+        if (b.length === 0) return 1;
 
         // check for '/'
         if (a.includes('/') && b.includes('/')) {
-            if (a.split('/')[0] === 'Infinity' && b.split('/')[0] === 'Infinity') {
-                a = a.split('/')[1];
-                b = b.split('/')[1];
-            } else {
-                a = a.split('/')[0];
-                b = b.split('/')[0];
-            }
-        }
-         // check for >
-         if (a[0] === '>') a = a.slice(1);
-         if (b[0] === '>') b = b.slice(1);
- 
-         // check if it is a number
-         if (!isNaN(a)) a = parseFloat(a);
-         if (!isNaN(b)) b = parseFloat(b);
- 
-         // compare values
+            // Split a by '/'
+            let tempA = a.split('/').map((x) => { return x === 'Infinity' ? Number.MAX_VALUE : x==="NA" ? 0: parseFloat(x) });
+            let tempB = b.split('/').map((x) => { return x === 'Infinity' ? Number.MAX_VALUE : x==="NA" ? 0: parseFloat(x) }); 
+            // compute mean
+            let meanA = tempA.reduce((a, b) => a + b) / tempA.length;
+            let meanB = tempB.reduce((a, b) => a + b) / tempB.length;
+            a=meanA;
+            b=meanB;
+           }
+          // compare values
          if (a > b) return 1;
          if (a < b) return -1;
          return 0;
@@ -172,7 +150,7 @@ sortingFns: {
                     <thead >
                         {table.getHeaderGroups().map((headerGroup) => (
                             // <tr {...headerGroup.getHeaderGroupProps()} >
-                            <tr>
+                            <tr > 
                                 {showGFFViewer && <th> Zoom in Viewer </th>}
                             
                                 {
@@ -214,7 +192,7 @@ sortingFns: {
                         {table.getRowModel().rows.map((row, i) => {
                             return (
                                 // <tr {...row.getRowProps()} ref={(rows.length - 21 === i) ? lastRow : null}>
-                                <tr>
+                                <tr ref={(table.getRowCount() - 21 === i) ? lastRow : null}>
 
                                     {showGFFViewer && <td> <button className="button-results" style={
                                         {

@@ -13,11 +13,13 @@ import ResultNotFoundPage from "./404Result";
 import ConfigList from "./Main/ConfigList";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { sortingFns } from "@tanstack/react-table";
+import SingleSelectDropdown from './Result/SingleSelect.jsx';
+
 
 /**
  * creates page that displays result of TSS prediction
  */
-const selectHeaders = ["detected", "enriched", "Genome", "Condition", "SuperStrand","Strand", "Primary", "Secondary", "Antisense", "Internal", "contigID"]
+const selectHeaders = ["detected", "enriched", "Genome", "Condition", "SuperStrand", "Strand", "Primary", "Secondary", "Antisense", "Internal", "contigID"]
 const cappedValues = ["enrichmentFactor", "stepHeight", "stepFactor"]
 function getFilterType(header) {
   const rangeHeaders = ["SuperPos", "Pos", "GeneLength", "UTRlength", "contigPos", "mapCount", "detCount", "classCount"]
@@ -77,7 +79,7 @@ function Result() {
         IDofSelectableColumns.push(i)
       }
       let filterVariant = getFilterType(h)
-      return { 
+      return {
         header: h,
         accessorKey: i.toString(),
         meta: {
@@ -86,7 +88,7 @@ function Result() {
         filterFn: filterVariant === "range" ? 'inNumberRange' : filterVariant === "select" ? 'arrIncludesSome' : filterVariant === "none" ? 'none' : 'includesString',
         sortingFn: h.startsWith("rep") ? "myReplicateSorting" : cappedValues.includes(h) ? "myCappedSorting" : sortingFns.alphanumeric
       };
-     });
+    });
     const searchFor = headers.indexOf("Genome") !== -1 ? "Genome" : "Condition";
     const genomeIdx = headers.indexOf(searchFor);
 
@@ -206,16 +208,23 @@ function Result() {
               <ConfigList configData={configData} />
 
             </div>
-            <div className='result-select'>
-              <h3 className='select-header'>Show the following TSS in plots: </h3>
-              <select onChange={(e) => setFilterForPlots(e.target.value)} value={filterForPlots}>
-                <option value='enriched'>Only enriched TSSs</option>
-                <option value='detected'>All detected TSSs</option>
-              </select>
-            </div>
 
-            <GenomeViewerWrapper filePath={filePath} filterSelected={filterForPlots} gosRef={gosRef} showGFFViewer={showGenomeViewer} setGFFViewer={setShowGenomeViewer} />
-
+            <SingleSelectDropdown
+              label="Show the following TSS in plots"
+              value={filterForPlots}
+              onChange={(value) => setFilterForPlots(value)}
+              options={[
+                { value: "enriched", label: "Only enriched TSSs" },
+                { value: "detected", label: "All detected TSSs" },
+              ]}
+            />
+            <GenomeViewerWrapper
+              filePath={filePath}
+              filterSelected={filterForPlots}
+              gosRef={gosRef}
+              showGFFViewer={showGenomeViewer}
+              setGFFViewer={setShowGenomeViewer}
+            />
             <div className='result-margin-left'>
               <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
                 {showUpSet ? "-" : "+"} Distribution of TSS across classes
@@ -233,21 +242,23 @@ function Result() {
                 <ClipLoader color='#ffa000' size={30} />
               )}
             </div>
-
-
-
-
-
             <div>
               <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>
                 {showTable ? "-" : "+"} Master Table
               </h3>
               {tableColumns.length > 0 ? (
-                 <QueryClientProvider client={queryClient}>
-
-                <MasterTable adaptFilterFromUpset={setFilterPositions} filterFromUpset={filterPositions} selectionData={dataMetadataColumns.current} tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGenomeViewer} />
+                <QueryClientProvider client={queryClient}>
+                  <MasterTable
+                    adaptFilterFromUpset={setFilterPositions}
+                    filterFromUpset={filterPositions}
+                    selectionData={dataMetadataColumns.current}
+                    tableColumns={tableColumns}
+                    tableData={tableData}
+                    showTable={showTable}
+                    gosRef={gosRef}
+                    showGFFViewer={showGenomeViewer} />
                 </QueryClientProvider>
-                              ) : (
+              ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}
             </div>

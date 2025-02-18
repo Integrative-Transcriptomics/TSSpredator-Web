@@ -23,7 +23,7 @@ const ScrollableTextComponent = ({ text, type, title }) => {
 
     return (
         <div style={{
-            width: '60%', // Adjust width as needed
+            width: '60%', 
         }}>
             <p className='header status' style={{ marginBottom: "0.5em", marginRight: "0.5em" }}>{title}</p>
             <div style={{ ...styles.container, color: type ? "darkred" : "black" }} ref={div}>

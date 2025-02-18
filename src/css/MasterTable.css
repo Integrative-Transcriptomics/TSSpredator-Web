@@ -116,6 +116,8 @@ table thead {
   font-size: 0.9em;
   color: #333;
   margin-right: 0.5em;
+  /*avoid wrap*/
+  white-space: nowrap;
 }
 
 .close-button {

@@ -308,10 +308,19 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
         let selected = {
           positions: [...new Set(selection.elems.map(x => x.name))],
           classes: [...selection.sets].map(x => x.name),
+          id: [...selection.sets].map(x => x.name).join(""),
           selectedType: plotSettings.classUpsetPlot === "tssClass" ? "TSS classes" : "Conditions/Genomes"
-        }
-        handleClickUpset((prev) => ([...prev, selected]))
+        };
+      
+        handleClickUpset((prev) => {
+          // Check if selection already exists
+          const exists = prev.some(item => item.id === selected.id);
+      
+          // If it doesn't exist, add it; otherwise, return the same state
+          return exists ? prev : [...prev, selected];
+        });
       }}
+      
     />
   </div>;
 }

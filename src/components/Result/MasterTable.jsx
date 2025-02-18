@@ -1,6 +1,6 @@
 import MultiSelectDropdown from './MultiSelectDropdown';
 import RangeFilter from './RangeFilter';
-import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
     flexRender,
     // Column,
@@ -17,6 +17,8 @@ import {
 import { useVirtualizer, notUndefined } from '@tanstack/react-virtual'
 
 import SearchInput from './SearchField';
+import "../../css/FilterCard.css";
+
 
 /**
  * create mastertable with infinite scroll for faster rendering 
@@ -29,9 +31,6 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
     // currently used data
     const [isLoading, setIsLoading] = useState(false);
     const [filteredData, setFilteredData] = useState([...tableData]); // Store filtered data separately
-
-    // const allData = useRef([...tableData]);
-
     useEffect(() => {
         setIsLoading(true); // Show loading overlay
 
@@ -140,18 +139,9 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
 
     return (
         <div className={showTable ? 'table-and-filter' : 'hidden'}>
-            <div className="table-filter">
-                {filterFromUpset.map((column, i) => (
-                    <div key={i} className="filter-card">
-                        <span className="filter-text">{column.selectedType}</span>
-                        <span className="filter-text">{column.classes}</span>
-                        <button className="close-button" onClick={() => adaptFilterFromUpset(prev => prev.filter((_, index) => index !== i))}>
-                            ✖
-                        </button>
-                    </div>
-                ))}
-            </div>
 
+            <FilterCard filterFromUpset={filterFromUpset} adaptFilterFromUpset={adaptFilterFromUpset}/>
+     
             <div 
                 ref={parentRef} 
                 className='table-container'
@@ -290,6 +280,35 @@ function Filter({ column, selectionData }) {
     ) : (
         <SearchInput column={column} columnFilterValue={columnFilterValue} />
     )
+}
+
+
+function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
+  return (
+    <div className="filter-container">
+      {/* Title Bar enclosing all filter cards */}
+      <div className="filter-title">
+        <span>Filters from UpSet plot:</span>
+        {filterFromUpset.length > 0 && (
+          <button className="clear-button" onClick={() => adaptFilterFromUpset([])}>
+            Clear All ✖
+          </button>
+        )}
+      </div>
+
+      <div className="filter-grid">
+        {filterFromUpset.map((column, i) => (
+          <div key={i} className="filter-card">
+            <span className="filter-text">{column.selectedType}</span>
+            <span className="filter-text">{column.classes.join(" & ")}</span>
+            <button className="close-button" onClick={() => adaptFilterFromUpset(prev => prev.filter((_, index) => index !== i))}>
+              ✖
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default MasterTable

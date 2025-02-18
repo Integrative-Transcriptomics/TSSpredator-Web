@@ -9,7 +9,7 @@ import { createWiggleTracks, createGenomeTrack, createDetailTSSTrack, createGFFT
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict, allowFetch }) {
+function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict, allowFetch, widthTrack }) {
 
     const createTSSTrack = (binSizes, strand, maxGenome, title = null, filePath) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
@@ -22,8 +22,8 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
                 "maxValueBin": binSizes[size]
             }
         })
-        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(filePath, size, maxValueBin, filter, strand, GT, LT, "single", title));
-        let specsWiggle = createWiggleTracks(strand, title, filePath, allowFetch)
+        let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(filePath, size, maxValueBin, filter, strand, GT, LT, "single", title,widthTrack));
+        let specsWiggle = createWiggleTracks(strand, title, filePath, allowFetch,widthTrack)
         specsWiggle.map(spec => {
             let [strand, genome, type] = spec["id"].split("_").slice(2)
             let genomeID = genome.replace(/-/g, "_")
@@ -33,7 +33,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
         })
 
 
-        let detailTSSTrack = createDetailTSSTrack(filePath, strand, filter, TSS_DETAIL_LEVEL_ZOOM, "single", title)
+        let detailTSSTrack = createDetailTSSTrack(filePath, strand, filter, TSS_DETAIL_LEVEL_ZOOM, "single", title, widthTrack)
         if (strand === "-") detailTSSTrack["x"]["axis"] = "none";
         return [
             {
@@ -52,9 +52,9 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
     const createTracks = (data, genomeName, maxGenome, filePath) => {
 
         const createTracks = (filePath, genomeName, direction) => {
-            const TSSTracks = createTSSTrack(data["maxAggregatedTSS"], direction, maxGenome, genomeName, filePath);
-            const genes = createGFFTrack(filePath, genomeName, direction);
-            const fastaTrack = createGenomeTrack(filePath, genomeName, direction);
+            const TSSTracks = createTSSTrack(data["maxAggregatedTSS"], direction, maxGenome, genomeName, filePath,widthTrack);
+            const genes = createGFFTrack(filePath, genomeName, direction,widthTrack);
+            const fastaTrack = createGenomeTrack(filePath, genomeName, direction,widthTrack);
             if (direction === "-") {
                 // For Simmetry
                 return [...fastaTrack, ...genes, ...TSSTracks];

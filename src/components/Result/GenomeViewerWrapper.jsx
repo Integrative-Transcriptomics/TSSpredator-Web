@@ -17,6 +17,8 @@ function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, s
         });
     }, [filePath]);
 
+    let widthTrack = (window.innerWidth/2)*0.85
+
 
     return (
         <div className='result-margin-left'>
@@ -30,6 +32,7 @@ function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, s
                     dataGosling={dataGosling}
                     filter={filterSelected === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
                     gosRef={gosRef}
+                    widthTrack={widthTrack}
                 />
 
             }

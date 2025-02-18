@@ -53,6 +53,7 @@ function Result() {
   const [showTable, setShowTable] = useState(true);
   const [filterForPlots, setFilterForPlots] = useState("enriched");
   const dataMetadataColumns = useRef(null);
+  const [filterPositions, setFilterPositions] = useState([]);
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
@@ -77,7 +78,7 @@ function Result() {
       }
       let filterVariant = getFilterType(h)
       return { 
-        header: () => <span>{h}</span>,
+        header: h,
         accessorKey: i.toString(),
         meta: {
           filterVariant: filterVariant,
@@ -226,6 +227,7 @@ function Result() {
                   filterForPlots={filterForPlots}
                   tableColumns={tableColumns}
                   tableData={tableData}
+                  handleClickUpset={setFilterPositions}
                 />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
@@ -243,7 +245,7 @@ function Result() {
               {tableColumns.length > 0 ? (
                  <QueryClientProvider client={queryClient}>
 
-                <MasterTable selectionData={dataMetadataColumns.current} tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGenomeViewer} />
+                <MasterTable adaptFilterFromUpset={setFilterPositions} filterFromUpset={filterPositions} selectionData={dataMetadataColumns.current} tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGenomeViewer} />
                 </QueryClientProvider>
                               ) : (
                 <ClipLoader color='#ffa000' size={30} />

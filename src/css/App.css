@@ -6,7 +6,7 @@
 * {
     box-sizing: border-box;
     margin: 0;
-    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 100%;
 }
 
@@ -19,7 +19,7 @@ header {
     background-color: var(--mainColor);
     color: white;
     box-shadow: 0 0.1rem 0.3rem rgb(136, 88, 0, 0.5);
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     padding: 0.3% 1%;
     display: flex;
     align-items: center;

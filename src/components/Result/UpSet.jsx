@@ -7,7 +7,7 @@ import { extractCombinations, UpSetJS } from '@upsetjs/react';
  * @param classes: all classes and their frequency
  * @param showUpSet: boolean for showing/hiding the plot
  */
-function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData }) {
+function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,handleClickUpset }) {
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
@@ -25,7 +25,6 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
   }, []);
 
   
-  const [upsetClasses, setUpsetClasses] = useState([]);
   const [data, setData] = useState([]);
   // const [type, setType] = useState("all");
   // const [classUpsetPlot, setClassesUpsetPlot] = useState("tssClass");
@@ -73,13 +72,13 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
    */
     const TSSperPosition = (rows, columns, typeIntersection = "all") => {
       // get column indices
-      const primaryIdx = columns.findIndex((col) => col["Header"] === "Primary");
-      const secondaryIdx = columns.findIndex((col) => col["Header"] === "Secondary");
-      const internalIdx = columns.findIndex((col) => col["Header"] === "Internal");
-      const antisenseIdx = columns.findIndex((col) => col["Header"] === "Antisense");
-      const superPosIdx = columns.findIndex((col) => col["Header"] === "SuperPos");
-      const variableFilterTSS = columns.findIndex((col) => col["Header"] === filterForPlots);
-      const superStrandIdx = columns.findIndex((col) => col["Header"] === "SuperStrand");
+      const primaryIdx = columns.findIndex((col) => col["header"] === "Primary");
+      const secondaryIdx = columns.findIndex((col) => col["header"] === "Secondary");
+      const internalIdx = columns.findIndex((col) => col["header"] === "Internal");
+      const antisenseIdx = columns.findIndex((col) => col["header"] === "Antisense");
+      const superPosIdx = columns.findIndex((col) => col["header"] === "SuperPos");
+      const variableFilterTSS = columns.findIndex((col) => col["header"] === filterForPlots);
+      const superStrandIdx = columns.findIndex((col) => col["header"] === "SuperStrand");
 
 
 
@@ -96,7 +95,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
           const tmpStrand = row[superStrandIdx];
           // Get genome/condition name
           const genomeIdx = columns.findIndex(
-            (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
+            (col) => col["header"] === "Genome" || col["header"] === "Condition"
           );
           const genomeName = row[genomeIdx];
           let tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
@@ -180,12 +179,12 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
     }
     else {
       const genomeIdx = tableColumns.findIndex(
-        (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
+        (col) => col["header"] === "Genome" || col["header"] === "Condition"
       );
-      const primaryIdx = tableColumns.findIndex((col) => col["Header"] === "Primary");
-      const secondaryIdx = tableColumns.findIndex((col) => col["Header"] === "Secondary");
-      const internalIdx = tableColumns.findIndex((col) => col["Header"] === "Internal");
-      const antisenseIdx = tableColumns.findIndex((col) => col["Header"] === "Antisense");
+      const primaryIdx = tableColumns.findIndex((col) => col["header"] === "Primary");
+      const secondaryIdx = tableColumns.findIndex((col) => col["header"] === "Secondary");
+      const internalIdx = tableColumns.findIndex((col) => col["header"] === "Internal");
+      const antisenseIdx = tableColumns.findIndex((col) => col["header"] === "Antisense");
       // filter table
       const newData = [];
       tableData.forEach((row) => {
@@ -292,8 +291,12 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
       combinations={combinations}
       width={windowWidth * 0.7} height={windowHeight * 0.4} selection={selection} onHover={setSelection} 
       onClick={(selection)=>{
-        console.log("clicked")
-        console.log(selection)
+        let selected = {
+          positions: [...new Set(selection.elems.map(x => x.name))],
+          classes: [...selection.sets].map(x => x.name), 
+          selectedType: plotSettings.classUpsetPlot === "tssClass" ? "TSS classes" : "Conditions/Genomes"
+        }
+        handleClickUpset((prev) => ([ ...prev, selected ]))
       }}
        />
   </div>;

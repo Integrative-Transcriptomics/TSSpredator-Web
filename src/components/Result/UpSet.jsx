@@ -260,7 +260,13 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
 
 
 
-  return <div className={showUpSet ? '' : 'hidden'}>
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%"
+  }} className={showUpSet ? '' : 'hidden'}>
     <div className="upset-settings">
       <SingleSelectDropdown
         label="Show UpSet Plot for"

@@ -225,10 +225,11 @@ function Result() {
               gosRef={gosRef}
               showGFFViewer={showGenomeViewer}
               setGFFViewer={setShowGenomeViewer}
+              nameGenomes={[...allGenomes]}
             />
             <div className='result-margin-left'>
               <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
-                {showUpSet ? "-" : "+"} Distribution of TSS across classes
+                {showUpSet ? "-" : "+"} UpSet Plot: Distribution of TSS across Categories
               </h3>
               {processedMasterTable ? (
                 <UpSet

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import GenomeViewer from "./GenomeViewer";
 
-function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, showGFFViewer }) {
+function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, showGFFViewer, nameGenomes }) {
     const dataGosling = useRef(null);
 
     const fetchDataGosling = async (filePath) => {
@@ -18,7 +18,7 @@ function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, s
     }, [filePath]);
 
     let widthTrack = (window.innerWidth/2)*0.85
-
+    console.log(nameGenomes)
 
     return (
         <div className='result-margin-left'>
@@ -32,6 +32,7 @@ function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, s
                     dataGosling={dataGosling}
                     filter={filterSelected === "enriched" ? ["Enriched"] : ["Enriched", "Detected"]}
                     gosRef={gosRef}
+                    nameGenomes={nameGenomes}
                     widthTrack={widthTrack}
                 />
 

@@ -1,33 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import SingleGenomeViz from './GoslingVisualizations/SingleGenomeViz';
 import AlignedGenomeViz from './GoslingVisualizations/AlignedGenomeViz';
 import throttle from 'lodash/throttle';
-import debounce from 'lodash/debounce';
 import SingleSelectDropdown from './SingleSelect';
 
 
-function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack }) {
+function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameGenomes }) {
     const [currentType, setCurrentType] = useState('single'); // single or aligned
     const [maxValueWiggleDict, setMaxValueWiggleDict] = useState({});
     const [currentPosition, setCurrentPosition] = useState([0, Number.MAX_SAFE_INTEGER]);
     const [enableUpdate, setEnableUpdate] = useState(false);
+    const hasSubscribedRef = useRef(false); // Track if subscription exists
+
 
     useEffect(() => {
+        // console.log(currentPosition)
         setEnableUpdate(Math.abs(currentPosition[0] - currentPosition[1]) < 5500)
     }, [currentPosition])
 
     const updatePositionThrottled = throttle((start, end) => {
         setCurrentPosition([start, end]);
     }, 500); // Adjust the interval as needed
-
     useEffect(() => {
         gosRef.current?.api?.subscribe('location', (typeEvent, dataOfTrack) => {
-            let referenceTrack = gosRef.current?.api?.getTracks().find(track => track.id.includes('detail_tss'));
-            // console.log(dataOfTrack.id)
-            if (dataOfTrack.id === referenceTrack.id) {
+            if (dataOfTrack.id === `detail_tss_+_${nameGenomes[0]}`) {
                 let start = parseInt(dataOfTrack.genomicRange[0].position);
                 let end = parseInt(dataOfTrack.genomicRange[1].position);
-                if (Math.abs(start - end) < 7000) {
+                if (Math.abs(start - end) < 10000) {
                     updatePositionThrottled(start, end);
                 }
 

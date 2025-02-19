@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import "../../css/DropDown.css"; // Import the same CSS for styling
 
-function SingleSelectDropdown({ value, onChange, options, label, textColor = "black", style }) {
+function SingleSelectDropdown({ value, onChange, options, label, textColor = "black", style, headerStyle }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(value);
   const dropdownRef = useRef(null);
@@ -26,11 +26,18 @@ function SingleSelectDropdown({ value, onChange, options, label, textColor = "bl
     setIsOpen(false);
   };
 
+  useEffect(() => {
+    setSelectedOption(value);
+  }
+    , [value
+    ]);
+
   return (
     <div className="custom-dropdown"
       style={{ margin: "0 1em ", color: textColor, ...style }}
       ref={dropdownRef}>
-      <h3 className="select-header">{label}</h3>
+      <h3 className="select-header" style={headerStyle}
+      >{label}</h3>
       <div className="dropdown-header" onClick={toggleDropdown}>
         {options.find((opt) => opt.value === selectedOption)?.label || "Select..."}
         <span className="dropdown-arrow">▼</span>

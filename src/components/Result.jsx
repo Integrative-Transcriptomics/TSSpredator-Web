@@ -217,6 +217,7 @@ function Result() {
                 { value: "enriched", label: "Only enriched TSSs" },
                 { value: "detected", label: "All detected TSSs" },
               ]}
+              style={{ maxWidth: "30vw"}}
             />
             <GenomeViewerWrapper
               filePath={filePath}

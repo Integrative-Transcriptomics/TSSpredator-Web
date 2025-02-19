@@ -7,6 +7,7 @@ import "../../css/Tabs.css";
 import "../../css/App.css";
 import "../../css/Grid.css";
 import "../../css/DragDrop.css";
+import SingleSelectDropdown from "../Result/SingleSelect";
 
 
 function FormConfig({
@@ -217,30 +218,38 @@ function FormConfig({
 
       <div className={showParam ? "show margin-left file-column" : "hidden"}>
         <div className='element-row'>
-          <label className='element preset-label' htmlFor='preset'>
-            {" "}
-            parameter preset
-          </label>
-          <select
-            className='param-preset'
-            value={parameterPreset}
-            name='parameter-preset'
-            id='preset'
-            onChange={(e) => handleParameterPreset(e)}
+          <div 
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              width: "50vw",
+            }}
           >
-            <option value='custom'>custom</option>
-            <option value='very specific'>very specific</option>
-            <option value='more specific'>more specific</option>
-            <option value='default'>default</option>
-            <option value='more sensitive'>more sensitive</option>
-            <option value='very sensitive'>very sensitive</option>
-          </select>
+
+          <SingleSelectDropdown
+            label='Prediction parameters Preset'
+            value={parameterPreset}
+            onChange={(value) => {
+              let tmp = { target: { name: 'parameter-preset', value: value, id: 'preset' } }
+              handleParameterPreset(tmp)
+            }}
+            options={[
+              { value: 'custom', label: 'custom' },
+              { value: 'very specific', label: 'very specific' },
+              { value: 'more specific', label: 'more specific' },
+              { value: 'default', label: 'default' },
+              { value: 'more sensitive', label: 'more sensitive' },
+              { value: 'very sensitive', label: 'very sensitive' },
+            ]}
+            headerStyle={{ fontSize: '1.05em' }}
+            />
 
           <label
             className='grid-checkbox'
             htmlFor='check'
             data-title='If this option is enabled, the normalized RNA-seq graphs are written. Note that writing the graphs will increase the runtime.'
-          >
+            >
             <input
               type='checkbox'
               name='rna-seq-graph'
@@ -250,6 +259,7 @@ function FormConfig({
             write rna-seq graph
           </label>
         </div>
+              </div>
 
         {!parameters.parameterBox ? (
           <p></p>

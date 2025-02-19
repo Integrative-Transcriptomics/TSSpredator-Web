@@ -9,7 +9,8 @@
   /* Title bar enclosing all filter cards */
   .filter-title {
     display: flex;
-    justify-content: space-between;
+    gap: 1em;
+    justify-content: center;
     align-items: center;
     padding: 12px;
     background-color: #007bff;

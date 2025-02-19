@@ -286,8 +286,8 @@ function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
       <div className="filter-title">
         <span>Filters from UpSet plot:</span>
         <div className="info-icon-container">
-          <Info size={18} className="info-icon" />
-          <div className="tooltip">These filters are applied based on the UpSet plot selection.</div>
+          <Info style={{color:"white"}} size={24} className="info-icon" />
+          <div className="tooltip">These filters are applied based on the interactions with the UpSet plot.</div>
         </div>
         {filterFromUpset.length > 0 && (
           <button className="clear-button" onClick={() => adaptFilterFromUpset([])}>
@@ -297,6 +297,21 @@ function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
       </div>
 
       <div className="filter-grid">
+        {filterFromUpset.length === 0 && (
+        <div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+            width: "100%",
+        }} >
+          <div className="filter-card">
+            <span className="filter-text">No global filters selected. Interact with the UpSet plot for complex filters.</span>
+          </div>
+          </div>
+        )
+            
+        }
         {filterFromUpset.map((column, i) => (
           <div key={i} className="filter-card">
             <span className="filter-text">Category: {column.selectedType}</span>

@@ -189,7 +189,7 @@ select[multiple] option:checked {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
+  width: 80%;
   margin-top: 1%;
   margin-bottom: 1%;
 }

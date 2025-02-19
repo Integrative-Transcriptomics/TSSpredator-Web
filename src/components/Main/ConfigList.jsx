@@ -7,7 +7,7 @@ function ConfigList({ configData }) {
         <h3 className='header click-param' onClick={() => setShowConfig(!showConfig)}>
             {showConfig ? "-" : "+"} Show config used
         </h3>
-        <div className={!showConfig && " hidden"} >
+        <div className={!showConfig ? " hidden" : ""} >
             {
                 !configData ? null : <div
 

@@ -3,7 +3,7 @@ const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
 const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
 
 
-export const createWiggleTracks = (strand, genome, filePath, allowFetch) => {
+export const createWiggleTracks = (strand, genome, filePath, allowFetch,width) => {
     
     return ["Normal", "FivePrime"].map(type => {
         return {
@@ -15,6 +15,8 @@ export const createWiggleTracks = (strand, genome, filePath, allowFetch) => {
             },
             "id": `detail_wiggle_${strand}_${genome.replace(/_/g, "-")}_${type}`,
             "mark": "bar",
+            width: width,
+
             "x": { "field": "start", "type": "genomic" },
             "xe": { "field": "end", "type": "genomic" },
             "style": { "align": strand === "+" ? "left" : "right", backgroundOpacity: 0 },
@@ -44,10 +46,12 @@ export const createWiggleTracks = (strand, genome, filePath, allowFetch) => {
     )
 }
 
-export const createGenomeTrack = (filePath, genome, strand = "+") => {
+export const createGenomeTrack = (filePath, genome, strand = "+",width) => {
     return [{
         "alignment": "overlay",
         "height": 20,
+        width: width,
+
         "id": `${genome}_${strand}_genome_track`,
 
         "data": {
@@ -86,7 +90,7 @@ export const createGenomeTrack = (filePath, genome, strand = "+") => {
 
 }
 
-export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, strand, GT, LT, viewType, genomeName) => {
+export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, strand, GT, LT, viewType, genomeName, width) => {
     let transitionPadding = 5000;
     return {
         "title": `TSS counts in ${strand === "+" ? "forward" : "reverse"} strand`,
@@ -105,6 +109,8 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
         "x": { "field": "binStart", "type": "genomic", "axis": "none" },
         "xe": { "field": "binEnd", "type": "genomic", "axis": "none" },
         "mark": "bar",
+        width: width,
+
         "style": { "background": strand === "+" ? "lightblue" : "#f59f95", "backgroundOpacity": 0.25 },
         "y": {
             "field": "count",
@@ -152,7 +158,7 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
     }
 }
 
-export const createDetailTSSTrack = (filePath, strand, filterTSS, TSS_DETAIL_LEVEL_ZOOM, viewType, genomeName) => {
+export const createDetailTSSTrack = (filePath, strand, filterTSS, TSS_DETAIL_LEVEL_ZOOM, viewType, genomeName, width) => {
     return {
         "data": {
             "type": "csv",
@@ -163,6 +169,8 @@ export const createDetailTSSTrack = (filePath, strand, filterTSS, TSS_DETAIL_LEV
             { "type": "filter", "field": "superStrand", "oneOf": [strand] },
             { "type": "filter", "field": "typeTSS", "oneOf": filterTSS }
         ],
+        width: width,
+
         "id": `detail_tss_${strand}_${genomeName}`,
         "x": { "field": "superPos", "type": "genomic", "axis": "top" },
         "mark": strand === "+" ? "triangleRight" : "triangleLeft",
@@ -198,12 +206,13 @@ export const createDetailTSSTrack = (filePath, strand, filterTSS, TSS_DETAIL_LEV
     };
 }
 
-export const createGFFTrack = (filePath, genomeName, strand) => {
+export const createGFFTrack = (filePath, genomeName, strand, width) => {
     const TSS_DETAIL_LEVEL_ZOOM = 50000;
     let transitionPadding = 5000;
     return [{
         "alignment": "overlay",
         "height": 60,
+        width: width,
         "data": {
             "type": "csv",
             "url": "/api/getGFFData/" + filePath + "/" + genomeName + "/" + (strand === "+" ? "Plus" : "Minus"),

@@ -453,6 +453,8 @@ function Main() {
   const handleParameters = (event) => {
     const { name, id: directParent } = event.target;
     const { value, valueAsNumber } = event.target;
+
+    console.log(name, value, valueAsNumber, directParent)
     const checkingTypeOrCluster = ["typeofstudy", "clustermethod"].includes(name)
     let val = checkingTypeOrCluster ? value : valueAsNumber;
     if (!checkingTypeOrCluster)
@@ -678,6 +680,8 @@ function Main() {
    * updates parameters according to the chosen parameter preset
    */
   const handleParameterPreset = (event) => {
+    console.log(event.target.value)
+    
     setParameterPreset(event.target.value);
     const preset = event.target.value.replace(" ", "");
     if (typeof parameters.parameterBox !== "undefined" && event.target.value !== "custom") {

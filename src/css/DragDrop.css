@@ -127,10 +127,12 @@
   word-break: break-word;
   width: 100%;
   margin: auto;
-  padding: 0;
-  background-color: #4000ff;
+  padding: 0.5em;
+  background-color: white;
   border-radius: 0.5rem;
-  color: white;
+  color: #007bff;
+  border-color: #007bff;
+  border: 1px solid;
   cursor: grab;
 }
 .replicate-container {

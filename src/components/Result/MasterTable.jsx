@@ -1,5 +1,20 @@
-import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
-import { useTable } from 'react-table';
+import MultiSelectDropdown from './MultiSelectDropdown';
+import RangeFilter from './RangeFilter';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import {
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getSortedRowModel,
+    useReactTable,
+} from '@tanstack/react-table';
+import { useVirtualizer, notUndefined } from '@tanstack/react-virtual'
+import { Info } from "lucide-react"; // Using lucide-react for the info icon
+
+
+import SearchInput from './SearchField';
+import "../../css/FilterCard.css";
+
 
 /**
  * create mastertable with infinite scroll for faster rendering 
@@ -7,197 +22,214 @@ import { useTable } from 'react-table';
  * @param tableData: all table rows
  * @param showTable: true <-> show table, else hidden
  */
-function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer }) {
 
-    const [loading, setLoading] = useState(false)
-    const [moreRows, setMoreRows] = useState(true);
-    const [counter, setCounter] = useState(200);
-    // currently loaded rows
-    const [currentData, setCurrentData] = useState(tableData.slice(0, 200));
+function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer, selectionData, filterFromUpset, adaptFilterFromUpset }) {
     // currently used data
-    const allData = useRef([...tableData]);
-    // current sorted column -> first index: column index, second index: d (descending) or a (ascending)
-    const currentSortedCol = useRef(['0', 'a']);
-    // seacrh string on column
-    const [searchColumn, setSearchColumn] = useState('0');
-    const [searchString, setSearchString] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [filteredData, setFilteredData] = useState([...tableData]); // Store filtered data separately
+    useEffect(() => {
+        setIsLoading(true); // Show loading overlay
 
-    // reset table
-    const resetTable = () => {
-        setSearchColumn('0');
-        setSearchString("");
-        allData.current = [...tableData];
-        setCounter(200);
-        setCurrentData(tableData.slice(0, 200));
-    }
+        // Simulate async filtering process (use actual logic here)
+        setTimeout(() => {
+            const newData = tableData.filter(row => {
+                if (filterFromUpset.length === 0) return true;
+                let tmpTuple = `${row[0]},${row[1]}`;
+                return filterFromUpset.some(filter => filter.positions.includes(tmpTuple));
+            });
 
-    // search for string in table column
-    const startSearch = () => {
-        if (searchString.length === 0) return;
+            setFilteredData(newData); // Update table data
+            setIsLoading(false); // Hide loading overlay
+        }, 300); // Small delay to ensure smooth transition
+    }, [filterFromUpset, tableData]);
 
-        const newData = [];
-        tableData.forEach((row) => {
-            if (row[searchColumn].includes(searchString)) {
-                newData.push(row);
-            }
-        });
-        setCounter(200);
-        allData.current = [...newData];
-        setCurrentData(newData.slice(0, 200));
-    }
+    const [columnFilters, setColumnFilters] = useState(
+        []
+    )
+    const [sorting, setSorting] = useState([])
 
-    // sort Table according to the given column
-    const sortTable = (column) => {
-
-        const sortData = [...allData.current];
-        // sort descending
-        var biggerA = -1;
-        var biggerB = 1;
-        // sort currenlty sorted column
-        if ((currentSortedCol.current)[0] === column) {
-
-            // currently column sorted in descending order
-            if ((currentSortedCol.current)[1] === "d") {
-                // sort in ascending order
-                biggerA = 1;
-                biggerB = -1
-                currentSortedCol.current = [column, 'a'];
-            } else {
-                currentSortedCol.current = [column, 'd'];
-            }
-        } else {
-            currentSortedCol.current = [column, 'd'];
-        }
-
-        sortData.sort((a, b) => {
-            return callSort(a[column], b[column], biggerA, biggerB);
-        });
-        setCounter(200);
-        allData.current = [...sortData];
-        setCurrentData(sortData.slice(0, 200));
-    }
-
-    /**
-     * do the sorting 
-     */
-    const callSort = (first, second, biggerA, biggerB) => {
-
-        // check if undefinde
-        if (typeof first === 'undefined') return biggerB;
-        if (typeof second === 'undefined') return biggerA;
-
-        // check if NA
-        if ((first === 'NA' && second === 'NA') || (first.length === 0 && second.length === 0) || (first === 'Infinity/Infinity' && second === 'Infinity/Infinity')) {
-            return 0;
-        }
-        if (first === 'NA' || second === 'Infinity/Infinity' || first.length === 0) return biggerB;
-        if (second === 'NA' || first === 'Infinity/Infinity' || second.length === 0) return biggerA;
-
-        // check for '/'
-        if (first.includes('/') && second.includes('/')) {
-            if (first.split('/')[0] === 'Infinity' && second.split('/')[0] === 'Infinity') {
-                first = first.split('/')[1];
-                second = second.split('/')[1];
-            } else {
-                first = first.split('/')[0];
-                second = second.split('/')[0];
-            }
-        }
-        // check for >
-        if (first[0] === '>') first = first.slice(1);
-        if (second[0] === '>') second = second.slice(1);
-
-        // check if it is a number
-        if (!isNaN(first)) first = parseFloat(first);
-        if (!isNaN(second)) second = parseFloat(second);
-
-        // compare values
-        if (first > second) return biggerA;
-        if (first < second) return biggerB;
-        return 0;
-    }
-
-
-    /**
-     * add observer to 20th last row
-     */
-    const observer = useRef();
-    const lastRow = useCallback(node => {
-        if (loading) return;
-        if (observer.current) observer.current.disconnect();
-        observer.current = new IntersectionObserver(rows => {
-            if (rows[0].isIntersecting && moreRows) {
-                setLoading(true);
-                /**
-                 * add new rows to current data
-                */
-                if (currentData.length - 100 <= allData.current.length) {
-                    setCurrentData(current => [...current, ...allData.current.slice(counter, counter + 100)]);
-                    setCounter(c => c + 100);
-                } else {
-                    setMoreRows(false);
-                }
-                setLoading(false);
-            }
-        });
-        if (node) observer.current.observe(node)
-    }, [loading, moreRows, counter, currentData])
 
     // prevent rerendering 
     const columns = useMemo(() => tableColumns, [tableColumns]);
-    const data = useMemo(() => currentData, [currentData]);
+    const data = useMemo(() => filteredData, [filteredData]);
 
     // create table instance
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data });
+    const table = useReactTable({
+        columns, data,
+        state: {
+            columnFilters,
+            sorting,
+        },
+        sortingFns: {
+            myReplicateSorting: (row1, row2, columnID) => {
+                let a = row1.original[columnID];
+                let b = row2.original[columnID];
+            
+                // Directly return if values are equal
+                if (a === b) return 0;
+            
+                // Handle empty values efficiently
+                if (!a) return -1;
+                if (!b) return 1;
+            
+                // Optimize '/' splitting and mean calculation
+                const parseValues = (val) => {
+                    if (!val.includes('/')) return val === "Infinity" ? Number.MAX_VALUE : val === "NA" ? 0 : parseFloat(val);
+                    let numbers = val.split('/').map(x => x === "Infinity" ? Number.MAX_VALUE : x === "NA" ? 0 : parseFloat(x));
+                    return numbers.reduce((sum, num) => sum + num, 0) / numbers.length;
+                };
+            
+                a = parseValues(a);
+                b = parseValues(b);
+            
+                return a - b;
+            },            
+            myCappedSorting: (row1, row2, columnID) => {
+                let a = row1.original[columnID];
+                let b = row2.original[columnID];
+            
+                // Directly return if values are equal
+                if (a === b) return 0;
+            
+                // Handle 'NA' cases efficiently
+                if (a === 'NA') return -1;
+                if (b === 'NA') return 1;
+            
+                // Remove '>' prefix if present
+                if (a.startsWith('>')) a = a.slice(1);
+                if (b.startsWith('>')) b = b.slice(1);
+            
+                // Convert to number only if necessary
+                a = isNaN(a) ? a : parseFloat(a);
+                b = isNaN(b) ? b : parseFloat(b);
+            
+                return a - b;
+                        
+            }
+        },
+        onSortingChange: setSorting,
 
+        onColumnFiltersChange: setColumnFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel()
+    });
+
+    const { rows } = table.getRowModel();
+    const parentRef = useRef(null);
+    const virtualizer = useVirtualizer({
+        count: rows.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 50,
+        overscan: 20,
+    })
+
+    const items = virtualizer.getVirtualItems();
+    const [before, after] =
+        items.length > 0
+            ? [
+                notUndefined(items[0]).start - virtualizer.options.scrollMargin,
+                virtualizer.getTotalSize() - notUndefined(items[items.length - 1]).end
+            ]
+            : [0, 0];
 
     return (
         <div className={showTable ? 'table-and-filter' : 'hidden'}>
-            <div className='table-filter'>Search column
-                <select onChange={(e) => setSearchColumn(e.target.value)} value={searchColumn}>
-                    {columns.map((col, i) => {
-                        return <option value={i} key={i}>{col['Header']}</option>
-                    })}
-                </select>
-                for
-                <input className='element' type='text' onChange={(e) => setSearchString(e.target.value)} value={searchString} />
-                <button className='button' onClick={() => startSearch()}>Search</button>
-                <p className='reset' onClick={() => resetTable()}>x</p>
-            </div>
-            <div className='table-container'>
-                <table {...getTableProps()}>
-                    <thead >
-                        {headerGroups.map((headerGroup) => (
-                            <tr {...headerGroup.getHeaderGroupProps()} >
-                                {showGFFViewer && <th> Zoom in Viewer </th>}
-                                {headerGroup.headers.map((column, i) => (
 
-                                    <th {...column.getHeaderProps()} onClick={() => sortTable((i.toString()))}>
-                                        {column.render('Header')}
-                                        {currentSortedCol.current[0] === i.toString()
-                                            ? (currentSortedCol.current[1] === 'a' ? <i className="sort-arrow up"></i> : <i className="sort-arrow down"></i>)
-                                            : <span className='sort-symbol'>-</span>}
-                                    </th>
-                                ))}
+            <FilterCard filterFromUpset={filterFromUpset} adaptFilterFromUpset={adaptFilterFromUpset}/>
+     
+            <div 
+                ref={parentRef} 
+                className='table-container'
+                style={{ overflow: "auto", overflowAnchor: "none" }}
+            >
+                <table>
+                    <thead >
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <tr
+                                key={headerGroup.id}
+                                style={{
+                                    position: "sticky",
+                                    top: 0,
+                                    background: "green",
+                                    width: "100%",
+                                }}
+                            >
+                                {showGFFViewer && <th> Zoom in Viewer </th>}
+
+                                {
+                                    headerGroup.headers.map((header, i) => (
+
+                                        <th colSpan={header.colSpan} key={header.column.id}>
+                                            <>
+                                                <div
+                                                    {...{
+                                                        className: header.column.getCanSort()
+                                                            ? 'cursor-pointer select-none'
+                                                            : '',
+                                                        onClick: header.column.getToggleSortingHandler(),
+                                                    }}
+                                                >
+                                                    {flexRender(
+                                                        header.column.columnDef.header,
+                                                        header.getContext()
+                                                    )}
+                                                    {{
+                                                        asc: ' 🔼',
+                                                        desc: ' 🔽',
+                                                    }[header.column.getIsSorted()] ?? null}
+                                                </div>
+                                                {header.column.getCanFilter() ? (
+                                                    <div>
+                                                        <Filter column={header.column} selectionData={selectionData} />
+                                                    </div>
+                                                ) : null}
+                                            </>
+
+                                        </th>
+                                    ))}
                             </tr>
                         ))}
                     </thead>
-                    <tbody {...getTableBodyProps()} >
-                        {rows.map((row, i) => {
-
-                            prepareRow(row)
+                    {isLoading && (
+                <div className="loading-overlay" style={{ 
+                    height: `${virtualizer.getTotalSize()}px`,
+                    transform: `translateY(${virtualizer.getScrollOffset()}px)`}}>
+                        <div className='loading-group' style={{transform: `translateY(${parseFloat(parentRef.current.clientHeight/2)}px)`}}>
+                        <div className="spinner"></div>
+                    <p>Loading...</p>
+                        </div>
+                </div>
+            )}
+                    <tbody  >
+                        {before > 0 && (
+                            <tr>
+                                <td colSpan={columns.length} style={{ height: before }} />
+                            </tr>
+                        )}
+                        {items.map((virtualRow, i) => {
+                            const row = rows[virtualRow.index]
                             return (
-                                <tr {...row.getRowProps()} ref={(rows.length - 21 === i) ? lastRow : null}>
+                                // <tr {...row.getRowProps()} ref={(rows.length - 21 === i) ? lastRow : null}>
+                                <tr
+                                    key={row.id}
+                                    style={{
+                                        height: `${virtualRow.size}px`,
+                                        // transform: `translateY(${virtualRow.start - i * virtualRow.size
+                                        //     }px)`,
+                                    }}
+                                >
 
                                     {showGFFViewer && <td> <button className="button-results" style={
                                         {
-                                            backgroundColor: "lightgrey",
-                                            color: "black",
-                                            padding: "2px",
+                                            backgroundColor: "#007bff",
+                                            color: "white",
+                                            padding: "0.5em",
                                             margin: "2px",
                                             border: "none",
                                             cursor: "pointer",
-                                            borderRadius: "5px"
+                                            borderRadius: "6px",
+                                            fontFamily: "Arial",
                                         }
                                     }
                                         onClick={() => {
@@ -209,21 +241,92 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
                                     }
 
                                     {
-                                        row.cells.map((cell) => {
+                                        row.getVisibleCells().map((cell) => {
                                             return (
-                                                <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                                                <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                                             )
                                         })
                                     }
-                                </tr>
-                            )
-
-                        })}
+                                </tr>)
+                        }
+                        )}
+                        {after > 0 && (
+                            <tr>
+                                <td colSpan={columns.length} style={{ height: after }} />
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
         </div >
     )
+}
+
+function Filter({ column, selectionData }) {
+    const columnFilterValue = column.getFilterValue()
+    const { filterVariant } = column.columnDef.meta ?? {}
+
+    return filterVariant === 'range' ? (
+        <RangeFilter column={column} columnFilterValue={columnFilterValue} />
+    ) : filterVariant === 'select' ? (
+        <MultiSelectDropdown column={column} selectionData={selectionData} columnFilterValue={columnFilterValue} />
+
+    ) : filterVariant === 'none' ? (
+        <> </>
+    ) : (
+        <SearchInput column={column} columnFilterValue={columnFilterValue} />
+    )
+}
+
+
+function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
+  return (
+    <div className="filter-container">
+      {/* Title Bar enclosing all filter cards */}
+      <div className="filter-title">
+        <span>Filters from UpSet plot:</span>
+        <div className="info-icon-container">
+          <Info style={{color:"white"}} size={24} className="info-icon" />
+          <div className="tooltip">These filters are applied based on the interactions with the UpSet plot.</div>
+        </div>
+        {filterFromUpset.length > 0 && (
+          <button className="clear-button" onClick={() => adaptFilterFromUpset([])}>
+            Clear All ✖
+          </button>
+        )}
+      </div>
+
+      <div className="filter-grid">
+        {filterFromUpset.length === 0 && (
+        <div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+            width: "100%",
+        }} >
+          <div className="filter-card">
+            <span className="filter-text">No global filters selected. Interact with the UpSet plot for complex filters.</span>
+          </div>
+          </div>
+        )
+            
+        }
+        {filterFromUpset.map((column, i) => (
+          <div key={i} className="filter-card">
+            <span className="filter-text">Category: {column.selectedType}</span>
+            <span className="filter-text">Selected: {column.classes.join(" & ")}</span>
+            <button
+              className="close-button"
+              onClick={() => adaptFilterFromUpset((prev) => prev.filter((_, index) => index !== i))}
+            >
+              ✖
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default MasterTable

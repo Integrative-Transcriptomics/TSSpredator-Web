@@ -75,6 +75,7 @@
 }
 .click-param {
     cursor: pointer; 
+    font-size: 1.2em;
 }
 .click-param:hover {
     color:rgb(255, 140, 0)

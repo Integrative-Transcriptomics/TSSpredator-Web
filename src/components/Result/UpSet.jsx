@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { extractCombinations, UpSetJS } from '@upsetjs/react';
+import SingleSelectDropdown from './SingleSelect.jsx';
 
 
 /** creates an Upset plot for the tss classes
@@ -7,8 +8,7 @@ import { extractCombinations, UpSetJS } from '@upsetjs/react';
  * @param classes: all classes and their frequency
  * @param showUpSet: boolean for showing/hiding the plot
  */
-function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData }) {
-
+function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData, handleClickUpset }) {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
 
@@ -24,8 +24,8 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
     };
   }, []);
 
-  
-  const [upsetClasses, setUpsetClasses] = useState([]);
+
+
   const [data, setData] = useState([]);
   // const [type, setType] = useState("all");
   // const [classUpsetPlot, setClassesUpsetPlot] = useState("tssClass");
@@ -34,7 +34,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
     classUpsetPlot: "tssClass",
     type: "all",
   });
-  
+
   const handleClassUpsetPlotChange = (value) => {
     setPlotSettings((prev) => ({ ...prev, classUpsetPlot: value, type: "all" }));
   };
@@ -42,8 +42,8 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
   const handleTypeChange = (value) => {
     setPlotSettings((prev) => ({ ...prev, type: value }));
   };
-  
-  
+
+
 
   const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
   const ORDER_TSS_CLASSES = ["primary", "secondary", "internal", "antisense", "orphan"]
@@ -73,13 +73,13 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
    */
     const TSSperPosition = (rows, columns, typeIntersection = "all") => {
       // get column indices
-      const primaryIdx = columns.findIndex((col) => col["Header"] === "Primary");
-      const secondaryIdx = columns.findIndex((col) => col["Header"] === "Secondary");
-      const internalIdx = columns.findIndex((col) => col["Header"] === "Internal");
-      const antisenseIdx = columns.findIndex((col) => col["Header"] === "Antisense");
-      const superPosIdx = columns.findIndex((col) => col["Header"] === "SuperPos");
-      const variableFilterTSS = columns.findIndex((col) => col["Header"] === filterForPlots);
-      const superStrandIdx = columns.findIndex((col) => col["Header"] === "SuperStrand");
+      const primaryIdx = columns.findIndex((col) => col["header"] === "Primary");
+      const secondaryIdx = columns.findIndex((col) => col["header"] === "Secondary");
+      const internalIdx = columns.findIndex((col) => col["header"] === "Internal");
+      const antisenseIdx = columns.findIndex((col) => col["header"] === "Antisense");
+      const superPosIdx = columns.findIndex((col) => col["header"] === "SuperPos");
+      const variableFilterTSS = columns.findIndex((col) => col["header"] === filterForPlots);
+      const superStrandIdx = columns.findIndex((col) => col["header"] === "SuperStrand");
 
 
 
@@ -96,7 +96,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
           const tmpStrand = row[superStrandIdx];
           // Get genome/condition name
           const genomeIdx = columns.findIndex(
-            (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
+            (col) => col["header"] === "Genome" || col["header"] === "Condition"
           );
           const genomeName = row[genomeIdx];
           let tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
@@ -163,10 +163,10 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
         }
       });
       if (plotSettings.classUpsetPlot === "tssClass") {
-        return(tssWithMultipleClasses);
+        return (tssWithMultipleClasses);
       }
       else {
-        return(tssWithMultipleConditions);
+        return (tssWithMultipleConditions);
       }
     };
     const selectedDataToShow = plotSettings.type;
@@ -180,12 +180,12 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
     }
     else {
       const genomeIdx = tableColumns.findIndex(
-        (col) => col["Header"] === "Genome" || col["Header"] === "Condition"
+        (col) => col["header"] === "Genome" || col["header"] === "Condition"
       );
-      const primaryIdx = tableColumns.findIndex((col) => col["Header"] === "Primary");
-      const secondaryIdx = tableColumns.findIndex((col) => col["Header"] === "Secondary");
-      const internalIdx = tableColumns.findIndex((col) => col["Header"] === "Internal");
-      const antisenseIdx = tableColumns.findIndex((col) => col["Header"] === "Antisense");
+      const primaryIdx = tableColumns.findIndex((col) => col["header"] === "Primary");
+      const secondaryIdx = tableColumns.findIndex((col) => col["header"] === "Secondary");
+      const internalIdx = tableColumns.findIndex((col) => col["header"] === "Internal");
+      const antisenseIdx = tableColumns.findIndex((col) => col["header"] === "Antisense");
       // filter table
       const newData = [];
       tableData.forEach((row) => {
@@ -194,12 +194,13 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
             newData.push(row);
           }
         }
-      else {
-        let tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
-        if (tmpClass === selectedDataToShow) {
-          newData.push(row);
+        else {
+          let tmpClass = getClass(row, primaryIdx, secondaryIdx, internalIdx, antisenseIdx);
+          if (tmpClass === selectedDataToShow) {
+            newData.push(row);
+          }
         }
-      }}
+      }
 
       );
       // create new plots
@@ -207,29 +208,29 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
     }
 
     let color_tss = {}
-  ORDER_TSS_CLASSES.forEach((x, i) => {
-    color_tss[x] = COLORS_TSS[i]
-  })
-  let elems;
-  if (plotSettings.type === "all") {
-    elems = Object.entries(processedData).reduce((accum, curr) => {
-      let tssName = curr[0]
-      let mapGenomes = Object.entries(curr[1]).filter(x => x[0] !== "set").map((other) => {
-        const typesOfTSS = other[1]
-        const genomeFound = other[0]
-        return { name: tssName, sets: [...typesOfTSS, genomeFound] }
-      })
-      // join accum and mapGenomes
-      return accum.concat(mapGenomes)
-    }, [])
-  }
-  else {
-    elems = Object.entries(processedData).map((other) => {
-      return { name: other[0], sets: other[1]["set"] }
+    ORDER_TSS_CLASSES.forEach((x, i) => {
+      color_tss[x] = COLORS_TSS[i]
     })
-  }
+    let elems;
+    if (plotSettings.type === "all") {
+      elems = Object.entries(processedData).reduce((accum, curr) => {
+        let tssName = curr[0]
+        let mapGenomes = Object.entries(curr[1]).filter(x => x[0] !== "set").map((other) => {
+          const typesOfTSS = other[1]
+          const genomeFound = other[0]
+          return { name: tssName, sets: [...typesOfTSS, genomeFound] }
+        })
+        // join accum and mapGenomes
+        return accum.concat(mapGenomes)
+      }, [])
+    }
+    else {
+      elems = Object.entries(processedData).map((other) => {
+        return { name: other[0], sets: other[1]["set"] }
+      })
+    }
 
- 
+
     const { sets } = extractCombinations(elems);
     let filteredSet;
     if (plotSettings.classUpsetPlot === "tssClass") {
@@ -242,7 +243,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
       if (!["all", "dedup"].includes(plotSettings.type)) {
         filteredSet.forEach(x => x.color = color_tss[plotSettings.type])
       }
-      
+
     }
 
     setData(filteredSet);
@@ -259,43 +260,74 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData 
 
 
 
-  return <div className={showUpSet ? '' : 'hidden'}>
-        <div className='result-select'>
-      <h3 className='select-header'>Categories to analyze</h3>
-      <select onChange={(e) => {
-        // setType("all")
-        handleClassUpsetPlotChange(e.target.value)
-        }} defaultValue={"tssClass"} value={plotSettings.classUpsetPlot}>
-        <option value='tssClass'>TSS classes</option>
-        <option value='conditions'>Conditions/Genomes</option>
-      </select>
-    </div>
-    <div className='result-select'>
-      <h3 className='select-header'>Show UpSet Plot for</h3>
-      <select onChange={(e) => handleTypeChange(e.target.value)} defaultValue={"all"} value={plotSettings.type}>
-        <option value='all'>Union of all TSS across {plotSettings.classUpsetPlot == "tssClass" ? "Conditions/Genomes" : "TSS classes"}</option>
-        <option value='dedup'>Intersection of all TSS across {plotSettings.classUpsetPlot == "tssClass" ? "Conditions/Genomes" : "TSS classes"}</option>
+  return <div style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%"
+  }} className={showUpSet ? '' : 'hidden'}>
+    <div className="upset-settings">
+      <SingleSelectDropdown
+        label="Show UpSet Plot for"
+        value={plotSettings.type}
+        onChange={(value) => handleTypeChange(value)}
+        options={[
+          {
+            value: "all",
+            label: `Union of all TSS across ${plotSettings.classUpsetPlot === "tssClass"
+                ? "Conditions/Genomes"
+                : "TSS classes"
+              }`,
+          },
+          {
+            value: "dedup",
+            label: `Intersection of all TSS across ${plotSettings.classUpsetPlot === "tssClass"
+                ? "Conditions/Genomes"
+                : "TSS classes"
+              }`,
+          },
+          ...(plotSettings.classUpsetPlot === "tssClass"
+            ? [...allGenomes]
+            : [...ORDER_TSS_CLASSES]
+          ).map((col) => ({ value: col, label: col })),
+        ]}
+      />
+      <SingleSelectDropdown
+        label="Categories to Analyze"
+        value={plotSettings.classUpsetPlot}
+        onChange={(value) => handleClassUpsetPlotChange(value)}
+        options={[
+          { value: "tssClass", label: "TSS classes" },
+          { value: "conditions", label: "Conditions/Genomes" },
+        ]}
+      />
 
-        { // Create a list of all genomes/conditions since Set does not have .map
-          (plotSettings.classUpsetPlot == "tssClass" ?  [...allGenomes] : [...ORDER_TSS_CLASSES]).map((col, i) => {
-            return (
-              <option value={col} key={i}>
-                {col}
-              </option>
-            );
-          })}
-      </select>
+
     </div>
 
     <UpSetJS className={showUpSet ? '' : 'hidden'}
       sets={data}
       combinations={combinations}
-      width={windowWidth * 0.7} height={windowHeight * 0.4} selection={selection} onHover={setSelection} 
-      onClick={(selection)=>{
-        console.log("clicked")
-        console.log(selection)
+      width={windowWidth * 0.7} height={windowHeight * 0.4} selection={selection} onHover={setSelection}
+      onClick={(selection) => {
+        let selected = {
+          positions: [...new Set(selection.elems.map(x => x.name))],
+          classes: [...selection.sets].map(x => x.name),
+          id: [...selection.sets].map(x => x.name).join(""),
+          selectedType: plotSettings.classUpsetPlot === "tssClass" ? "TSS classes" : "Conditions/Genomes"
+        };
+      
+        handleClickUpset((prev) => {
+          // Check if selection already exists
+          const exists = prev.some(item => item.id === selected.id);
+      
+          // If it doesn't exist, add it; otherwise, return the same state
+          return exists ? prev : [...prev, selected];
+        });
       }}
-       />
+      
+    />
   </div>;
 }
 

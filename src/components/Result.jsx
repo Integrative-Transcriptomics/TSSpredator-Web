@@ -7,15 +7,35 @@ import "../css/App.css";
 import "../css/MasterTable.css";
 import MasterTable from "./Result/MasterTable";
 import UpSet from "./Result/UpSet";
-import UpSetOverConditions from "./Result/UpSetOverConditions";
 import Header from "./Main/Header";
 import GenomeViewerWrapper from "./Result/GenomeViewerWrapper";
 import ResultNotFoundPage from "./404Result";
 import ConfigList from "./Main/ConfigList";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { sortingFns } from "@tanstack/react-table";
+import SingleSelectDropdown from './Result/SingleSelect.jsx';
+
 
 /**
  * creates page that displays result of TSS prediction
  */
+const selectHeaders = ["detected", "enriched", "Genome", "Condition", "SuperStrand", "Strand", "Primary", "Secondary", "Antisense", "Internal", "contigID"]
+const cappedValues = ["enrichmentFactor", "stepHeight", "stepFactor"]
+function getFilterType(header) {
+  const rangeHeaders = ["SuperPos", "Pos", "GeneLength", "UTRlength", "contigPos", "mapCount", "detCount", "classCount"]
+  const nonFilterable = ["Sequence -50 nt upstream + TSS (51nt)"]
+
+  if (rangeHeaders.includes(header)) {
+    return "range";
+  }
+  else if (selectHeaders.includes(header)) {
+    return "select";
+  }
+  else if (nonFilterable.includes(header)) {
+    return "none";
+  }
+  return "text";
+}
 
 function Result() {
   // filePath on server
@@ -34,10 +54,11 @@ function Result() {
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(true);
   const [filterForPlots, setFilterForPlots] = useState("enriched");
+  const dataMetadataColumns = useRef(null);
+  const [filterPositions, setFilterPositions] = useState([]);
 
   // Upset Plot
   const [showUpSet, setShowUpSet] = useState(false);
-  const [showUpSetConditions, setShowUpSetConditions] = useState(false);
 
   // GoslingRef
   const gosRef = useRef();
@@ -51,9 +72,22 @@ function Result() {
   const handleMasterTable = (masterTable) => {
     const allRows = masterTable.trim().split("\n"); // trim() removes trailing newline
     const headers = allRows[0].split("\t");
-
+    let IDofSelectableColumns = []
+    let tmpMetadataColumns = {}
     const col = headers.map((h, i) => {
-      return { Header: h, accessor: i.toString() };
+      if (selectHeaders.includes(h)) {
+        IDofSelectableColumns.push(i)
+      }
+      let filterVariant = getFilterType(h)
+      return {
+        header: h,
+        accessorKey: i.toString(),
+        meta: {
+          filterVariant: filterVariant,
+        },
+        filterFn: filterVariant === "range" ? 'inNumberRange' : filterVariant === "select" ? 'arrIncludesSome' : filterVariant === "none" ? 'none' : 'includesString',
+        sortingFn: h.startsWith("rep") ? "myReplicateSorting" : cappedValues.includes(h) ? "myCappedSorting" : sortingFns.alphanumeric
+      };
     });
     const searchFor = headers.indexOf("Genome") !== -1 ? "Genome" : "Condition";
     const genomeIdx = headers.indexOf(searchFor);
@@ -61,12 +95,20 @@ function Result() {
     const allG = new Set();
     const dataRows = allRows.slice(1).map(row => {
       const tmp = row.split("\t");
+
       allG.add(tmp[genomeIdx]);
       return tmp.reduce((acc, content, j) => {
+        if (IDofSelectableColumns.includes(j)) {
+          if (tmpMetadataColumns[j.toString()] === undefined) {
+            tmpMetadataColumns[j.toString()] = new Set()
+          }
+          tmpMetadataColumns[j.toString()].add(content)
+        }
         acc[j.toString()] = content;
         return acc;
       }, {});
     });
+    dataMetadataColumns.current = tmpMetadataColumns;
 
     setTableColumns(col);
     setTableData(dataRows);
@@ -128,7 +170,7 @@ function Result() {
       }, 0);
     }
   };
-
+  let queryClient = new QueryClient();
   /**
    * update plots for selected genome/condition
    */
@@ -166,19 +208,28 @@ function Result() {
               <ConfigList configData={configData} />
 
             </div>
-            <div className='result-select'>
-              <h3 className='select-header'>Show the following TSS in plots: </h3>
-              <select onChange={(e) => setFilterForPlots(e.target.value)} value={filterForPlots}>
-                <option value='enriched'>Only enriched TSSs</option>
-                <option value='detected'>All detected TSSs</option>
-              </select>
-            </div>
 
-            <GenomeViewerWrapper filePath={filePath} filterSelected={filterForPlots} gosRef={gosRef} showGFFViewer={showGenomeViewer} setGFFViewer={setShowGenomeViewer} />
-
+            <SingleSelectDropdown
+              label="Show the following TSS in plots"
+              value={filterForPlots}
+              onChange={(value) => setFilterForPlots(value)}
+              options={[
+                { value: "enriched", label: "Only enriched TSSs" },
+                { value: "detected", label: "All detected TSSs" },
+              ]}
+              style={{ maxWidth: "30vw"}}
+            />
+            <GenomeViewerWrapper
+              filePath={filePath}
+              filterSelected={filterForPlots}
+              gosRef={gosRef}
+              showGFFViewer={showGenomeViewer}
+              setGFFViewer={setShowGenomeViewer}
+              nameGenomes={[...allGenomes]}
+            />
             <div className='result-margin-left'>
               <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
-                {showUpSet ? "-" : "+"} Distribution of TSS across classes
+                {showUpSet ? "-" : "+"} UpSet Plot: Distribution of TSS across Categories
               </h3>
               {processedMasterTable ? (
                 <UpSet
@@ -187,22 +238,28 @@ function Result() {
                   filterForPlots={filterForPlots}
                   tableColumns={tableColumns}
                   tableData={tableData}
+                  handleClickUpset={setFilterPositions}
                 />
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}
             </div>
-
-
-
-
-
             <div>
               <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>
                 {showTable ? "-" : "+"} Master Table
               </h3>
               {tableColumns.length > 0 ? (
-                <MasterTable tableColumns={tableColumns} tableData={tableData} showTable={showTable} gosRef={gosRef} showGFFViewer={showGenomeViewer} />
+                <QueryClientProvider client={queryClient}>
+                  <MasterTable
+                    adaptFilterFromUpset={setFilterPositions}
+                    filterFromUpset={filterPositions}
+                    selectionData={dataMetadataColumns.current}
+                    tableColumns={tableColumns}
+                    tableData={tableData}
+                    showTable={showTable}
+                    gosRef={gosRef}
+                    showGFFViewer={showGenomeViewer} />
+                </QueryClientProvider>
               ) : (
                 <ClipLoader color='#ffa000' size={30} />
               )}

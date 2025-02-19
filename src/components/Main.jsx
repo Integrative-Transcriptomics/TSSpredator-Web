@@ -453,6 +453,8 @@ function Main() {
   const handleParameters = (event) => {
     const { name, id: directParent } = event.target;
     const { value, valueAsNumber } = event.target;
+
+    console.log(name, value, valueAsNumber, directParent)
     const checkingTypeOrCluster = ["typeofstudy", "clustermethod"].includes(name)
     let val = checkingTypeOrCluster ? value : valueAsNumber;
     if (!checkingTypeOrCluster)

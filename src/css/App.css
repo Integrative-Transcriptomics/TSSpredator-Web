@@ -129,22 +129,31 @@ input:focus {
 .button {
     cursor: pointer;
     color: rgb(0, 0, 0, 0.8);
-    background-color: #e0e0e0;
+    /* background-color: #e0e0e0; */
     max-height: 2.2rem;
     font-size: 0.8rem;
-    padding: 1% 1.4%;
+    /* padding: 1% 1.4%; */
     border-radius: 0.25rem;
     box-shadow: 0 0.1rem 0.3rem rgb(0, 0, 0, 0.5);
     text-transform: uppercase;
-    margin-top: -1%;
-    margin-right: 1.1%;
+    margin-top: -1%;    margin-right: 1.1%;
     border: 1px solid transparent;
     min-width: fit-content;
+
+    background-color: white;
+    color: var(--mainColor);
+    font-weight: bold;
+    padding: 0.5em;
+    margin: 0.1em 1em 0 0;
+    border: none;
+    cursor: "pointer";
+    border-radius: "6px";
+    font-family: "Arial";
 }
 
 .button:hover {
     box-shadow: 0 0.2rem 0.4rem rgb(0, 0, 0, 0.6);
-    background-color: var(--complement);
+    background-color: var(--mainColor);
     color: white;
 }
 
@@ -224,6 +233,8 @@ input:focus {
 
 .file-row {
     margin: 0.8rem 0;
+    align-items: center;
+    justify-items: center;
 }
 
 select {
@@ -305,6 +316,8 @@ a.open-results {
     display: flex;
     flex-direction: row;
     column-gap: 1.5%;
+    justify-content: center;
+    align-items: center;
 }
 
 .no-margin {

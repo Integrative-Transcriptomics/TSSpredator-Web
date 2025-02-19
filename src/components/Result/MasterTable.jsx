@@ -3,18 +3,14 @@ import RangeFilter from './RangeFilter';
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
     flexRender,
-    // Column,
-    // ColumnDef,
-    // ColumnFiltersState,
-    // RowData,
-    // flexRender,
     getCoreRowModel,
     getFilteredRowModel,
-    // getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer, notUndefined } from '@tanstack/react-virtual'
+import { Info } from "lucide-react"; // Using lucide-react for the info icon
+
 
 import SearchInput from './SearchField';
 import "../../css/FilterCard.css";
@@ -289,6 +285,10 @@ function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
       {/* Title Bar enclosing all filter cards */}
       <div className="filter-title">
         <span>Filters from UpSet plot:</span>
+        <div className="info-icon-container">
+          <Info size={18} className="info-icon" />
+          <div className="tooltip">These filters are applied based on the UpSet plot selection.</div>
+        </div>
         {filterFromUpset.length > 0 && (
           <button className="clear-button" onClick={() => adaptFilterFromUpset([])}>
             Clear All ✖
@@ -299,9 +299,12 @@ function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
       <div className="filter-grid">
         {filterFromUpset.map((column, i) => (
           <div key={i} className="filter-card">
-            <span className="filter-text">{column.selectedType}</span>
-            <span className="filter-text">{column.classes.join(" & ")}</span>
-            <button className="close-button" onClick={() => adaptFilterFromUpset(prev => prev.filter((_, index) => index !== i))}>
+            <span className="filter-text">Category: {column.selectedType}</span>
+            <span className="filter-text">Selected: {column.classes.join(" & ")}</span>
+            <button
+              className="close-button"
+              onClick={() => adaptFilterFromUpset((prev) => prev.filter((_, index) => index !== i))}
+            >
               ✖
             </button>
           </div>

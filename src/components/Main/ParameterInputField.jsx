@@ -160,12 +160,20 @@ function FormConfig({
         ) : (
           <>
             {parameters.setup.typeofstudy.value === "genome" ? (
+
               <div
+             
                 className={parameters.setup.typeofstudy.value === "genome"
                   ? "file-box-align"
                   : "file-box-align vis-hidden"}
                 title='Select the xmfa alignment file containing the aligned genomes.'
               >
+                <div  style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                width: "50vw",
+              }}>
                 <p className='file-row'>Alignment File</p>
                 <label className='element-row file-row' htmlFor='alignment-file'>
                   <input
@@ -180,6 +188,7 @@ function FormConfig({
                     <p className='file-name'>{alignmentFile.name}</p>
                   )}
                 </label>
+              </div>
               </div>
             ) : (
               <></>

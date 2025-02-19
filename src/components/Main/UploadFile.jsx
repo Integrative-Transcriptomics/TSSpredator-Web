@@ -64,6 +64,12 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
   if (label === 'genomeannotation') {
     return (
       <div className={show ? 'file-box' : 'hidden'} data-title={file.tooltip}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          width: "50vw",
+        }} >
         <p className='file-row'>{file.name}</p>
         <label className='element-row file-row element-text'>
 
@@ -86,11 +92,18 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
             </>
           }
         </label>
+        </div>
       </div>
     )
   } else {
     return (
       <div className={show ? 'file-box' : 'hidden'} data-title={file.tooltip}>
+         < div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          width: "50vw",
+        }} >
         <p className='file-row'>{file.name}</p>
         <label className='element-row file-row element-text'>
 
@@ -101,6 +114,7 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
           {typeof fileName === 'undefined' ? (disabled === true ? <p className='file-name'>No file needed.</p> : <p className='file-name'>No file selected.</p>)
             : <p className='file-name'>{fileName}</p>}
         </label>
+        </div>
       </div>
     )
   }

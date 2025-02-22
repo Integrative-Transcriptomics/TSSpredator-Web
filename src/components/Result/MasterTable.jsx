@@ -287,7 +287,7 @@ function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
         <span>Filters from UpSet plot:</span>
         <div className="info-icon-container">
           <Info style={{color:"white"}} size={24} className="info-icon" />
-          <div className="tooltip">These filters are applied based on the interactions with the UpSet plot.</div>
+          <div className="tooltip">These filters are applied based on the interactions with the UpSet plot. The TSS positions need to be in at least one filter group to appear on the list.</div>
         </div>
         {filterFromUpset.length > 0 && (
           <button className="clear-button" onClick={() => adaptFilterFromUpset([])}>

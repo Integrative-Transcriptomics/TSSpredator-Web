@@ -306,7 +306,7 @@ function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
             width: "100%",
         }} >
           <div className="filter-card">
-            <span className="filter-text">No global filters selected. Interact with the UpSet plot for complex filters.</span>
+            <span className="filter-text">No global filters selected. Interact with the UpSet plot to include some global filters.</span>
           </div>
           </div>
         )

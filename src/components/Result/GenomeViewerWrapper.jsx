@@ -23,7 +23,7 @@ function GenomeViewerWrapper({ filePath, filterSelected, gosRef, setGFFViewer, s
     return (
         <div className='result-margin-left'>
             <h3 className='header click-param' onClick={() => setGFFViewer(!showGFFViewer)}>
-                {showGFFViewer ? "-" : "+"} TSS positions with genome viewer
+                {showGFFViewer ? "-" : "+"} Genome Viewer for TSS data
             </h3>
             {
                 showGFFViewer &&

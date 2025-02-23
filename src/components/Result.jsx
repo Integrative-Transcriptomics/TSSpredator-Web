@@ -209,41 +209,6 @@ function Result() {
 
             </div>
 
-            <SingleSelectDropdown
-              label="Show the following TSS in plots"
-              value={filterForPlots}
-              onChange={(value) => setFilterForPlots(value)}
-              options={[
-                { value: "enriched", label: "Only enriched TSSs" },
-                { value: "detected", label: "All detected TSSs" },
-              ]}
-              style={{ maxWidth: "30vw"}}
-            />
-            <GenomeViewerWrapper
-              filePath={filePath}
-              filterSelected={filterForPlots}
-              gosRef={gosRef}
-              showGFFViewer={showGenomeViewer}
-              setGFFViewer={setShowGenomeViewer}
-              nameGenomes={[...allGenomes]}
-            />
-            <div className='result-margin-left'>
-              <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
-                {showUpSet ? "-" : "+"} UpSet Plot: Distribution of TSS across Categories
-              </h3>
-              {processedMasterTable ? (
-                <UpSet
-                  showUpSet={showUpSet}
-                  allGenomes={allGenomes}
-                  filterForPlots={filterForPlots}
-                  tableColumns={tableColumns}
-                  tableData={tableData}
-                  handleClickUpset={setFilterPositions}
-                />
-              ) : (
-                <ClipLoader color='#ffa000' size={30} />
-              )}
-            </div>
             <div>
               <h3 className='header click-param' onClick={() => setShowTable(!showTable)}>
                 {showTable ? "-" : "+"} Master Table
@@ -264,6 +229,44 @@ function Result() {
                 <ClipLoader color='#ffa000' size={30} />
               )}
             </div>
+
+            <SingleSelectDropdown
+              label="Show the following TSS in plots"
+              value={filterForPlots}
+              onChange={(value) => setFilterForPlots(value)}
+              options={[
+                { value: "enriched", label: "Only enriched TSSs" },
+                { value: "detected", label: "All detected TSSs" },
+              ]}
+              style={{ maxWidth: "30vw"}}
+            />
+            
+            <div className='result-margin-left'>
+              <h3 className='header click-param' onClick={() => setShowUpSet(!showUpSet)}>
+                {showUpSet ? "-" : "+"} UpSet Plot: Distribution of TSS across Categories
+              </h3>
+              {processedMasterTable ? (
+                <UpSet
+                  showUpSet={showUpSet}
+                  allGenomes={allGenomes}
+                  filterForPlots={filterForPlots}
+                  tableColumns={tableColumns}
+                  tableData={tableData}
+                  handleClickUpset={setFilterPositions}
+                />
+              ) : (
+                <ClipLoader color='#ffa000' size={30} />
+              )}
+            </div>
+            <GenomeViewerWrapper
+              filePath={filePath}
+              filterSelected={filterForPlots}
+              gosRef={gosRef}
+              showGFFViewer={showGenomeViewer}
+              setGFFViewer={setShowGenomeViewer}
+              nameGenomes={[...allGenomes]}
+            />
+           
           </div>
       }
     </>

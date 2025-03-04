@@ -49,6 +49,8 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
         <div className='gosling-component'>
             <div className='genome-viewer-select' style={{ paddingBottom: "1.5em" }}>
                 <SingleSelectDropdown
+                        helpText={`Two different views are available: Single View shows the genome viewer grouped vertically by Genome/Condition, while the Aligned View aligns the strands vertically and the genomes/conditions on each row.`}
+
                     label="Change Genome Viewer Modus:"
                     value={currentType}
                     onChange={(value) => setCurrentType(value)}

@@ -239,6 +239,8 @@ function Result() {
                 { value: "detected", label: "All detected TSSs" },
               ]}
               style={{ maxWidth: "30vw"}}
+              helpText={`Show only enriched TSSs or all detected TSSs in the UpSet plot and the Genome Viewer`}
+
             />
             
             <div className='result-margin-left'>

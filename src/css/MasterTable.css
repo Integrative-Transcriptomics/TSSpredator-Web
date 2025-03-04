@@ -176,8 +176,8 @@ table thead {
 }
 
 .info-icon-container {
-  position: relative;
-  display: flex;
+  /* position: relative; */
+  /* display: flex; */
   /* margin-right: 8px; */
   cursor: pointer;
 }

@@ -228,6 +228,8 @@ function FormConfig({
           >
 
           <SingleSelectDropdown
+                  helpText={`Predefined set of parameters for the TSS prediction. The parameters can be adjusted in the parameter section.`}
+
             label='Prediction parameters Preset'
             value={parameterPreset}
             onChange={(value) => {

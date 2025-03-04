@@ -214,7 +214,9 @@ def from_bedgraph_to_bw(inputDir, genome, fileType, strand, resultsDir, file, df
     adaptedFile = file.replace("_avg.bigwig", "_adapted.bigwig")
     df.to_csv(adaptedFile, sep='\t', index=False, header=False)
     outputBigWig = os.path.join(resultsDir, f'{genome}_{fileType}{strand}.bw')
-    serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
+    current_location = os.getcwd()
+    serverLocation = os.path.join(current_location, "server_tsspredator") if not current_location.endswith("server_tsspredator") else current_location
+    serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', current_location)
     bedGraphPath = os.path.join(serverLocation, 'bedGraphToBigWig')
     result = subprocess.run([bedGraphPath, adaptedFile, chromSizes, outputBigWig], 
                                 stdout=subprocess.PIPE, 

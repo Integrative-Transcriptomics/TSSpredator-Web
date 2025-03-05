@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import "../../css/DropDown.css"; // Import the same CSS for styling
+import { Info } from "lucide-react"; // Using lucide-react for the info icon
 
-function SingleSelectDropdown({ value, onChange, options, label, textColor = "black", style, headerStyle }) {
+
+function SingleSelectDropdown({ value, onChange, options, label, textColor = "black", style, headerStyle, helpText }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(value);
   const dropdownRef = useRef(null);
@@ -34,10 +36,19 @@ function SingleSelectDropdown({ value, onChange, options, label, textColor = "bl
 
   return (
     <div className="custom-dropdown"
-      style={{ margin: "0 1em ", color: textColor, ...style }}
+      style={{ margin: "0 1em ", color: textColor, ...style,}}
       ref={dropdownRef}>
+        <div style={{display:"flex"}}>
+
+        <div className="info-icon-container" style={{marginRight:"0.5em"}}>
+          <Info style={{color:"orange"}} size={24} className="info-icon" />
+          <div className="tooltip">{helpText}</div>
+        </div>
       <h3 className="select-header" style={headerStyle}
-      >{label}</h3>
+      >{label}
+      
+      </h3>
+      </div>
       <div className="dropdown-header" onClick={toggleDropdown}>
         {options.find((opt) => opt.value === selectedOption)?.label || "Select..."}
         <span className="dropdown-arrow">▼</span>

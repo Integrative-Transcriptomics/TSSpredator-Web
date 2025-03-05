@@ -33,6 +33,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
   const [plotSettings, setPlotSettings] = useState({
     classUpsetPlot: "tssClass",
     type: "all",
+    countType: "position"
   });
 
   const handleClassUpsetPlotChange = (value) => {
@@ -41,6 +42,10 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
 
   const handleTypeChange = (value) => {
     setPlotSettings((prev) => ({ ...prev, type: value }));
+  }; 
+  
+  const handleCountTSS = (value) => {
+    setPlotSettings((prev) => ({ ...prev, countType: value }));
   };
 
 
@@ -71,7 +76,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
    * for upset plot: count frequncy of each tss class
    * and get all genome/condition names
    */
-    const TSSperPosition = (rows, columns, typeIntersection = "all") => {
+    const TSSperPosition = (rows, columns) => {
       // get column indices
       const primaryIdx = columns.findIndex((col) => col["header"] === "Primary");
       const secondaryIdx = columns.findIndex((col) => col["header"] === "Secondary");
@@ -84,10 +89,8 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
 
 
       // save frequency of classes for a TSS (upset plot)
-      let tssByClass = {};
       let tssWithMultipleClasses = {};
       // For the condition
-      let tssByCondition = {};
       let tssWithMultipleConditions = {};
 
       rows.forEach((row) => {
@@ -119,16 +122,6 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
             tssWithMultipleConditions[tmpTuple][tmpClass] = [genomeName]
           }
 
-          if (genomeName in tssByCondition) {
-            if (!tssByCondition[genomeName].includes(tmpTuple)) {
-              tssByCondition[genomeName].push(tmpTuple);
-            } else if (typeIntersection === "dedup") {
-              return; // Exit the current iteration of the loop
-            }
-          } else {
-            tssByCondition[genomeName] = [tmpTuple];
-          }
-
           // add tss to tssWithMultipleClasses
           if (tmpTuple in tssWithMultipleClasses) {
             // Add once to set
@@ -147,19 +140,6 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
             tssWithMultipleClasses[tmpTuple][genomeName] = [tmpClass]
           }
 
-
-
-          // add tss to tssByClass
-          if (tmpClass in tssByClass) {
-            if (!tssByClass[tmpClass].includes(tmpTuple)) {
-              tssByClass[tmpClass].push(tmpTuple);
-            } else if (typeIntersection === "dedup") {
-              return; // Exit the current iteration of the loop
-            }
-          } else {
-            tssByClass[tmpClass] = [tmpTuple];
-          }
-
         }
       });
       if (plotSettings.classUpsetPlot === "tssClass") {
@@ -174,9 +154,6 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
     if (selectedDataToShow === "all") {
       // create new plots
       processedData = TSSperPosition(tableData, tableColumns);
-    }
-    else if (selectedDataToShow === "dedup") {
-      processedData = TSSperPosition(tableData, tableColumns, selectedDataToShow);
     }
     else {
       const genomeIdx = tableColumns.findIndex(
@@ -212,7 +189,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
       color_tss[x] = COLORS_TSS[i]
     })
     let elems;
-    if (plotSettings.type === "all") {
+    if (plotSettings.countType === "classification") {
       elems = Object.entries(processedData).reduce((accum, curr) => {
         let tssName = curr[0]
         let mapGenomes = Object.entries(curr[1]).filter(x => x[0] !== "set").map((other) => {
@@ -240,7 +217,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
     }
     else {
       filteredSet = sets.filter(x => !ORDER_TSS_CLASSES.includes(x.name))
-      if (!["all", "dedup"].includes(plotSettings.type)) {
+      if (plotSettings.type !== "all") {
         filteredSet.forEach(x => x.color = color_tss[plotSettings.type])
       }
 
@@ -268,6 +245,18 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
     width: "100%"
   }} className={showUpSet ? '' : 'hidden'}>
     <div className="upset-settings">
+    <SingleSelectDropdown
+        label="Categories to Analyze"
+        value={plotSettings.classUpsetPlot}
+        onChange={(value) => handleClassUpsetPlotChange(value)}
+        options={[
+          { value: "tssClass", label: "TSS classes" },
+          { value: "conditions", label: "Conditions/Genomes" },
+        ]}
+        helpText={`This option defines the axes of the UpSet plot.`}
+
+      />
+
       <SingleSelectDropdown
         label="Show UpSet Plot for"
         value={plotSettings.type}
@@ -275,14 +264,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
         options={[
           {
             value: "all",
-            label: `Union of all TSS across ${plotSettings.classUpsetPlot === "tssClass"
-                ? "Conditions/Genomes"
-                : "TSS classes"
-              }`,
-          },
-          {
-            value: "dedup",
-            label: `Intersection of all TSS across ${plotSettings.classUpsetPlot === "tssClass"
+            label: `All ${plotSettings.classUpsetPlot === "tssClass"
                 ? "Conditions/Genomes"
                 : "TSS classes"
               }`,
@@ -292,17 +274,33 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
             : [...ORDER_TSS_CLASSES]
           ).map((col) => ({ value: col, label: col })),
         ]}
+        helpText={`Either show data for all ${plotSettings.classUpsetPlot === "tssClass" ? "Conditions/Genomes" : "TSS classes"} or for specific ones`}
       />
       <SingleSelectDropdown
-        label="Categories to Analyze"
-        value={plotSettings.classUpsetPlot}
-        onChange={(value) => handleClassUpsetPlotChange(value)}
+        label={`A TSSs is defined by its`}
+        value={plotSettings.countType}
+        onChange={(value) => handleCountTSS(value)}
+        helpText={`A TSS can be associated with multiple ${plotSettings.classUpsetPlot === "tssClass"
+                ? "Conditions/Genomes"
+                : "TSS classes"
+              }. However, the genomic position is the same. This option defines how to count the TSSs, either as unique genomic positions or account also for the classification. 
+              Please consider that for the case that a TSS is classified twice as internal or antisense, it will only be counted once.`}
+
         options={[
-          { value: "tssClass", label: "TSS classes" },
-          { value: "conditions", label: "Conditions/Genomes" },
+          {
+            value: "position",
+            label: `Location`,
+          },
+          {
+            value: "classification",
+            label: `Location and ${plotSettings.classUpsetPlot === "tssClass"
+              ? "Conditions/Genomes"
+              : "TSS classes"
+            }`,
+          }
         ]}
       />
-
+     
 
     </div>
 

@@ -27,7 +27,6 @@ WORKDIR /app
 
 # Update package lists and install required packages
 RUN apt-get update && apt-get install -y \
-    gcompat \
     libstdc++6 \
     gcc \
     g++ \
@@ -52,11 +51,11 @@ COPY setup.py /app
 RUN wget https://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig -P /app
 RUN chmod +x /app/bedGraphToBigWig
 
-RUN python3 -m venv /app/env_tss_predator_web
+RUN python3.11 -m venv /app/env_tss_predator_web
 ENV PATH="/app/env_tss_predator_web/bin:$PATH"
-RUN python3 -m pip install --upgrade pip
+RUN python3.11  -m pip install --upgrade pip
 # install python dependencies
-RUN python3 -m pip install -r requirements.txt
+RUN python3.11  -m pip install -r requirements.txt
 
 # Install the server package
 RUN pip install -e .

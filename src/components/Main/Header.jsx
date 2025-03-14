@@ -65,15 +65,19 @@ function Header({ loading, onLoadExampleData, showExamples = false, statusID = n
               <>
                 <button className='dropbtn'>Load Example Data</button>
                 <div className='dropdown-content'>
+                <button name='ecoli' type='button' onClick={(e) => onLoadExampleData(e)}>
+                    Escherichia coli (Balkin et al., 2024)
+                  </button>
                   <button name='campylobacter' type='button' onClick={(e) => onLoadExampleData(e)}>
-                    Campylobacter jejuni
+                    Campylobacter jejuni (Dugar et al.,  2013)
+                  </button>
+                  <button name='saureus' type='button' onClick={(e) => onLoadExampleData(e)}>
+                    Staphylococcus aureus (Rohmer et al., 2022)
                   </button>
                   <button name='pseudomonas' type='button' onClick={(e) => onLoadExampleData(e)}>
                     Pseudomonas aeruginosa
                   </button>
-                  <button name='saureus' type='button' onClick={(e) => onLoadExampleData(e)}>
-                    Staphylococcus aureus
-                  </button>
+
                 </div>
               </>
             )}

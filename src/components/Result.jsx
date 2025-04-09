@@ -73,8 +73,18 @@ function Result() {
     const allRows = masterTable.trim().split("\n"); // trim() removes trailing newline
     const headers = allRows[0].split("\t");
     let IDofSelectableColumns = []
+    const isGenomeComparison = headers.indexOf("Genome") !== -1 
     let tmpMetadataColumns = {}
-    const col = headers.map((h, i) => {
+    let col = headers.map((h, i) => {
+      if (!isGenomeComparison) {
+        if (["Pos", "Strand"].includes(h)) {
+          return null;
+        }
+        if (["SuperPos", "SuperStrand"].includes(h)) {
+          // Remove "Super" prefix
+          h = h.replace("Super", "");
+        }
+      }
       if (selectHeaders.includes(h)) {
         IDofSelectableColumns.push(i)
       }
@@ -89,7 +99,8 @@ function Result() {
         sortingFn: h.startsWith("rep") ? "myReplicateSorting" : cappedValues.includes(h) ? "myCappedSorting" : sortingFns.alphanumeric
       };
     });
-    const searchFor = headers.indexOf("Genome") !== -1 ? "Genome" : "Condition";
+    col = col.filter((c) => c !== null);
+    const searchFor = isGenomeComparison ? "Genome" : "Condition";
     const genomeIdx = headers.indexOf(searchFor);
 
     const allG = new Set();

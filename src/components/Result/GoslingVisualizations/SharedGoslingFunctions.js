@@ -63,7 +63,7 @@ export const createGenomeTrack = (filePath, genome, strand = "+",width) => {
         "mark": "text",
         "text": { "field": "base", "type": "nominal" },
         "x": { "field": "pos", "type": "genomic" },
-        "style": { "textFontWeight": "bold", "align": "center" },
+        "style": { "textFontWeight": "bold", "align": "center" , "textAlign": "center"},
         "size": { "value": 16 },
         "color": {
             "field": "base",
@@ -77,8 +77,8 @@ export const createGenomeTrack = (filePath, genome, strand = "+",width) => {
                     {
                         "operation": "LT",
                         "measure": "zoomLevel",
-                        "threshold": 500,
-                        "transitionPadding": 1000,
+                        "threshold": 125,
+                        "transitionPadding": 50,
                         "target": "mark"
                     }]
 
@@ -110,8 +110,6 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
         "xe": { "field": "binEnd", "type": "genomic", "axis": "none" },
         "mark": "bar",
         width: width,
-
-        "style": { "background": strand === "+" ? "lightblue" : "#f59f95", "backgroundOpacity": 0.25 },
         "y": {
             "field": "count",
             "type": "quantitative",
@@ -221,10 +219,9 @@ export const createGFFTrack = (filePath, genomeName, strand, width) => {
         "mark": "rect",
         "x": { "field": "start", "type": "genomic", "axis": "none" },
         "xe": { "field": "end", "type": "genomic", "axis": "none" },
-        "color": { "value": "grey" },
-        "opacity": { "value": 0.4 },
+        "color": { "value": "darkgrey" },
+        "opacity": { "value": 0.75 },
         "size": { "value": 4 },
-        "style": { background: strand === "+" ? "lightblue" : "#f59f95", backgroundOpacity: 0.15 },
         "tracks": [
             {
                 "tooltip": [

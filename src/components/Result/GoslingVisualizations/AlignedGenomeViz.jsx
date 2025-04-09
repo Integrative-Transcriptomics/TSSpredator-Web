@@ -107,7 +107,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
     }
     const completeView = (views, color, subtitle) => {
         return {
-            "style": { "background": color, "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
+            "style": { "backgroundOpacity": 0.25, "outline": "black", "outlineWidth": 2 },
             "subtitle": subtitle,
             "spacing": 0,
             "arrangement": "vertical",

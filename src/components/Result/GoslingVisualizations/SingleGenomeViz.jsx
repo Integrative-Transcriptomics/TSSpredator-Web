@@ -38,7 +38,6 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
         return [
             {
                 "alignment": "overlay",
-                // "style": { background: strand === "+" ? "lightblue" : "#f59f95", backgroundOpacity: 0.25 },
                 "tracks": [
                     detailTSSTrack,
                     ...binnedViews,
@@ -72,9 +71,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
         let views = [];
         for (let genome of Object.keys(data)) {
             views.push({
-                style: {
-                    outline: "black", outlineWidth: 2
-                },
+                style: {outline: "black", outlineWidth: 2},
                 "alignment": "stack",
                 "assembly": [[genome, data[genome]["lengthGenome"]]],
                 "spacing": 0,

@@ -110,8 +110,6 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
         "xe": { "field": "binEnd", "type": "genomic", "axis": "none" },
         "mark": "bar",
         width: width,
-
-        // "style": { "background": strand === "+" ? "lightblue" : "#f59f95", "backgroundOpacity": 0.25 },
         "y": {
             "field": "count",
             "type": "quantitative",
@@ -127,9 +125,6 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
             "range": COLORS_TSS,
             "legend": viewType === "single" ? strand === "+" : false
         },
-        // "style": {
-        //     "inlineLegend": true,
-        // },
         "tooltip": [
             { "field": "binStart", "alt": "Bin start" },
             { "field": "binEnd", "alt": "Bin end" },
@@ -227,7 +222,6 @@ export const createGFFTrack = (filePath, genomeName, strand, width) => {
         "color": { "value": "darkgrey" },
         "opacity": { "value": 0.75 },
         "size": { "value": 4 },
-        // "style": { background: strand === "+" ? "lightblue" : "#f59f95", backgroundOpacity: 0.15 },
         "tracks": [
             {
                 "tooltip": [

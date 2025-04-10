@@ -75,10 +75,11 @@ function Result() {
     let IDofSelectableColumns = []
     const isGenomeComparison = headers.indexOf("Genome") !== -1 
     let tmpMetadataColumns = {}
+    let removedHeaders = [];
     let col = headers.map((h, i) => {
       if (!isGenomeComparison) {
         if (["Pos", "Strand"].includes(h)) {
-          return null;
+          removedHeaders.push(i)
         }
         if (["SuperPos", "SuperStrand"].includes(h)) {
           // Remove "Super" prefix
@@ -86,12 +87,12 @@ function Result() {
         }
       }
       if (selectHeaders.includes(h)) {
-        IDofSelectableColumns.push(i)
+        IDofSelectableColumns.push(i-removedHeaders.length)
       }
       let filterVariant = getFilterType(h)
       return {
         header: h,
-        accessorKey: i.toString(),
+        accessorKey: (i - removedHeaders.length).toString(),
         meta: {
           filterVariant: filterVariant,
         },
@@ -99,13 +100,19 @@ function Result() {
         sortingFn: h.startsWith("rep") ? "myReplicateSorting" : cappedValues.includes(h) ? "myCappedSorting" : sortingFns.alphanumeric
       };
     });
-    col = col.filter((c) => c !== null);
+    col = col.filter((_, i) => !removedHeaders.includes(i));
     const searchFor = isGenomeComparison ? "Genome" : "Condition";
     const genomeIdx = headers.indexOf(searchFor);
 
     const allG = new Set();
     const dataRows = allRows.slice(1).map(row => {
-      const tmp = row.split("\t");
+      let tmp = row.split("\t");
+      if (!isGenomeComparison) {
+        // remove indices of removed headers
+       tmp = tmp.filter((_, i) => {
+          return !removedHeaders.includes(i)
+        })        
+      }
 
       allG.add(tmp[genomeIdx]);
       return tmp.reduce((acc, content, j) => {

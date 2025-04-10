@@ -73,7 +73,7 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
   };
   useEffect(() => {
     /**
-   * for upset plot: count frequncy of each tss class
+   * for upset plot: count frequency of each tss class
    * and get all genome/condition names
    */
     const TSSperPosition = (rows, columns) => {
@@ -82,9 +82,14 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
       const secondaryIdx = columns.findIndex((col) => col["header"] === "Secondary");
       const internalIdx = columns.findIndex((col) => col["header"] === "Internal");
       const antisenseIdx = columns.findIndex((col) => col["header"] === "Antisense");
-      const superPosIdx = columns.findIndex((col) => col["header"] === "SuperPos");
+      // Either SuperPos or Pos
+      // if superPos is not in the columns, use the Pos column
+      const allHeaders = columns.map((col) => col["header"]);
+      const searchForPos = allHeaders.includes("SuperPos") ? "SuperPos" : "Pos";
+      const superPosIdx = columns.findIndex((col) => col["header"] === searchForPos);
       const variableFilterTSS = columns.findIndex((col) => col["header"] === filterForPlots);
-      const superStrandIdx = columns.findIndex((col) => col["header"] === "SuperStrand");
+      const searchForStrand = allHeaders.includes("SuperStrand") ? "SuperStrand" : "Strand";
+      const superStrandIdx = columns.findIndex((col) => col["header"] === searchForStrand);
 
 
 

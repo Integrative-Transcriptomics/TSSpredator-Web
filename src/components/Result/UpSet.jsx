@@ -84,10 +84,11 @@ function UpSet({ showUpSet, allGenomes, filterForPlots, tableColumns, tableData,
       const antisenseIdx = columns.findIndex((col) => col["header"] === "Antisense");
       // Either SuperPos or Pos
       // if superPos is not in the columns, use the Pos column
-      const searchForPos = col["header"].includes("SuperPos") ? "SuperPos" : "Pos";
+      const all_headers = columns.map((col) => col["header"]);
+      const searchForPos = all_headers.includes("SuperPos") ? "SuperPos" : "Pos";
       const superPosIdx = columns.findIndex((col) => col["header"] === searchForPos);
       const variableFilterTSS = columns.findIndex((col) => col["header"] === filterForPlots);
-      const searchForStrand = col["header"].includes("SuperStrand") ? "SuperStrand" : "Strand";
+      const searchForStrand = all_headers.includes("SuperStrand") ? "SuperStrand" : "Strand";
       const superStrandIdx = columns.findIndex((col) => col["header"] === searchForStrand);
 
 

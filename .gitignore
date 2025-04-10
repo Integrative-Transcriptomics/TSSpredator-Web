@@ -50,3 +50,5 @@ src/test/GenomeViewerWrapper.jsx
 src/test/Result.jsx
 src/test/SharedGoslingFunctions.js
 src/test/SingleGenomeViz.jsx
+server_tsspredator/exampleData/saureus/saureus_config.json
+server_tsspredator/redisdb/dump-tsspredator.rdb

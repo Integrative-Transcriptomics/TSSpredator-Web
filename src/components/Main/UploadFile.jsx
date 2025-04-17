@@ -19,7 +19,12 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
     disabled = true;
   }
 
-  const label = (file.name).toLowerCase().replace(' ', '');
+  let label = (file.name).toLowerCase().replace(' ', '');
+  // if label contains normal forward or normal reverse, change normal to non-enriched (control)
+  // if (label.includes('normal')) {
+  //   console.log(label);
+  //   label = label.replace('normal', 'nonenriched');
+  // }
 
   let fileName;
   let gIdx;
@@ -104,7 +109,7 @@ function UploadFile({ file, id, studyType, genomes, saveIndividualFile, show, sa
           gap: "12px",
           width: "50vw",
         }} >
-        <p className='file-row'>{file.name}</p>
+        <p className='file-row'>{file.name.includes("normal") ? file.name.replace("normal", "non-enriched (control)") : file.name}</p>
         <label className='element-row file-row element-text'>
 
           <input disabled={disabled} className='element' type="file" name={label} id={id + 'file'} style={{ display: 'none' }}

@@ -61,11 +61,11 @@ function ReplicateColumn({ handleRemove, handleFiles, handleAddEF, handleAddER, 
                                 handleAdd={(e) => handleAddER(e, i)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} 
                                 tooltip="Graph file containing the RNA-seq expression graph for the reverse strand from the 5' enrichment library. tagRNA-seq: Use the TSS reads here."/>
 
-                            <DragDropField label='normal forward file' currentFiles={[currentNF[i]]} state='normalF' index={i}
+                            <DragDropField label='non-enriched (control) forward file' currentFiles={[currentNF[i]]} state='normalF' index={i}
                                 handleAdd={(e) => handleAddNF(e, i)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)}
                                 tooltip="Graph file containing the RNA-seq expression graph for the forward strand from library without 5' enrichment. tagRNA-seq: Use the PSS reads here." />
 
-                            <DragDropField label='normal reverse file' currentFiles={[currentNR[i]]} state='normalR' index={i}
+                            <DragDropField label='non-enriched (control) reverse file' currentFiles={[currentNR[i]]} state='normalR' index={i}
                                 handleAdd={(e) => handleAddNR(e, i)} handleRemove={(e, s, i) => handleRemove(e, s, i)} handleFiles={(e) => handleFiles(e)} 
                                 tooltip="Graph file containing the RNA-seq expression graph for the reverse strand from library without 5' enrichment. tagRNA-seq: Use the PSS reads here."/>
 

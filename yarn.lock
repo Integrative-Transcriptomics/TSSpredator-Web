@@ -3,7 +3,7 @@
 
 __metadata:
   version: 8
-  cacheKey: 10
+  cacheKey: 10c0
 
 "@babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.14.0, @babel/runtime@npm:^7.2.0":
   version: 7.23.9
@@ -1047,6 +1047,62 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/query-core@npm:5.67.1":
+  version: 5.67.1
+  resolution: "@tanstack/query-core@npm:5.67.1"
+  checksum: 10c0/449e1880b10d8413bfa746a6f1def962a1ad7ab670d8cc24b25780e8668df1a6fa2d537e6b1981ac12f32f2e7939ba1406f2b03bf16a26f0044eda2c48facecf
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^5.66.3":
+  version: 5.67.1
+  resolution: "@tanstack/react-query@npm:5.67.1"
+  dependencies:
+    "@tanstack/query-core": "npm:5.67.1"
+  peerDependencies:
+    react: ^18 || ^19
+  checksum: 10c0/ac591f367335f7b09a8f6106a51456b3f725f08f8b4b834406411b9c51170eea7d563fb42dbf7c4e017c19b637ff49fc8bdc15e4994a835f2660feaab2a091de
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-table@npm:^8.21.2":
+  version: 8.21.2
+  resolution: "@tanstack/react-table@npm:8.21.2"
+  dependencies:
+    "@tanstack/table-core": "npm:8.21.2"
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 10c0/192392c7d945bf50a21a0904fdce07e4abb74bc6187bcd32ae843031d48e851a10899e0218443d742ee01c30ca1ff890a8677a5878b8904561ebc23479adfdf1
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-virtual@npm:^3.13.0":
+  version: 3.13.2
+  resolution: "@tanstack/react-virtual@npm:3.13.2"
+  dependencies:
+    "@tanstack/virtual-core": "npm:3.13.2"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/6341e43c8af79b273deb9283631b881065131191959ffc08e9e83c42e772e0c1576a4787252017650798e2e3961fc7854ee7ea0a8b40dab7354c6a2e830f5db6
+  languageName: node
+  linkType: hard
+
+"@tanstack/table-core@npm:8.21.2":
+  version: 8.21.2
+  resolution: "@tanstack/table-core@npm:8.21.2"
+  checksum: 10c0/836326c6aef7e0b9b4566f9b2ade5ea73b90ce94f2b0cc35a3b3e1f44a9b3512d5507e4818c509824443b3d0488f2026df54e7a9f8f0cdccae6040347e6ff079
+  languageName: node
+  linkType: hard
+
+"@tanstack/virtual-core@npm:3.13.2":
+  version: 3.13.2
+  resolution: "@tanstack/virtual-core@npm:3.13.2"
+  checksum: 10c0/6527f4e2db071e03b6a0768b10405d072c2692551148314e36ea673878c78ea50f10849f173b32ec8b8d265bd624ab03cacb770c60719885e1ca02cdccf04927
+  languageName: node
+  linkType: hard
+
 "@types/earcut@npm:^2.1.0":
   version: 2.1.4
   resolution: "@types/earcut@npm:2.1.4"
@@ -1680,15 +1736,15 @@ __metadata:
   linkType: hard
 
 "cross-spawn@npm:^6.0.5":
-  version: 6.0.5
-  resolution: "cross-spawn@npm:6.0.5"
+  version: 6.0.6
+  resolution: "cross-spawn@npm:6.0.6"
   dependencies:
     nice-try: "npm:^1.0.4"
     path-key: "npm:^2.0.1"
     semver: "npm:^5.5.0"
     shebang-command: "npm:^1.2.0"
     which: "npm:^1.2.9"
-  checksum: 10/f07e643b4875f26adffcd7f13bc68d9dff20cf395f8ed6f43a23f3ee24fc3a80a870a32b246fd074e514c8fd7da5f978ac6a7668346eec57aa87bac89c1ed3a1
+  checksum: 10c0/bf61fb890e8635102ea9bce050515cf915ff6a50ccaa0b37a17dc82fded0fb3ed7af5478b9367b86baee19127ad86af4be51d209f64fd6638c0862dca185fe1d
   languageName: node
   linkType: hard
 
@@ -2919,9 +2975,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gosling.js@npm:^0.17.0":
-  version: 0.17.0
-  resolution: "gosling.js@npm:0.17.0"
+"gosling.js@npm:^1.0.0":
+  version: 1.0.2
+  resolution: "gosling.js@npm:1.0.2"
   dependencies:
     "@gmod/bam": "npm:^1.1.18"
     "@gmod/bbi": "npm:^3.0.1"
@@ -2945,7 +3001,7 @@ __metadata:
     generic-filehandle: "npm:^3.0.1"
     higlass: "npm:^1.13.4"
     higlass-register: "npm:^0.3.0"
-    higlass-text: "npm:^0.1.1"
+    higlass-text: "npm:^0.1.7"
     json-stringify-pretty-compact: "npm:^2.0.0"
     jspdf: "npm:^2.3.1"
     lodash-es: "npm:^4.17.21"
@@ -2960,7 +3016,7 @@ __metadata:
     pixi.js: ^6.3.0
     react: ^16.6.3 || ^17.0.0 || ^18.0.0
     react-dom: ^16.6.3 || ^17.0.0 || ^18.0.0
-  checksum: 10/d85dc2480e7d7e49808d86fb90be9b1f3c82ab2d8e07f0aec4a5d3979fecfa53c51c9b895b59ae0313561e3aa057e927c8851e651f5bda2c56090af3b518652f
+  checksum: 10c0/9c4c3452547db7f9511b33fbfe052a5ea98b699b539b313e8e7e3cf945c69a8a99742cc93d86d480e3fa9cbae8d1bf38d517d376b3a7adb83010b463d073a008
   languageName: node
   linkType: hard
 
@@ -3058,15 +3114,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"higlass-text@npm:^0.1.1":
-  version: 0.1.6
-  resolution: "higlass-text@npm:0.1.6"
+"higlass-text@npm:^0.1.7":
+  version: 0.1.7
+  resolution: "higlass-text@npm:0.1.7"
   dependencies:
     d3-color: "npm:^3.1.0"
     d3-scale: "npm:^4.0.2"
     higlass-register: "npm:^0.3.0"
     slugid: "npm:^2.0.0"
-  checksum: 10/3d52b080f8bf3d57afe16d903f12e2a80a96113aefd79f6a655f3ce3f7e71b2d23a33c522eae6fdde1c256d4c2e77a65d2d1109e33a4772571b771662090ed92
+  checksum: 10c0/3174f4003afd3ad4ef9e5e44ab28a591030638b127c5cb2909cac18fdfa41b58d3b3561ae1dab725a6943557cf1e9bdb741d5b353fcbf65922c0268dfa1e6db3
   languageName: node
   linkType: hard
 
@@ -3872,6 +3928,15 @@ __metadata:
   dependencies:
     yallist: "npm:^4.0.0"
   checksum: 10/fc1fe2ee205f7c8855fa0f34c1ab0bcf14b6229e35579ec1fd1079f31d6fc8ef8eb6fd17f2f4d99788d7e339f50e047555551ebd5e434dda503696e7c6591825
+  languageName: node
+  linkType: hard
+
+"lucide-react@npm:^0.475.0":
+  version: 0.475.0
+  resolution: "lucide-react@npm:0.475.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/9cb17bd4e70da4db104874b6b2e9d9c7e2be9438e9d1c0b2565df0c4d0bdd1add41b7dff3cb60840699ecbd29870c453878b42b69a7c46480def0c9370a852a9
   languageName: node
   linkType: hard
 
@@ -5771,12 +5836,16 @@ __metadata:
     "@fortawesome/free-brands-svg-icons": "npm:^6.7.2"
     "@fortawesome/pro-light-svg-icons": "npm:^6.7.2"
     "@fortawesome/react-fontawesome": "npm:^0.2.2"
+    "@tanstack/react-query": "npm:^5.66.3"
+    "@tanstack/react-table": "npm:^8.21.2"
+    "@tanstack/react-virtual": "npm:^3.13.0"
     "@upsetjs/react": "npm:^1.11.0"
     "@vitejs/plugin-react-swc": "npm:^3.7.2"
     axios: "npm:^1.7.9"
-    gosling.js: "npm:^0.17.0"
+    gosling.js: "npm:^1.0.0"
     higlass: "npm:^1.13.5"
     jszip: "npm:^3.10.1"
+    lucide-react: "npm:^0.475.0"
     npm-run-all: "npm:^4.1.5"
     pixi.js: "npm:6.5.10"
     react: "npm:^18.3.1"

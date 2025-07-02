@@ -205,7 +205,7 @@ table thead {
   position: absolute;
   z-index: 10;
   bottom: 75%;
-  transform: translateX(-50%); 
+  /* transform: translateX(-50%);  */
   opacity: 0;
   width: 25vw;
   transition: opacity 0.3s ease-in-out;

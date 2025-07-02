@@ -267,8 +267,8 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
                                             tooltip.style.visibility = "visible";
                                             tooltip.style.opacity = 1;
                                             // get position of the cursor and set to tooltip
-                                            tooltip.style.left = `${e.clientX + 15}px`;
-                                            tooltip.style.top = `${e.clientY - 100}px`;
+                                            tooltip.style.left = `${e.pageX + 15}px`;
+                                            tooltip.style.top = `${e.pageY - 100}px`;
                                                                                 }                                        }
                                         }
                                             onMouseLeave={() => {
@@ -361,7 +361,10 @@ function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
                 <span>Filters from UpSet plot:</span>
                 <div className="info-icon-container">
                     <Info style={{ color: "white" }} size={24} className="info-icon" />
-                    <div className="tooltip">These filters allow to filter the MasterTable with respect to intersecting groups from the UpSet plot. Click on the specific group to get the corresponding subset. The TSS positions need to be in at least one filter group to appear on the list.</div>
+                    <div className="tooltip" style={{
+                                            transform: "translateX(-50%)",
+
+                    }}>These filters allow to filter the MasterTable with respect to intersecting groups from the UpSet plot. Click on the specific group to get the corresponding subset. The TSS positions need to be in at least one filter group to appear on the list.</div>
                 </div>
                 {filterFromUpset.length > 0 && (
                     <button className="clear-button" onClick={() => adaptFilterFromUpset([])}>

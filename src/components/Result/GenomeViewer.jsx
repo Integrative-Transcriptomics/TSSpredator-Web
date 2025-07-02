@@ -26,7 +26,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
     useEffect(() => {
     
         if (gosRef.current) {
-  
+
             gosRef.current.api?.subscribe('location', (typeEvent, dataOfTrack) => {
                 if (dataOfTrack.id === `detail_tss_+_${nameGenomes[0]}`) {
                     let start = parseInt(dataOfTrack.genomicRange[0].position);

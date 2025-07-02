@@ -1,6 +1,6 @@
 import MultiSelectDropdown from './MultiSelectDropdown';
 import RangeFilter from './RangeFilter';
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import {
     flexRender,
     getCoreRowModel,
@@ -14,6 +14,7 @@ import { Info } from "lucide-react"; // Using lucide-react for the info icon
 
 import SearchInput from './SearchField';
 import "../../css/FilterCard.css";
+import "../../css/MasterTable.css";
 
 
 /**
@@ -162,7 +163,7 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
 
                                         <th colSpan={header.colSpan} key={header.column.id}>
                                             <>
-                                                <div
+                                                <span
                                                     {...{
                                                         className: header.column.getCanSort()
                                                             ? 'cursor-pointer select-none'
@@ -178,7 +179,7 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
                                                         asc: ' 🔼',
                                                         desc: ' 🔽',
                                                     }[header.column.getIsSorted()] ?? null}
-                                                </div>
+                                                </span>
                                                 {header.column.getCanFilter() ? (
                                                     <div>
                                                         <Filter column={header.column} selectionData={selectionData} />
@@ -210,13 +211,10 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
                         {items.map((virtualRow, i) => {
                             const row = rows[virtualRow.index]
                             return (
-                                // <tr {...row.getRowProps()} ref={(rows.length - 21 === i) ? lastRow : null}>
                                 <tr
                                     key={row.id}
                                     style={{
                                         height: `${virtualRow.size}px`,
-                                        // transform: `translateY(${virtualRow.start - i * virtualRow.size
-                                        //     }px)`,
                                     }}
                                 >
 
@@ -287,7 +285,7 @@ function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
         <span>Filters from UpSet plot:</span>
         <div className="info-icon-container">
           <Info style={{color:"white"}} size={24} className="info-icon" />
-          <div className="tooltip">These filters are applied based on the interactions with the UpSet plot. The TSS positions need to be in at least one filter group to appear on the list.</div>
+          <div className="tooltip">These filters allow to filter the MasterTable with respect to intersecting groups from the UpSet plot. Click on the specific group to get the corresponding subset. The TSS positions need to be in at least one filter group to appear on the list.</div>
         </div>
         {filterFromUpset.length > 0 && (
           <button className="clear-button" onClick={() => adaptFilterFromUpset([])}>

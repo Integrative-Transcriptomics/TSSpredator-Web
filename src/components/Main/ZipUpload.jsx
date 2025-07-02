@@ -140,7 +140,13 @@ function ZipUpload({ closePopup }) {
                             </>
                             : loading === 'error' ?
                                 <>
-                                    <h3 className='header error-popup-header'>Error</h3>
+                                    <div className='header error-popup-header' style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div />
+                                    <h3 style={{ textAlign: "center" }}> Error</h3>
+                                    <FontAwesomeIcon style={{ "cursor": "pointer", color: "#ffa000", marginRight: "5px" }} onClick={() => {
+                                        closePopup()
+                                    }} size="lg" icon={faCircleXmark} />
+                                    </div>
                                     <div className='error-field'>An error occurred while processing the files</div>
                                     <div className='error-field'>{errorAlert}</div>
                                 </>

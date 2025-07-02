@@ -239,8 +239,10 @@ function Result() {
                     selectionData={dataMetadataColumns.current}
                     tableColumns={tableColumns}
                     tableData={tableData}
+                    setShowTable={setShowTable}
                     showTable={showTable}
                     gosRef={gosRef}
+                    setGFFViewer={setShowGenomeViewer}
                     showGFFViewer={showGenomeViewer} />
                 </QueryClientProvider>
               ) : (

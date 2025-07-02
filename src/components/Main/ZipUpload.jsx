@@ -29,11 +29,13 @@ function ZipUpload({ closePopup }) {
             }
         }
         );
-        if (folderName !== "") {
-            zipFile = zipFile.folder(folderName);
-        }
+        // console.log("Folder name: " + folderName);
+        // if (folderName !== "") {
+        //     zipFile = zipFile.folder(folderName);
+        // }
         // Check if MasterTable.tsv is in the zip file
         if (zipFile.file("MasterTable.tsv") === null) {
+
             setLoading('error');
             setError('Error: MasterTable.tsv not found in the zip file. \n Are you sure you uploaded files computed by TSSpredator-Web?');
             return false;

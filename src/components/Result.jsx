@@ -241,6 +241,7 @@ function Result() {
                     tableData={tableData}
                     showTable={showTable}
                     gosRef={gosRef}
+                    setGFFViewer={setShowGenomeViewer}
                     showGFFViewer={showGenomeViewer} />
                 </QueryClientProvider>
               ) : (

@@ -24,7 +24,7 @@ import "../../css/MasterTable.css";
  * @param showTable: true <-> show table, else hidden
  */
 
-function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer, selectionData, filterFromUpset, adaptFilterFromUpset }) {
+function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer, selectionData, filterFromUpset, adaptFilterFromUpset, setGFFViewer }) {
     // currently used data
     const [isLoading, setIsLoading] = useState(false);
     const [filteredData, setFilteredData] = useState([...tableData]); // Store filtered data separately
@@ -65,47 +65,47 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
             myReplicateSorting: (row1, row2, columnID) => {
                 let a = row1.original[columnID];
                 let b = row2.original[columnID];
-            
+
                 // Directly return if values are equal
                 if (a === b) return 0;
-            
+
                 // Handle empty values efficiently
                 if (!a) return -1;
                 if (!b) return 1;
-            
+
                 // Optimize '/' splitting and mean calculation
                 const parseValues = (val) => {
                     if (!val.includes('/')) return val === "Infinity" ? Number.MAX_VALUE : val === "NA" ? 0 : parseFloat(val);
                     let numbers = val.split('/').map(x => x === "Infinity" ? Number.MAX_VALUE : x === "NA" ? 0 : parseFloat(x));
                     return numbers.reduce((sum, num) => sum + num, 0) / numbers.length;
                 };
-            
+
                 a = parseValues(a);
                 b = parseValues(b);
-            
+
                 return a - b;
-            },            
+            },
             myCappedSorting: (row1, row2, columnID) => {
                 let a = row1.original[columnID];
                 let b = row2.original[columnID];
-            
+
                 // Directly return if values are equal
                 if (a === b) return 0;
-            
+
                 // Handle 'NA' cases efficiently
                 if (a === 'NA') return -1;
                 if (b === 'NA') return 1;
-            
+
                 // Remove '>' prefix if present
                 if (a.startsWith('>')) a = a.slice(1);
                 if (b.startsWith('>')) b = b.slice(1);
-            
+
                 // Convert to number only if necessary
                 a = isNaN(a) ? a : parseFloat(a);
                 b = isNaN(b) ? b : parseFloat(b);
-            
+
                 return a - b;
-                        
+
             }
         },
         onSortingChange: setSorting,
@@ -136,11 +136,24 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
 
     return (
         <div className={showTable ? 'table-and-filter' : 'hidden'}>
+            <div className="table-tooltip">
 
-            <FilterCard filterFromUpset={filterFromUpset} adaptFilterFromUpset={adaptFilterFromUpset}/>
-     
-            <div 
-                ref={parentRef} 
+                <div id='tooltip-genome' className="tooltip" style={{
+                    position: "absolute",
+                    visibility: "visible",
+                    height: "5em",
+                    width: "10em",
+                    opacity: 1,
+                    transition: "opacity 0.3s ease-in-out",
+                    zIndex: 15,
+                }}>
+                    To visualize the TSS position, open the genome viewer first
+                </div>
+            </div>
+            <FilterCard filterFromUpset={filterFromUpset} adaptFilterFromUpset={adaptFilterFromUpset} />
+
+            <div
+                ref={parentRef}
                 className='table-container'
                 style={{ overflow: "auto", overflowAnchor: "none" }}
             >
@@ -152,11 +165,29 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
                                 style={{
                                     position: "sticky",
                                     top: 0,
-                                    background: "green",
+                                    zIndex: 1,
                                     width: "100%",
                                 }}
                             >
-                                {showGFFViewer && <th> Zoom in Viewer </th>}
+                                {showGFFViewer ? <th> Show Position </th> : <th >
+                                    <button className="button-results" style={
+                                        {
+                                            backgroundColor: "white",
+                                            color: "#007bff",
+                                            padding: "0.5em",
+                                            margin: "2px",
+                                            border: "none",
+                                            // make bold
+                                            fontWeight: "bold",
+                                            cursor: "pointer",
+                                            borderRadius: "6px",
+                                            fontFamily: "Arial",
+                                        }
+                                    }
+
+                                        onClick={() => {
+                                            setGFFViewer(true)
+                                        }}> Open Viewer</button></th>}
 
                                 {
                                     headerGroup.headers.map((header, i) => (
@@ -193,15 +224,16 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
                         ))}
                     </thead>
                     {isLoading && (
-                <div className="loading-overlay" style={{ 
-                    height: `${virtualizer.getTotalSize()}px`,
-                    transform: `translateY(${virtualizer.getScrollOffset()}px)`}}>
-                        <div className='loading-group' style={{transform: `translateY(${parseFloat(parentRef.current.clientHeight/2)}px)`}}>
-                        <div className="spinner"></div>
-                    <p>Loading...</p>
+                        <div className="loading-overlay" style={{
+                            height: `${virtualizer.getTotalSize()}px`,
+                            transform: `translateY(${virtualizer.getScrollOffset()}px)`
+                        }}>
+                            <div className='loading-group' style={{ transform: `translateY(${parseFloat(parentRef.current.clientHeight / 2)}px)` }}>
+                                <div className="spinner"></div>
+                                <p>Loading...</p>
+                            </div>
                         </div>
-                </div>
-            )}
+                    )}
                     <tbody  >
                         {before > 0 && (
                             <tr>
@@ -218,24 +250,59 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
                                     }}
                                 >
 
-                                    {showGFFViewer && <td> <button className="button-results" style={
-                                        {
-                                            backgroundColor: "#007bff",
-                                            color: "white",
-                                            padding: "0.5em",
-                                            margin: "2px",
-                                            border: "none",
-                                            cursor: "pointer",
-                                            borderRadius: "6px",
-                                            fontFamily: "Arial",
+                                    {<td key={`button-${row.id}`} className='cell-button'>
+                                        <div className="tooltip-wrapper" onMouseEnter={(e) => {
+                                        if (!showGFFViewer) {
+                                            // get the tooltip element 
+                                            let tooltip = document.getElementById('tooltip-genome');
+                                            tooltip.style.visibility = "visible";
+                                            tooltip.style.opacity = 1;
+                                            // get position of the cursor and set to tooltip
+                                            tooltip.style.left = `${e.clientX + 15}px`;
+                                            tooltip.style.top = `${e.clientY - 100}px`;
+                                                                                }                                        }
                                         }
-                                    }
-                                        onClick={() => {
-                                            gosRef.current.api.zoomTo(
-                                                `${row.original[4]}_${row.original[1]}_genome_track`,
-                                                `${row.original[4].trim()}:${parseInt(row.original[0]) - 150}-${parseInt(row.original[0]) + 150}`,
-                                                200)
-                                        }}> Show in Viewer</button></td>
+                                            onMouseLeave={() => {
+                                                document.getElementById('tooltip-genome').style.visibility = "hidden";
+                                                document.getElementById('tooltip-genome').style.opacity = 0;
+                                            }
+                                            }>
+                                            <button
+                                                className="button-results"
+                                                disabled={!showGFFViewer}
+                                                style={{
+                                                    backgroundColor: showGFFViewer ? "#007bff" : "grey",
+                                                    color: "white",
+                                                    padding: "0.5em",
+                                                    margin: "2px",
+                                                    border: "none",
+                                                    cursor: showGFFViewer ? "pointer" : "not-allowed",
+                                                    borderRadius: "6px",
+                                                    fontFamily: "Arial",
+                                                }}
+
+                                                onClick={() => {
+                                                    if (gosRef.current) {
+                                                        gosRef.current.api.zoomTo(
+                                                            `${row.original[4]}_${row.original[1]}_genome_track`,
+                                                            `${row.original[4].trim()}:${parseInt(row.original[0]) - 150}-${parseInt(row.original[0]) + 150}`,
+                                                            200
+                                                        );
+                                                        // Jump to the div
+                                                        const div = document.getElementById(`genome-viewer`);
+                                                        if (div) {
+                                                            div.scrollIntoView({ behavior: "smooth", block: "center" });
+                                                        }
+                                                    }
+                                                }}
+                                            >
+                                                Show in Viewer
+                                            </button>
+
+
+                                        </div>
+                                    </td>
+
                                     }
 
                                     {
@@ -278,53 +345,53 @@ function Filter({ column, selectionData }) {
 
 
 function FilterCard({ filterFromUpset, adaptFilterFromUpset }) {
-  return (
-    <div className="filter-container">
-      {/* Title Bar enclosing all filter cards */}
-      <div className="filter-title">
-        <span>Filters from UpSet plot:</span>
-        <div className="info-icon-container">
-          <Info style={{color:"white"}} size={24} className="info-icon" />
-          <div className="tooltip">These filters allow to filter the MasterTable with respect to intersecting groups from the UpSet plot. Click on the specific group to get the corresponding subset. The TSS positions need to be in at least one filter group to appear on the list.</div>
-        </div>
-        {filterFromUpset.length > 0 && (
-          <button className="clear-button" onClick={() => adaptFilterFromUpset([])}>
-            Clear All ✖
-          </button>
-        )}
-      </div>
+    return (
+        <div className="filter-container">
+            {/* Title Bar enclosing all filter cards */}
+            <div className="filter-title">
+                <span>Filters from UpSet plot:</span>
+                <div className="info-icon-container">
+                    <Info style={{ color: "white" }} size={24} className="info-icon" />
+                    <div className="tooltip">These filters allow to filter the MasterTable with respect to intersecting groups from the UpSet plot. Click on the specific group to get the corresponding subset. The TSS positions need to be in at least one filter group to appear on the list.</div>
+                </div>
+                {filterFromUpset.length > 0 && (
+                    <button className="clear-button" onClick={() => adaptFilterFromUpset([])}>
+                        Clear All ✖
+                    </button>
+                )}
+            </div>
 
-      <div className="filter-grid">
-        {filterFromUpset.length === 0 && (
-        <div style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100%",
-            width: "100%",
-        }} >
-          <div className="filter-card">
-            <span className="filter-text">No global filters selected. Interact with the UpSet plot to include some global filters.</span>
-          </div>
-          </div>
-        )
-            
-        }
-        {filterFromUpset.map((column, i) => (
-          <div key={i} className="filter-card">
-            <span className="filter-text">Category: {column.selectedType}</span>
-            <span className="filter-text">Selected: {column.classes.join(" & ")}</span>
-            <button
-              className="close-button"
-              onClick={() => adaptFilterFromUpset((prev) => prev.filter((_, index) => index !== i))}
-            >
-              ✖
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+            <div className="filter-grid">
+                {filterFromUpset.length === 0 && (
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        height: "100%",
+                        width: "100%",
+                    }} >
+                        <div className="filter-card">
+                            <span className="filter-text">No global filters selected. Interact with the UpSet plot to include some global filters.</span>
+                        </div>
+                    </div>
+                )
+
+                }
+                {filterFromUpset.map((column, i) => (
+                    <div key={i} className="filter-card">
+                        <span className="filter-text">Category: {column.selectedType}</span>
+                        <span className="filter-text">Selected: {column.classes.join(" & ")}</span>
+                        <button
+                            className="close-button"
+                            onClick={() => adaptFilterFromUpset((prev) => prev.filter((_, index) => index !== i))}
+                        >
+                            ✖
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 }
 
 export default MasterTable

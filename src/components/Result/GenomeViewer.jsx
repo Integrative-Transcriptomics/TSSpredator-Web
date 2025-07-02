@@ -122,7 +122,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
 
 
             </div>
-            <div className='genome-viewer'>
+            <div id="genome-viewer" className='genome-viewer'>
                 {
                     (
                         currentType === 'single' ?

@@ -189,6 +189,11 @@ table thead {
   opacity: 1;
 }
 
+.cell-button:hover #tooltip-genome {
+  visibility: visible;
+  opacity: 1;
+}
+
 .tooltip {
   visibility: visible;
   background-color: white;

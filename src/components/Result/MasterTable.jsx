@@ -24,7 +24,7 @@ import "../../css/MasterTable.css";
  * @param showTable: true <-> show table, else hidden
  */
 
-function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer, selectionData, filterFromUpset, adaptFilterFromUpset, setGFFViewer }) {
+function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer, setShowTable,selectionData, filterFromUpset, adaptFilterFromUpset, setGFFViewer }) {
     // currently used data
     const [isLoading, setIsLoading] = useState(false);
     const [filteredData, setFilteredData] = useState([...tableData]); // Store filtered data separately
@@ -42,6 +42,15 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
             setFilteredData(newData); // Update table data
             setIsLoading(false); // Hide loading overlay
         }, 300); // Small delay to ensure smooth transition
+        // Jump to the div containing the table
+        if (!showTable){
+            setShowTable(true);
+        }; // Only scroll if the table is visible
+        // This ensures the table is visible when the component mounts or updates
+        const div = document.getElementById('master-table');
+        if (div) {
+            div.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     }, [filterFromUpset, tableData]);
 
     const [columnFilters, setColumnFilters] = useState(
@@ -135,15 +144,15 @@ function MasterTable({ tableColumns, tableData, showTable, gosRef, showGFFViewer
             : [0, 0];
 
     return (
-        <div className={showTable ? 'table-and-filter' : 'hidden'}>
+        <div id="master-table" className={showTable ? 'table-and-filter' : 'hidden'}>
             <div className="table-tooltip">
 
                 <div id='tooltip-genome' className="tooltip" style={{
                     position: "absolute",
-                    visibility: "visible",
+                    visibility: "hidden",
                     height: "5em",
                     width: "10em",
-                    opacity: 1,
+                    opacity: 0,
                     transition: "opacity 0.3s ease-in-out",
                     zIndex: 15,
                 }}>

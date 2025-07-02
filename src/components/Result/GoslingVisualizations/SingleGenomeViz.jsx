@@ -98,7 +98,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
             "arrangement": "horizontal",
             "spacing": 50,
             "linkingId": "detail", // linkingId is used to enable zooming and panning across views
-            "zoomLimits": [50, maxValue],
+            "zoomLimits": [50, Math.round(maxValue)],
             "views": distributedViews,
         }), [dataGosling, filePath, maxValueWiggleDict,filter, allowFetch]); 
         

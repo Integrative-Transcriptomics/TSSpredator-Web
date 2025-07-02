@@ -10,7 +10,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
     const [maxValueWiggleDict, setMaxValueWiggleDict] = useState({});
     const [currentPosition, setCurrentPosition] = useState([0, Number.MAX_SAFE_INTEGER]);
     const [enableUpdate, setEnableUpdate] = useState(false);
-    const hasSubscribedRef = useRef(false); // Track if subscription exists
+
 
 
     useEffect(() => {
@@ -21,21 +21,28 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
     const updatePositionThrottled = throttle((start, end) => {
         setCurrentPosition([start, end]);
     }, 500); // Adjust the interval as needed
-    useEffect(() => {
-        gosRef.current?.api?.subscribe('location', (typeEvent, dataOfTrack) => {
-            if (dataOfTrack.id === `detail_tss_+_${nameGenomes[0]}`) {
-                let start = parseInt(dataOfTrack.genomicRange[0].position);
-                let end = parseInt(dataOfTrack.genomicRange[1].position);
-                if (Math.abs(start - end) < 10000) {
-                    updatePositionThrottled(start, end);
-                }
 
-            }
-        });
+
+    useEffect(() => {
+    
+        if (gosRef.current) {
+  
+            gosRef.current.api?.subscribe('location', (typeEvent, dataOfTrack) => {
+                if (dataOfTrack.id === `detail_tss_+_${nameGenomes[0]}`) {
+                    let start = parseInt(dataOfTrack.genomicRange[0].position);
+                    let end = parseInt(dataOfTrack.genomicRange[1].position);
+                    if (Math.abs(start - end) < 10000) {
+                        updatePositionThrottled(start, end);
+                    }
+                    
+                }
+            });
+        }
+
         return () => {
             gosRef.current?.api?.unsubscribe('location'); // Cleanup on unmount
         };
-    }, []);
+    }, [gosRef.current]);
 
 
     const fetchMaxima = async () => {

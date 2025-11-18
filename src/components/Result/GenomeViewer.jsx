@@ -10,32 +10,50 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
     const [maxValueWiggleDict, setMaxValueWiggleDict] = useState({});
     const [currentPosition, setCurrentPosition] = useState([0, Number.MAX_SAFE_INTEGER]);
     const [enableUpdate, setEnableUpdate] = useState(false);
-    const hasSubscribedRef = useRef(false); // Track if subscription exists
+    const [allowWiggleVisualization, setAllowWiggleVisualization] = useState(false);
+    const [zoomLevel, setZoomLevel] = useState(1);
+
 
 
     useEffect(() => {
-        // console.log(currentPosition)
-        setEnableUpdate(Math.abs(currentPosition[0] - currentPosition[1]) < 5500)
+
+        let abs_diff = Math.abs(currentPosition[0] - currentPosition[1]);
+        if (abs_diff < 5500) {
+            setEnableUpdate(true);
+        }
+        else{
+            setEnableUpdate(false);
+            setAllowWiggleVisualization(false);
+        }
     }, [currentPosition])
 
     const updatePositionThrottled = throttle((start, end) => {
         setCurrentPosition([start, end]);
-    }, 500); // Adjust the interval as needed
-    useEffect(() => {
-        gosRef.current?.api?.subscribe('location', (typeEvent, dataOfTrack) => {
-            if (dataOfTrack.id === `detail_tss_+_${nameGenomes[0]}`) {
-                let start = parseInt(dataOfTrack.genomicRange[0].position);
-                let end = parseInt(dataOfTrack.genomicRange[1].position);
-                if (Math.abs(start - end) < 10000) {
-                    updatePositionThrottled(start, end);
-                }
+    }, 100); // Adjust the interval as needed
 
-            }
-        });
+
+    useEffect(() => {
+    
+        if (gosRef.current) {
+            console.log(gosRef.current.api.getViews())
+
+
+            gosRef.current.api?.subscribe('location', (typeEvent, dataOfTrack) => {
+                if (dataOfTrack.id === `gff_track_+_${nameGenomes[0]}`) {
+                    let start = parseInt(dataOfTrack.genomicRange[0].position);
+                    let end = parseInt(dataOfTrack.genomicRange[1].position);
+                    if (Math.abs(start - end) < 10000) {
+                        updatePositionThrottled(start, end);
+                    }
+                    
+                }
+            });
+        }
+
         return () => {
             gosRef.current?.api?.unsubscribe('location'); // Cleanup on unmount
         };
-    }, []);
+    }, [gosRef.current]);
 
 
     const fetchMaxima = async () => {
@@ -61,6 +79,36 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                     style={{ maxWidth: "25%" }}
                 />
 
+                <div className="button-container">
+                    <label
+                        htmlFor="wiggle-toggle"
+                        style={{
+                           textAlign: "center"
+                        }}
+                        data-title={
+                            allowWiggleVisualization
+                                ? "Coverage profile visualization enabled. This consumes more resources, please, disable if unnecessary."
+                                : "You can enable it when zoomed in, but consider that this requires a stable high-sppeed internet connection."
+                        }
+                    >
+                        <input
+                            id="wiggle-toggle"
+                            type="checkbox"
+                            disabled={!enableUpdate}
+                            checked={allowWiggleVisualization}
+                            onChange={(e) => setAllowWiggleVisualization(e.target.checked)}
+                            style={{
+                                width: "1.1em",
+                                height: "1.1em",
+                                cursor: "pointer",
+                                accentColor: "#ffa000", // similar to your button color
+                            }}
+                        />
+                        <span>
+                            Enable read coverage visualization
+                        </span>
+                    </label>
+</div>
 
                 <div className='button-container'>
                     <label htmlFor="update-button" style={{ textAlign: "center" }}
@@ -68,7 +116,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
 
                         <button className="button-results" style={
                             {
-                                backgroundColor: enableUpdate ? "#ffa000" : "darkgrey",
+                                backgroundColor: allowWiggleVisualization ? "#ffa000" : "darkgrey",
                                 color: "white",
                                 padding: "0.5em",
                                 margin: "2px",
@@ -76,11 +124,11 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                                 cursor: "pointer",
                                 borderRadius: "6px",
                                 fontFamily: "Arial",
-                                cursor: enableUpdate ? "pointer" : "not-allowed",
+                                cursor: allowWiggleVisualization ? "pointer" : "not-allowed",
                                 maxWidth: "auto"
                             }
                         }
-                            disabled={!enableUpdate} onClick={() => {
+                            disabled={!allowWiggleVisualization} onClick={() => {
                                 fetchMaxima()
                             }}>Update Y-Axes for wiggle files</button>
                     </label>
@@ -122,7 +170,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
 
 
             </div>
-            <div className='genome-viewer'>
+            <div id="genome-viewer" className='genome-viewer'>
                 {
                     (
                         currentType === 'single' ?
@@ -131,18 +179,21 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                                 dataGosling={dataGosling}
                                 filePath={filePath}
                                 filter={filter}
+                                allowWiggleVisualization = {allowWiggleVisualization}
                                 allowFetch={enableUpdate}
                                 gosRef={gosRef}
                                 widthTrack={widthTrack}
+                                zoomLevel={zoomLevel}
                             /> :
                             <AlignedGenomeViz
-                                maxValueWiggleDict={maxValueWiggleDict}
-                                dataGosling={dataGosling}
-                                filePath={filePath}
-                                allowFetch={enableUpdate}
-                                filter={filter}
-                                gosRef={gosRef}
-                                widthTrack={widthTrack}
+                                maxValueWiggleDict       = {maxValueWiggleDict}
+                                dataGosling              = {dataGosling}
+                                filePath                 = {filePath}
+                                allowFetch               = {enableUpdate}
+                                allowWiggleVisualization = {allowWiggleVisualization}
+                                filter                   = {filter}
+                                gosRef                   = {gosRef}
+                                widthTrack               = {widthTrack}
 
                             />
 

@@ -3,19 +3,20 @@ const COLORS_TSS = ["#377eb8", "#fb8072", "#fed9a6", "#8dd3c7", "#decbe4"]
 const ORDER_TSS_CLASSES = ["Primary", "Secondary", "Internal", "Antisense", "Orphan"]
 
 
-export const createWiggleTracks = (strand, genome, filePath, allowFetch,width) => {
+export const createWiggleTracks = (strand, genome, filePath,width) => {
     
     return ["Normal", "FivePrime"].map(type => {
         return {
+            "spacing": 0,
             "data": {
-                "url": `/api/provideBigWig/${filePath}/${genome}/${strand === "+" ? "Plus" : "Minus"}/${type}/${allowFetch}`,
+                "url": `/api/provideBigWig/${filePath}/${genome}/${strand === "+" ? "Plus" : "Minus"}/${type}/True`,
                 "type": "bigwig",
                 "binSize": 5,
                 "aggregation": "mean"
             },
             "id": `detail_wiggle_${strand}_${genome.replace(/_/g, "-")}_${type}`,
             "mark": "bar",
-            width: width,
+            "width": width,
 
             "x": { "field": "start", "type": "genomic" },
             "xe": { "field": "end", "type": "genomic" },
@@ -48,9 +49,9 @@ export const createWiggleTracks = (strand, genome, filePath, allowFetch,width) =
 
 export const createGenomeTrack = (filePath, genome, strand = "+",width) => {
     return [{
-        "alignment": "overlay",
         "height": 20,
-        width: width,
+        "width": width,
+        "alignment": "overlay",
 
         "id": `${genome}_${strand}_genome_track`,
 
@@ -93,23 +94,17 @@ export const createGenomeTrack = (filePath, genome, strand = "+",width) => {
 export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, strand, GT, LT, viewType, genomeName, width) => {
     let transitionPadding = 5000;
     return {
-        "title": `TSS counts in ${strand === "+" ? "forward" : "reverse"} strand`,
-        "data": {
-            "type": "csv",
-            "url": "/api/getAggregated/" + filePath + "/" + genomeName + "/" + binSize,
-            "genomicFields": ["binStart", "binEnd"],
-            "sampleLength": 2000
-        },
+        "spacing": 0,
         "dataTransform": [
             { "type": "filter", "field": "strand", "oneOf": [strand] },
-            { "type": "filter", "field": "typeTSS", "oneOf": filterTSS }
-
+            { "type": "filter", "field": "typeTSS", "oneOf": filterTSS },
+            { "type": "filter", "field": "binSize", "oneOf": [`${binSize}`] }
         ],
         "id": `aggregated_tss_${strand}_${binSize}_${genomeName}`,
-        "x": { "field": "binStart", "type": "genomic", "axis": "none" },
-        "xe": { "field": "binEnd", "type": "genomic", "axis": "none" },
+        "x": { "field": "binStart", "type": "genomic", "axis":  strand === "+" ? "top" : "bottom" },
+        "xe": { "field": "binEnd", "type": "genomic", "axis": strand === "+" ? "top" : "bottom" },
         "mark": "bar",
-        width: width,
+        "width": width,
         "y": {
             "field": "count",
             "type": "quantitative",
@@ -125,17 +120,7 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
             "range": COLORS_TSS,
             "legend": viewType === "single" ? strand === "+" : false
         },
-        "tooltip": [
-            { "field": "binStart", "alt": "Bin start" },
-            { "field": "binEnd", "alt": "Bin end" },
-            {
-                "field": "mainClass",
-                "type": "nominal",
-                "alt": "Main TSS class",
-            },
-            { "field": "count", "alt": "Number of TSS" },
-            { "field": "typeTSS", "alt": "Enriched or Detected?" }
-        ],
+
         "visibility": [
             {
                 "operation": "GT",
@@ -152,25 +137,36 @@ export const createBinnedView = (filePath, binSize, maxValueBin, filterTSS, stra
                 "transitionPadding": transitionPadding,
                 "target": "track"
             }
-        ]
+        ],
+                "tooltip": [
+            { "field": "binStart", "alt": "Bin start" },
+            { "field": "binEnd", "alt": "Bin end" },
+            {
+                "field": "mainClass",
+                "type": "nominal",
+                "alt": "Main TSS class",
+            },
+            { "field": "count", "alt": "Number of TSS" },
+            { "field": "typeTSS", "alt": "Enriched or Detected?" },
+            { "field": "classesTSS", "alt": "All TSS classes" }
+
+        ],
     }
 }
 
 export const createDetailTSSTrack = (filePath, strand, filterTSS, TSS_DETAIL_LEVEL_ZOOM, viewType, genomeName, width) => {
     return {
-        "data": {
-            "type": "csv",
-            "url": "/api/getSingleTSS/" + filePath + "/" + genomeName,
-            "genomicFields": ["superPos"],
-        },
+        "spacing": 0,
+
         "dataTransform": [
-            { "type": "filter", "field": "superStrand", "oneOf": [strand] },
-            { "type": "filter", "field": "typeTSS", "oneOf": filterTSS }
+            { "type": "filter", "field": "strand", "oneOf": [strand] },
+            { "type": "filter", "field": "typeTSS", "oneOf": filterTSS },
+            {"type": "filter", "field": "binSize", "oneOf": ["1"]}
         ],
         width: width,
 
         "id": `detail_tss_${strand}_${genomeName}`,
-        "x": { "field": "superPos", "type": "genomic", "axis": "top" },
+        "x": { "field": "binStart", "type": "genomic", "axis": "top" },
         "mark": strand === "+" ? "triangleRight" : "triangleLeft",
         "style": { "align": strand === "+" ? "left" : "right" },
         "size": { "value": 10, "legend": false, axis: "none" },
@@ -182,7 +178,7 @@ export const createDetailTSSTrack = (filePath, strand, filterTSS, TSS_DETAIL_LEV
             "legend": viewType === "single" ? strand === "+" : false
         },
         "tooltip": [
-            { "field": "superPos", "type": "genomic", "alt": "TSS Position" },
+            { "field": "binStart", "type": "genomic", "alt": "TSS Position" },
             {
                 "field": "mainClass",
                 "type": "nominal",
@@ -210,7 +206,9 @@ export const createGFFTrack = (filePath, genomeName, strand, width) => {
     return [{
         "alignment": "overlay",
         "height": 60,
-        width: width,
+        "width": width,
+                "id": `gff_track_${strand}_${genomeName}`,
+
         "data": {
             "type": "csv",
             "url": "/api/getGFFData/" + filePath + "/" + genomeName + "/" + (strand === "+" ? "Plus" : "Minus"),

@@ -379,6 +379,32 @@ def expandTSSPositions(tss_set, expansion):
             expandedTSS.add((int(tss + i),strand))
     return expandedTSS
 
+def join_tss_data(resultsDir, tempDir, genomeKey, binSizes):
+    '''Join TSS data into a single file for better visualization'''
+
+    #  subdfAgg.to_csv(outputDir + f'/aggregated_data_temp_{genomeName}_{binSize}.csv', index=False)
+    #         subdfTSS.to_csv(resultsDir + f'/tss_data_temp_{genomeKey}.csv', index=False)
+    # read all files starting with aggregated_data_temp_
+    all_aggregated_tss = pd.DataFrame()
+    for binSize in binSizes:
+        agg_file = os.path.join(resultsDir, f'aggregated_data_temp_{genomeKey}_{binSize}.csv')
+        df_agg = pd.read_csv(agg_file, header=0)
+        df_agg['binSize'] = binSize
+        all_aggregated_tss = pd.concat([all_aggregated_tss, df_agg], ignore_index=True)
+    # read single TSS data
+    tss_file = os.path.join(resultsDir, f'tss_data_temp_{genomeKey}.csv')
+    df_tss = pd.read_csv(tss_file, header=0)
+    df_tss['binSize'] = 1
+    # rename column 'superPos' to 'binStart' and 'superStrand' to 'strand'
+    df_tss = df_tss.rename(columns={'superPos': 'binStart', 'superStrand': 'strand'})
+    # create a column 'binEnd' with value binStart 
+    df_tss['binEnd'] = df_tss['binStart'] 
+    # concatenate both dataframes
+    all_aggregated_tss = pd.concat([all_aggregated_tss, df_tss], ignore_index=True, sort=False,  axis=0, join='outer')
+
+    all_aggregated_tss.to_csv(os.path.join(resultsDir, f'all_tss_data_{genomeKey}.csv'), index=False)
+    #
+
 
 def process_results(tempDir, resultsDir): 
     """
@@ -416,6 +442,7 @@ def process_results(tempDir, resultsDir):
         rnaData[genomeKey] = {}
         rnaData[genomeKey] = parseRNAGraphs(tempDir, genomeKey, resultsDir)
         from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss_expanded)
+        join_tss_data(resultsDir, tempDir, genomeKey, list(masterTable[genomeKey]['maxAggregatedTSS'].keys()))
     # write compressed json in resultsDir
     with open(resultsDir + '/aggregated_data.json', 'w') as f:
         f.write(json.dumps(masterTable))

@@ -117,18 +117,6 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
             }), [dataGosling, filePath, maxValueWiggleDict,filter, allowFetch, allowWiggleVisualization]); 
         return specs;
     }
-    console.log(createSpecsGosling(dataGosling, filePath, maxValueWiggleDict, filter, allowFetch, allowWiggleVisualization, widthTrack))
-
-    React.useEffect(() => {
-        
-            if (gosRef.current) 
-                    console.log(gosRef.current.api)
-                    console.log(gosRef.current.api.getTracksAndViews())
-
-          
-        }, [gosRef.current]);
-    
-    // console.log(gosRef.current?.api?.getViewsAndTracks())
 
 
     return <>

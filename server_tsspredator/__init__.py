@@ -363,6 +363,11 @@ def getFile(filename):
 def getAggregated(filePath, genome, binSize):
     return getFile(tempfile.gettempdir().replace('\\', '/') + '/' + filePath + f'/aggregated_data_temp_{genome}_{binSize}.csv')  
 
+@app.route('/api/getTSSdata/<filePath>/<genome>')
+def getTSSdata(filePath, genome):
+    return getFile(tempfile.gettempdir().replace('\\', '/') + '/' + filePath + f'/all_tss_data_{genome}.csv')  
+
+
 @app.route('/api/getSingleTSS/<filePath>/<genome>')
 def getSingleTSS(filePath, genome):
     return getFile(tempfile.gettempdir().replace('\\', '/') + '/' + filePath + f'/tss_data_temp_{genome}.csv')

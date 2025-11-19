@@ -94,7 +94,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
 
     }
 
-    const createSpecsGosling = (dataGosling, filePath, maxValueWiggleDict, filter, allowFetch,) => {
+    const createSpecsGosling = (dataGosling, filePath, maxValueWiggleDict, filter, allowFetch) => {
 
         const data = dataGosling.current
         const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));

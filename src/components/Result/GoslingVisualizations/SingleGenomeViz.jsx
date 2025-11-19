@@ -94,7 +94,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
 
     }
 
-    const createSpecsGosling = (dataGosling, filePath, maxValueWiggleDict, filter, allowFetch, allowWiggleVisualization, widthTrack) => {
+    const createSpecsGosling = (dataGosling, filePath, maxValueWiggleDict, filter, allowFetch,) => {
 
         const data = dataGosling.current
         const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
@@ -122,7 +122,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
     return <>
         {dataGosling === null ?
             <ClipLoader color='#ffa000' size={30} /> :
-            <GoslingComponent spec={createSpecsGosling(dataGosling, filePath, maxValueWiggleDict, filter, allowFetch, allowWiggleVisualization, widthTrack)} ref={gosRef}  reactive={true} />}
+            <GoslingComponent spec={createSpecsGosling(dataGosling, filePath, maxValueWiggleDict, filter, allowFetch)} ref={gosRef}  reactive={true} />}
     </>
         ;
 }

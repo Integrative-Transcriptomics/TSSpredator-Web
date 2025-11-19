@@ -12,7 +12,7 @@ import { useEffect } from "react";
  */
 function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict, allowFetch, widthTrack, allowWiggleVisualization }) {
 
-    const createTSSTrack = (binSizes, strand, maxGenome, title = null, filePath, allowFetch) => {
+    const createTSSTrack = (binSizes, strand, maxGenome, title = null, filePath, maxValueGenome) => {
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
         let sizesBins = Object.keys(binSizes).sort((a, b) => parseInt(a) - parseInt(b)).map((size, i, arr) => {
             const overflowForTransition = 40;
@@ -49,6 +49,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
                     "sampleLength": 100000
                 },
                 "alignment": "overlay",
+                "zoomLimits": [50, Math.round(  maxValueGenome)],
                 "tracks": [
                     detailTSSTrack,
                     ...binnedViews,
@@ -59,10 +60,10 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
         ]
     }
 
-    const createTracks = (data, genomeName, maxGenome, filePath, allowFetch) => {
+    const createTracks = (data, genomeName, maxGenome, filePath, maxValueGenome) => {
 
-        const createTracks = (filePath, genomeName, direction, allowFetch) => {
-            const TSSTracks = createTSSTrack(data["maxAggregatedTSS"], direction, maxGenome, genomeName, filePath, allowFetch);
+        const createTracks = (filePath, genomeName, direction, maxValueGenome) => {
+            const TSSTracks = createTSSTrack(data["maxAggregatedTSS"], direction, maxGenome, genomeName, filePath, maxValueGenome);
             const genes = createGFFTrack(filePath, genomeName, direction,widthTrack);
             const fastaTrack = createGenomeTrack(filePath, genomeName, direction,widthTrack);
             if (direction === "-") {
@@ -73,13 +74,13 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
             }
         };
 
-        const tracks_plus = createTracks(filePath, genomeName, "+", allowFetch);
-        const tracks_minus = createTracks(filePath, genomeName, "-", allowFetch);
+        const tracks_plus = createTracks(filePath, genomeName, "+", maxValueGenome);
+        const tracks_minus = createTracks(filePath, genomeName, "-", maxValueGenome);
 
         return [...tracks_plus, ...tracks_minus];
     }
 
-    const getViews = (data, filePath, allowFetch) => {
+    const getViews = (data, filePath, maxValueGenome) => {
         let views = [];
         for (let genome of Object.keys(data)) {
             views.push({
@@ -87,7 +88,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
                 "alignment": "stack",
                 "assembly": [[genome, data[genome]["lengthGenome"]]],
                 "layout": "linear",
-                "tracks": createTracks(data[genome], genome, data[genome]["lengthGenome"], filePath, allowFetch)
+                "tracks": createTracks(data[genome], genome, data[genome]["lengthGenome"], filePath, maxValueGenome)
             })
         }
         return views;
@@ -98,7 +99,7 @@ function SingleGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggle
 
         const data = dataGosling.current
         const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
-        const allViews = getViews(data, filePath)
+        const allViews = getViews(data, filePath, maxValue)
         const distributedViews = [{
             "arrangement": "vertical",
             "views": allViews.filter((_, i) => i < allViews.length / 2)

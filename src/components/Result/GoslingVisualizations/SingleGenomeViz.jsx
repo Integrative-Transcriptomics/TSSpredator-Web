@@ -3,7 +3,6 @@ import React from 'react';
 import { GoslingComponent } from "gosling.js";
 import { ClipLoader } from "react-spinners";
 import { createWiggleTracks, createGenomeTrack, createDetailTSSTrack, createGFFTrack, createBinnedView } from "./SharedGoslingFunctions.js";
-import { useEffect } from "react";
 /**
  * Renders a genome visualization using Gosling.js library.
  * @param {Object} props - The component props.

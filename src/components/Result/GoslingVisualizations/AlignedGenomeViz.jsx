@@ -14,7 +14,7 @@ import { createGenomeTrack, createWiggleTracks, createDetailTSSTrack, createBinn
 function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict, allowFetch, allowWiggleVisualization, widthTrack }) {
      
 
-    const createTSSTrack = (binSizes, strand, maxGenome, title, filePath) => {
+    const createTSSTrack = (binSizes, strand, maxGenome, title, filePath, maxValueGenome) => {
         let genomeName = title;
         const TSS_DETAIL_LEVEL_ZOOM = 50000;
         let sizesBins = Object.keys(binSizes).sort((a, b) => parseInt(a) - parseInt(b)).map((size, i, arr) => {
@@ -48,7 +48,8 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
                     "genomicFields": ["binStart","binEnd"],
                     "sampleLength": 100000
                 },
-                        
+                "zoomLimits": [50, maxValueGenome],
+
                 "alignment": "overlay",
                 "tracks": [
                     detailTSSTrack,
@@ -79,14 +80,14 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
         return view;
     }
 
-    const createTracks = (filePath, data, genomeName, maxGenome, strand, allowFetch) => {
+    const createTracks = (filePath, data, genomeName, maxGenome, strand, maxValueGenome) => {
         let genes = createGFFTrack(filePath, genomeName, strand, widthTrack);
         let fastaTrack = createGenomeTrack(filePath, genomeName, strand, widthTrack);
-        let TSSTracks = createTSSTrack(data["maxAggregatedTSS"], strand, maxGenome, genomeName, filePath, allowFetch);
+        let TSSTracks = createTSSTrack(data["maxAggregatedTSS"], strand, maxGenome, genomeName, filePath, maxValueGenome);
         return [...TSSTracks, ...genes, ...fastaTrack];
     }
 
-    const getViews = (data, filePath) => {
+    const getViews = (data, filePath, maxValueGenome) => {
         let views_plus = [];
         let views_minus = [];
         let addLegend = true;
@@ -98,7 +99,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
                     "assembly": [[genome, data[genome]["lengthGenome"]]],
                     "spacing": 0,
                     "layout": "linear",
-                    "tracks": createTracks(filePath, data[genome], genome, data[genome]["lengthGenome"], strand)
+                    "tracks": createTracks(filePath, data[genome], genome, data[genome]["lengthGenome"], strand, maxValueGenome)
                 }
                 if (addLegend)
                     tempView = addLegendToTSS(tempView)
@@ -114,14 +115,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
         return [views_minus, views_plus];
 
     }
-    const completeView = (views, subtitle) => {
-        return {
-            "style": { "outline": "black", "outlineWidth": 2 },
-            "spacing": 0,
-            "tracks": views, 
-            "id": `subtitle_${subtitle}`,
-        }
-    }
+
 
     const completeViewPerGenome = (viewsForward, viewsReverse) => {
         // Zip views
@@ -138,7 +132,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
     const createSpecsGosling = (dataGosling, filePath, maxValueWiggleDict, filter, allowFetch) => { 
         const data = dataGosling.current
         const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
-        const [view_forward, view_reverse] = getViews(data, filePath);
+        const [view_forward, view_reverse] = getViews(data, filePath, maxValue);
         const distributedViews = [completeViewPerGenome(view_forward, view_reverse)].flat();
 
         const specs = React.useMemo(() => ({

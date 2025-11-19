@@ -11,7 +11,6 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
     const [currentPosition, setCurrentPosition] = useState([0, Number.MAX_SAFE_INTEGER]);
     const [enableUpdate, setEnableUpdate] = useState(false);
     const [allowWiggleVisualization, setAllowWiggleVisualization] = useState(false);
-    const [zoomLevel, setZoomLevel] = useState(1);
 
 
 
@@ -21,7 +20,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
         if (abs_diff < 5500) {
             setEnableUpdate(true);
         }
-        else{
+        else {
             setEnableUpdate(false);
             setAllowWiggleVisualization(false);
         }
@@ -33,7 +32,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
 
 
     useEffect(() => {
-    
+
         if (gosRef.current) {
             console.log(gosRef.current.api.getViews())
 
@@ -45,7 +44,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                     if (Math.abs(start - end) < 10000) {
                         updatePositionThrottled(start, end);
                     }
-                    
+
                 }
             });
         }
@@ -67,7 +66,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
         <div className='gosling-component'>
             <div className='genome-viewer-select' style={{ paddingBottom: "1.5em" }}>
                 <SingleSelectDropdown
-                        helpText={`Two different views are available: Single View shows the genome viewer grouped vertically by Genome/Condition, while the Aligned View aligns the strands vertically and the genomes/conditions on each row.`}
+                    helpText={`Two different views are available: Single View shows the genome viewer grouped vertically by Genome/Condition, while the Aligned View aligns the strands vertically and the genomes/conditions on each row.`}
 
                     label="Change Genome Viewer Modus:"
                     value={currentType}
@@ -83,12 +82,12 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                     <label
                         htmlFor="wiggle-toggle"
                         style={{
-                           textAlign: "center"
+                            textAlign: "center"
                         }}
                         data-title={
                             allowWiggleVisualization
-                                ? "Coverage profile visualization enabled. This consumes more resources, please, disable if unnecessary."
-                                : "You can enable it when zoomed in, but consider that this requires a stable high-sppeed internet connection."
+                                ? "The coverage profile visualization is enabled. As this consumes more resources, please, disable if unnecessary. It will be disabled automatically when zooming out."
+                                : "The visualization of the coverage profile can be activated once you are reach the detailed view of the explorer (i.e. TSS are visualized individually). Consider that this requires a stable and high-speed internet connection for a smooth interaction."
                         }
                     >
                         <input
@@ -100,7 +99,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                             style={{
                                 width: "1.1em",
                                 height: "1.1em",
-                                cursor: "pointer",
+                                cursor: enableUpdate ? "pointer" : "not-allowed",
                                 accentColor: "#ffa000", // similar to your button color
                             }}
                         />
@@ -108,7 +107,7 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                             Enable read coverage visualization
                         </span>
                     </label>
-</div>
+                </div>
 
                 <div className='button-container'>
                     <label htmlFor="update-button" style={{ textAlign: "center" }}
@@ -135,34 +134,34 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                 </div>
 
                 <div className='button-container'>
-                <button className="button-results" style={
-                            {
-                                backgroundColor: "#ffa000",
-                                color: "white",
-                                padding: "0.5em",
-                                margin: "2px",
-                                border: "none",
-                                cursor: "pointer",
-                                borderRadius: "6px",
-                                fontFamily: "Arial",
-                                maxWidth: "auto"
-                            }
-                        } onClick={() => {
+                    <button className="button-results" style={
+                        {
+                            backgroundColor: "#ffa000",
+                            color: "white",
+                            padding: "0.5em",
+                            margin: "2px",
+                            border: "none",
+                            cursor: "pointer",
+                            borderRadius: "6px",
+                            fontFamily: "Arial",
+                            maxWidth: "auto"
+                        }
+                    } onClick={() => {
                         gosRef.current.api.exportPdf()
                     }}>Export as PDF</button>
                     <button className="button-results" style={
-                            {
-                                backgroundColor: "#ffa000",
-                                color: "white",
-                                padding: "0.5em",
-                                margin: "2px",
-                                border: "none",
-                                cursor: "pointer",
-                                borderRadius: "6px",
-                                fontFamily: "Arial",
-                                maxWidth: "auto"
-                            }
-                        } onClick={() => {
+                        {
+                            backgroundColor: "#ffa000",
+                            color: "white",
+                            padding: "0.5em",
+                            margin: "2px",
+                            border: "none",
+                            cursor: "pointer",
+                            borderRadius: "6px",
+                            fontFamily: "Arial",
+                            maxWidth: "auto"
+                        }
+                    } onClick={() => {
                         gosRef.current.api.exportPng()
                     }}>Export as PNG</button>
 
@@ -179,21 +178,20 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                                 dataGosling={dataGosling}
                                 filePath={filePath}
                                 filter={filter}
-                                allowWiggleVisualization = {allowWiggleVisualization}
+                                allowWiggleVisualization={allowWiggleVisualization}
                                 allowFetch={enableUpdate}
                                 gosRef={gosRef}
                                 widthTrack={widthTrack}
-                                zoomLevel={zoomLevel}
                             /> :
                             <AlignedGenomeViz
-                                maxValueWiggleDict       = {maxValueWiggleDict}
-                                dataGosling              = {dataGosling}
-                                filePath                 = {filePath}
-                                allowFetch               = {enableUpdate}
-                                allowWiggleVisualization = {allowWiggleVisualization}
-                                filter                   = {filter}
-                                gosRef                   = {gosRef}
-                                widthTrack               = {widthTrack}
+                                maxValueWiggleDict={maxValueWiggleDict}
+                                dataGosling={dataGosling}
+                                filePath={filePath}
+                                allowFetch={enableUpdate}
+                                allowWiggleVisualization={allowWiggleVisualization}
+                                filter={filter}
+                                gosRef={gosRef}
+                                widthTrack={widthTrack}
 
                             />
 

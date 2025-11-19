@@ -11,7 +11,7 @@ import { createGenomeTrack, createWiggleTracks, createDetailTSSTrack, createBinn
  * @param {Array} props.data - The data used for visualization.
  * @returns {JSX.Element} - The rendered genome visualization component.
  */
-function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict, allowFetch, allowWiggleVisualization, widthTrack }) {
+function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggleDict, allowWiggleVisualization, widthTrack }) {
      
 
     const createTSSTrack = (binSizes, strand, maxGenome, title, filePath, maxValueGenome) => {
@@ -27,18 +27,18 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
             }
         })
         let binnedViews = sizesBins.map(({ GT, LT, size, maxValueBin }) => createBinnedView(filePath, size, maxValueBin, filter, strand, GT, LT, "aligned", title));
-         let specsWiggle = []
-               if (allowWiggleVisualization) {
-                specsWiggle = createWiggleTracks(strand, title, filePath, widthTrack)
-               specsWiggle.map(spec => {
-                   let [strand, genome, type] = spec["id"].split("_").slice(2)
-                   let genomeID = genome.replace(/-/g, "_")
-                   let strandID = strand === "+" ? "Plus" : "Minus"
-                   let maxValuesTemp = maxValueWiggleDict?.[genomeID]?.[strandID] || 100;
-                   spec["y"]["domain"] = [0, maxValuesTemp]
-               })
-               }
         let detailTSSTrack = createDetailTSSTrack(filePath, strand, filter, TSS_DETAIL_LEVEL_ZOOM, "aligned", genomeName)
+           let specsWiggle = []
+            if (allowWiggleVisualization) {
+            specsWiggle = createWiggleTracks(strand, title, filePath, widthTrack)
+            specsWiggle.map(spec => {
+                let [strand, genome, type] = spec["id"].split("_").slice(2)
+                let genomeID = genome.replace(/-/g, "_")
+                let strandID = strand === "+" ? "Plus" : "Minus"
+                let maxValuesTemp = maxValueWiggleDict?.[genomeID]?.[strandID] || 100;
+                spec["y"]["domain"] = [0, maxValuesTemp]
+            })
+            }
         return [
             {
                 "spacing": 0,
@@ -48,15 +48,12 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
                     "genomicFields": ["binStart","binEnd"],
                     "sampleLength": 100000
                 },
-                "zoomLimits": [50, maxValueGenome],
-
                 "alignment": "overlay",
+                "zoomLimits": [50, Math.round(  maxValueGenome)],
                 "tracks": [
                     detailTSSTrack,
                     ...binnedViews,
                     ...specsWiggle
-
-
                 ]
             }
 
@@ -95,9 +92,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
             for (let strand of ["+", "-"]) {
                 let tempView = {
                     "alignment": "stack",
-                    // "title": `${genome}${strand}`,
                     "assembly": [[genome, data[genome]["lengthGenome"]]],
-                    "spacing": 0,
                     "layout": "linear",
                     "tracks": createTracks(filePath, data[genome], genome, data[genome]["lengthGenome"], strand, maxValueGenome)
                 }
@@ -121,6 +116,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
         // Zip views
         let zippedViews = viewsForward.map((view, index) => {
             return {
+                spacing: 0,
                 "arrangement": "horizontal",
                 "views":  [viewsReverse[index], view]
             }})
@@ -129,7 +125,7 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
 
 
 
-    const createSpecsGosling = (dataGosling, filePath, maxValueWiggleDict, filter, allowFetch) => { 
+    const createSpecsGosling = (dataGosling, filePath, maxValueWiggleDict, filter) => { 
         const data = dataGosling.current
         const maxValue = Math.max(...Object.values(data).map(d => d["lengthGenome"]));
         const [view_forward, view_reverse] = getViews(data, filePath, maxValue);
@@ -141,19 +137,19 @@ function AlignedGenomeViz({ dataGosling, filter, filePath, gosRef, maxValueWiggl
                 "arrangement": "vertical",
                 "spacing": 50,
                 "linkingId": "detail", // linkingId is used to enable zooming and panning across views
-                "zoomLimits": [50, maxValue],
+                "zoomLimits": [50, Math.round(maxValue)],
                 "views": distributedViews,
-            }), [dataGosling, filePath, maxValueWiggleDict,filter, allowFetch, allowWiggleVisualization]); 
-            console.log("SPEC ALIGNED")
-            console.log(specs)
+            }), [dataGosling, filePath, maxValueWiggleDict,filter, allowWiggleVisualization]); 
         return specs;
     }
     
+    
+
 
     return <>
          {dataGosling === null ?
                     <ClipLoader color='#ffa000' size={30} /> :
-                    <GoslingComponent spec={createSpecsGosling(dataGosling, filePath, maxValueWiggleDict, filter, allowFetch)} ref={gosRef}  reactive={true} />}
+                    <GoslingComponent spec={createSpecsGosling(dataGosling, filePath, maxValueWiggleDict, filter)} ref={gosRef}  reactive={true} />}
     </>
         ;
 

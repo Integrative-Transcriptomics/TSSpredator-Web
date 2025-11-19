@@ -177,9 +177,9 @@ function GenomeViewer({ filePath, dataGosling, filter, gosRef, widthTrack, nameG
                                 maxValueWiggleDict={maxValueWiggleDict}
                                 dataGosling={dataGosling}
                                 filePath={filePath}
-                                filter={filter}
-                                allowWiggleVisualization={allowWiggleVisualization}
                                 allowFetch={enableUpdate}
+                                allowWiggleVisualization={allowWiggleVisualization}
+                                filter={filter}
                                 gosRef={gosRef}
                                 widthTrack={widthTrack}
                             /> :

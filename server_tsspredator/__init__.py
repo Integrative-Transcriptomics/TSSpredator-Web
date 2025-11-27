@@ -110,6 +110,7 @@ def helperAsyncPredator(self, *args ):
         # print files in resultDir
         print(f"Files in {resultDir}: {os.listdir(resultDir)}")
         self.update_state(state='PROCESSING_RESULTS', meta={'projectName': projectName})
+        self.update_state(state='PROCESSING_RESULTS', meta={'projectName': projectName})
         # Zip the results        
         make_archive(os.path.join(tmpdirResult,'result'), 'zip', resultDir)
         # Process results for visualization
@@ -318,6 +319,12 @@ def returnBigWigMax(filePath, start, end):
 @app.route('/api/provideFasta/<filePath>/<genome>/<strand>')
 def returnFasta(filePath, genome, strand): 
     completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f'{genome}_{strand}_superGenome.tsv')
+    return send_file(completePath, mimetype='text/plain')
+
+
+@app.route('/api/getGenomes/<filePath>/')
+def getGenome(filePath): 
+    completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f'allGenomes_superGenome.tsv')
     return send_file(completePath, mimetype='text/plain')
 
 @app.route('/api/TSSViewer/<filePath>/')

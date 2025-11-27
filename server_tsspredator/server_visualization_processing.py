@@ -325,25 +325,27 @@ def parseSuperGFF (inputDir, genomeKey, resultsDir):
 
 def from_fasta_to_tsv(tempDir, genomeKey, resultsDir, unique_tss):
     '''convert fasta to tsv'''
-    with open(os.path.join(tempDir, f'{genomeKey}_super.fa'), 'r') as f:
-        genome_as_string = ""
-        for line in f:
-            if line.startswith('>'):
-                continue
-            line = line.rstrip()
-            genome_as_string += line
-
-    length_genome = len(genome_as_string)
-    for fix_strand in ["+", "-"]:
-        filt_unique_tss = [tss[0] for tss in unique_tss if tss[1] == fix_strand]
-        with open(os.path.join(resultsDir,f'{genomeKey}_{fix_strand}_superGenome.tsv'), 'w') as output:
-            for pos in filt_unique_tss:
-                if pos < 1 or pos > length_genome:
+    with open(os.path.join(resultsDir,f'allGenomes_superGenome.tsv'), 'w') as outputAll:
+        with open(os.path.join(tempDir, f'{genomeKey}_super.fa'), 'r') as f:
+            genome_as_string = ""
+            for line in f:
+                if line.startswith('>'):
                     continue
-                base = genome_as_string[pos-1]
-                if fix_strand == "-":
-                    base = reverse_base(base)
-                output.write(f'{pos}\t{base}\n')
+                line = line.rstrip()
+                genome_as_string += line
+
+        length_genome = len(genome_as_string)
+        for fix_strand in ["+", "-"]:
+            filt_unique_tss = [tss[0] for tss in unique_tss if tss[1] == fix_strand]
+            with open(os.path.join(resultsDir,f'{genomeKey}_{fix_strand}_superGenome.tsv'), 'w') as output:
+                for pos in filt_unique_tss:
+                    if pos < 1 or pos > length_genome:
+                        continue
+                    base = genome_as_string[pos-1]
+                    if fix_strand == "-":
+                        base = reverse_base(base)
+                    output.write(f'{pos}\t{base}\n')
+                    outputAll.write(f'{pos}\t{base}\t{genomeKey}\t{fix_strand}\n')
        
 
 def reverse_base(base) -> str | Literal['T', 'A', 'G', 'C']:

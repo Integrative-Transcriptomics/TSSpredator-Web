@@ -48,6 +48,7 @@ export const createWiggleTracks = (strand, genome, filePath,width) => {
 }
 
 export const createGenomeTrack = (filePath, genome, strand = "+",width) => {
+    console.log("Creating genome track for:", filePath, genome, strand);
     return [{
         "height": 20,
         "width": width,
@@ -55,12 +56,23 @@ export const createGenomeTrack = (filePath, genome, strand = "+",width) => {
 
         "id": `${genome}_${strand}_genome_track`,
 
-        "data": {
-            "url": `/api/provideFasta/${filePath}/${genome}/${strand}`,
+        // "data": {
+        //     "url": `/api/provideFasta/${filePath}/${genome}/${strand}`,
+        //     "type": "csv",
+        //     "separator": "\t",
+        //     "headerNames": ["pos", "base"],
+        // },
+
+                "data": {
+            "url": `/api/getGenomes/${filePath}/`,
             "type": "csv",
             "separator": "\t",
-            "headerNames": ["pos", "base"],
+            "headerNames": ["pos", "base", "genome", "strand"],
         },
+         "dataTransform": [
+            { "type": "filter", "field": "strand", "oneOf": [strand] },
+            { "type": "filter", "field": "genome", "oneOf": [genome] }
+        ],
         "mark": "text",
         "text": { "field": "base", "type": "nominal" },
         "x": { "field": "pos", "type": "genomic" },

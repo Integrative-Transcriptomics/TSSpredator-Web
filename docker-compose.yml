@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   web:
     image: tsspredator_web:latest
@@ -7,7 +6,7 @@ services:
       context: .
       dockerfile: webapp/Dockerfile
     working_dir: /app/server_tsspredator
-    command: gunicorn --workers 6 --timeout 500 --graceful-timeout 500  --bind 0.0.0.0:5001 server_tsspredator.wsgi:tsspredator
+    command: gunicorn --workers 6 --worker-class gthread --threads 4 --timeout 500 --graceful-timeout 500  --bind 0.0.0.0:5001 server_tsspredator.wsgi:tsspredator
     deploy:
       resources:
         limits:
@@ -39,6 +38,8 @@ services:
       context: .
       dockerfile: celery/Dockerfile
     command: celery -A server_tsspredator.celery_app worker -B --loglevel=warning
+    environment:
+      - TSSPREDATOR_JAVA_XMX=${TSSPREDATOR_JAVA_XMX:-2g}
     volumes:
       - tmpDataPredator:/tmpData
     depends_on:

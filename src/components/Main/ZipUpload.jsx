@@ -1,9 +1,8 @@
-import React from 'react';
 import { useState } from 'react';
 import { ClipLoader } from "react-spinners";
 import JSZip from "jszip";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleXmark } from '@fortawesome/pro-light-svg-icons';
+import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * popup window for uploading config file and folder that contains all needed files

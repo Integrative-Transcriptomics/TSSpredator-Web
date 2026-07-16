@@ -3,7 +3,7 @@ import TextFieldGroup from './TextFieldGroup';
 import UploadFilesIndividually from './UploadFilesIndividually';
 import PopupWindow from "./PopupWindow";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleInfo } from '@fortawesome/pro-light-svg-icons';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 
 /** creates the genome and replicate tabs
  * 

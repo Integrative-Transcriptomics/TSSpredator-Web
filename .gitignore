@@ -122,3 +122,8 @@ server_tsspredator/exampleData/saureus/files/GM_SA_WT3_plus_TEX.fa_div_by_954394
 server_tsspredator/exampleData/saureus/files/GM_SA_WT3_plus_TEX.fa_div_by_9543947.0_multi_by_5727088.0_reverse.wig_GM_SA_WT3_plus_TEX.fa_reverse_in_NC_009641.1.gr
 server_tsspredator/exampleData/saureus/files/NC_009641.fna
 server_tsspredator/exampleData/saureus/files/NC_009641.gff
+server_tsspredator/redisdb/dump-tsspredator.rdb
+server_tsspredator/redisdb/dump-tsspredator.rdb
+image_tsspredator_celery_app_test.tar.gz
+image_tsspredator_web_test.tar.gz
+server_tsspredator/redisdb/dump-tsspredator.rdb

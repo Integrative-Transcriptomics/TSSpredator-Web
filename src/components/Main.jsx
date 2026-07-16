@@ -125,8 +125,8 @@ function Main() {
     }
     if (run) {
       await fetch(`/api/startUpload/`)
-      const promises = sendDataAsync();
-      let uploadedFiles = await Promise.all(promises)
+      const tasks = sendDataAsync();
+      let uploadedFiles = await runWithConcurrency(tasks, 6)
       let modifiedGenomes = []
       let modifiedReplicates = []
       genomes.forEach((genome, i) => {
@@ -348,7 +348,27 @@ function Main() {
     formData.append("fileCategory", fileCategory);
     formData.append("fileType", fileCategory.includes("annotation") ? "annotation" : "input");
     formData.append("fileName", fileName);
-    formData.append("file", file);
+    // Wiggle / annotation / fasta files are text and compress ~80-90%. Gzip them
+    // in the browser before upload to cut transfer time (the upstream link is
+    // usually the bottleneck); the server decompresses on the fly. Falls back to
+    // a raw upload if CompressionStream is unavailable or compression fails.
+    let compressed = null;
+    if (typeof CompressionStream !== "undefined") {
+      try {
+        compressed = await new Response(
+          file.stream().pipeThrough(new CompressionStream("gzip"))
+        ).blob();
+      } catch (e) {
+        console.log("gzip compression failed, uploading raw", e);
+        compressed = null;
+      }
+    }
+    if (compressed) {
+      formData.append("encoding", "gzip");
+      formData.append("file", compressed, fileName + ".gz");
+    } else {
+      formData.append("file", file);
+    }
     // send file to server
     return fetchRetry("/api/upload/", 2, 3, {
       method: "POST",
@@ -372,13 +392,16 @@ function Main() {
   function sendDataAsync() {
     setReadyLoaded("loading");
     const typesOfReplicates = ["enrichedforward", "enrichedreverse", "normalforward", "normalreverse"];
-    let promises = [];
+    // Build deferred upload tasks (thunks) instead of firing every request at
+    // once. runWithConcurrency runs them through a bounded pool so we don't gzip
+    // and buffer every large file in memory simultaneously.
+    let tasks = [];
     genomes.forEach((genome, i) => {
       let idGenome = `genome${i + 1}`
       const { genomefasta, genomeannotation } = genome[idGenome];
-      promises.push(uploadFile(genomefasta, `${idGenome}_genomefasta`));
+      tasks.push(() => uploadFile(genomefasta, `${idGenome}_genomefasta`));
       genomeannotation.forEach((annotation, k) => {
-        promises.push(uploadFile(annotation, `${idGenome}_genomeannotation${i + 1}`));
+        tasks.push(() => uploadFile(annotation, `${idGenome}_genomeannotation${i + 1}`));
       });
       const rep = replicates[i][idGenome];
       rep.forEach((replicate, j) => {
@@ -387,13 +410,32 @@ function Main() {
         const { enrichedforward, enrichedreverse, normalforward, normalreverse } = replicate[replicateID];
         let replicateFiles = [enrichedforward, enrichedreverse, normalforward, normalreverse];
         replicateFiles.forEach((file, k) => {
-          promises.push(uploadFile(file, `${idGenome}_${replicateID}_${typesOfReplicates[k]}`));
+          tasks.push(() => uploadFile(file, `${idGenome}_${replicateID}_${typesOfReplicates[k]}`));
         });
       });
     });
 
-    if (alignmentFile) promises.push(uploadFile(alignmentFile, "alignmentfile"));
-    return promises
+    if (alignmentFile) tasks.push(() => uploadFile(alignmentFile, "alignmentfile"));
+    return tasks
+  }
+
+  /**
+   * Run async task thunks with a bounded concurrency limit, preserving the
+   * order of results. Keeps at most `limit` uploads (each: gzip + POST) in
+   * flight at once instead of all of them.
+   */
+  async function runWithConcurrency(tasks, limit) {
+    const results = new Array(tasks.length);
+    let next = 0;
+    async function worker() {
+      while (next < tasks.length) {
+        const current = next++;
+        results[current] = await tasks[current]();
+      }
+    }
+    const pool = Array.from({ length: Math.min(limit, tasks.length) }, worker);
+    await Promise.all(pool);
+    return results;
   }
 
   /**

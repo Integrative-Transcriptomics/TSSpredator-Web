@@ -73,4 +73,4 @@ ENV TSSPREDATOR_TEMPDATA="/tmpData"
 ENV TSSPREDATOR_REDIS_HOST="redis"
 
 # The command that will be executed when the container is run
-CMD ["gunicorn","--workers", "3","--timeout","500","--graceful-timeout", "500", "--bind", "0.0.0.0:5001", "--log-level='debug'", "server_tsspredator.wsgi:tsspredator"]
+CMD ["gunicorn","--workers", "3","--worker-class","gthread","--threads","4","--timeout","500","--graceful-timeout", "500", "--bind", "0.0.0.0:5001", "--log-level='debug'", "server_tsspredator.wsgi:tsspredator"]

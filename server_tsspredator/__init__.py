@@ -1,13 +1,15 @@
 from asyncio.subprocess import PIPE
-from shutil import make_archive, rmtree, unpack_archive, copy
+from shutil import make_archive, rmtree, unpack_archive, copy, copyfileobj
 from time import time
 import traceback
 from flask import Flask, request, send_file, send_from_directory, jsonify, session
+from flask_compress import Compress
 from werkzeug.utils import secure_filename
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
 
 import pyBigWig
+import gzip
 import math
 import json
 import tempfile
@@ -38,6 +40,54 @@ def celery_init_app(app: Flask) -> Celery:
 
 app = Flask(__name__, static_folder='../dist', static_url_path='/')
 app.secret_key = os.getenv('SECRET_KEY_TSSPREDATOR', "BAD_SECRET_KEY")
+
+# --- Response transfer optimization -------------------------------------------
+# The deployed app is served by gunicorn directly (no reverse proxy), so gzip
+# compression and cache headers have to be applied here. Almost every result
+# endpoint returns highly compressible text (JSON / CSV / TSV) or the static JS
+# bundle; gzip typically shrinks these by 80-90%. BigWig (.bw) responses are
+# deliberately left out: they are binary and served via HTTP range requests, so
+# compressing them whole would break partial fetches for the genome viewer.
+app.config["COMPRESS_MIMETYPES"] = [
+    "text/html",
+    "text/css",
+    "text/xml",
+    "text/plain",
+    "text/csv",
+    "text/tab-separated-values",
+    "text/javascript",
+    "application/javascript",
+    "application/json",
+    "image/svg+xml",
+]
+app.config["COMPRESS_LEVEL"] = 6
+app.config["COMPRESS_MIN_SIZE"] = 500
+Compress(app)
+
+# Result artifacts are written under a unique, immutable temp filePath and never
+# change once generated, so both the data endpoints and the content-hashed Vite
+# assets can be cached aggressively. index.html must stay uncached because it
+# references the hashed asset filenames.
+_CACHEABLE_API_PREFIXES = (
+    '/api/getAggregated/', '/api/getTSSdata/', '/api/getSingleTSS/',
+    '/api/getGFFData/', '/api/provideBigWig/', '/api/provideFasta/',
+    '/api/result/', '/api/TSSViewer/', '/api/getConfig/',
+)
+
+@app.after_request
+def add_cache_headers(response):
+    if response.status_code != 200:
+        return response
+    path = request.path
+    if path.startswith('/assets/'):
+        response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    elif path == '/' or path.endswith('/index.html'):
+        response.headers['Cache-Control'] = 'no-cache'
+    elif path.startswith(_CACHEABLE_API_PREFIXES):
+        # per-run immutable results, cleaned up after 7 days
+        response.headers['Cache-Control'] = 'private, max-age=604800'
+    return response
+# ------------------------------------------------------------------------------
 
 
 host_redis = os.getenv('TSSPREDATOR_REDIS_HOST', 'localhost')
@@ -90,15 +140,32 @@ def helperAsyncPredator(self, *args ):
         serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.path.join(os.getcwd(), "server_tsspredator"))
         # join server Location to find TSSpredator
         tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
-        # Run JAR file
-        result = subprocess.run(['java', '-jar',tsspredatorLocation, jsonString], 
+        # Run JAR file. Heap *ceiling* is configurable per deployment via
+        # TSSPREDATOR_JAVA_XMX (e.g. "4g", "8192m"); defaults to 2g. Only -Xmx is
+        # set: the JVM starts with a small heap and grows toward this cap on
+        # demand. Do NOT also force -Xms to this value — that reserves the whole
+        # amount at startup and makes the JVM fail to start (or get OOM-killed)
+        # when that much RAM isn't free, which produces no results at all.
+        javaHeap = os.getenv('TSSPREDATOR_JAVA_XMX', '2g')
+        result = subprocess.run(['java', f'-Xmx{javaHeap}', '-jar', tsspredatorLocation, jsonString],
                                 stdout=subprocess.PIPE, 
                                 stderr=subprocess.PIPE, 
                                 text=True,  # Ensures stdout and stderr are strings
                             )
-        # If stderr is not empty, something went wrong
-        if len(result.stderr) > 0:
-            raise subprocess.CalledProcessError(result.returncode, result.args, stderr=result.stderr, output=result.stdout)
+        print(result)
+        # Something went wrong if the process failed (non-zero return code) or
+        # wrote to stderr. A negative return code (e.g. -9) or 137 means the JVM
+        # was killed by a signal — typically the OS OOM-killer, which leaves
+        # stderr empty, so the return code is the only evidence.
+        if result.returncode != 0 or len(result.stderr) > 0:
+            stderr = result.stderr
+            if not stderr:
+                stderr = f"Process terminated with return code {result.returncode} and no output."
+                if result.returncode in (-9, 137):
+                    stderr += (" The JVM was killed by the operating system, most likely"
+                               " out of memory. Lower TSSPREDATOR_JAVA_XMX so the heap"
+                               " fits available RAM, or free/add memory.")
+            raise subprocess.CalledProcessError(result.returncode, result.args, stderr=stderr, output=result.stdout)
         tmpdirResult = tempfile.mkdtemp(prefix='tmpPredZippedResult')
         # remove temp dir from jsonString
         jsonString = jsonString.replace(annotationDir, "")
@@ -117,12 +184,16 @@ def helperAsyncPredator(self, *args ):
         filePath = os.path.basename(tmpdirResult)
         return {"filePath":filePath, "stderr": result.stderr, "stdout": result.stdout, "inputDir": inputDir, "annotationDir": annotationDir, "tempResultsDir": resultDir, "projectName": projectName}
     except Exception as e:
-        self.update_state(state="INTERNAL_ERROR", 
-                          meta={ 'stderr': e.stderr, 
-                                'stdout': e.stdout, 
-                                'inputDir': inputDir, 
-                                'annotationDir': annotationDir, 
-                                'tempResultsDir': resultDir, 
+        # Not every exception is a CalledProcessError (e.g. process_results
+        # failing on a missing MasterTable when the run was killed), so fall
+        # back to str(e) instead of assuming .stderr/.stdout exist — otherwise
+        # the real cause gets masked by an AttributeError here.
+        self.update_state(state="INTERNAL_ERROR",
+                          meta={ 'stderr': getattr(e, 'stderr', None) or str(e),
+                                'stdout': getattr(e, 'stdout', None),
+                                'inputDir': inputDir,
+                                'annotationDir': annotationDir,
+                                'tempResultsDir': resultDir,
                                 'projectName': projectName
                                 })
         raise Ignore()
@@ -174,10 +245,17 @@ def upload():
             directory = session["inputFiles"] if fileType == "input" else session["annotationFiles"]
             if not os.path.exists(directory):
                 os.makedirs(directory)
-            # Save file
-            fileName = secure_filename(file.filename)
+            # Save file. The client gzip-compresses text files (wiggle/annotation/
+            # fasta) before upload to cut transfer time; decompress on the fly so
+            # the stored file is identical to a raw upload. The original (un-.gz)
+            # name is sent separately in the 'fileName' field.
+            fileName = secure_filename(request.form.get('fileName') or file.filename)
             filePath = os.path.join(directory, fileName)
-            file.save(filePath)
+            if request.form.get('encoding') == 'gzip':
+                with gzip.GzipFile(fileobj=file.stream) as gzIn, open(filePath, 'wb') as out:
+                    copyfileobj(gzIn, out)
+            else:
+                file.save(filePath)
             return jsonify({'result': 'success', "fileName": fileName, "fileCategory": fileCategory})
         except Exception as e:
             print(f"Exception: {e}")
@@ -281,7 +359,10 @@ def getFiles(filePath):
 def returnBigWig(filePath, genome, strand, fileType, allowFetch):
     if allowFetch:
         completePath = os.path.join(tempfile.gettempdir().replace('\\', '/'), filePath, f"{genome}_super{fileType}{strand}.bw")
-        return send_file(completePath, mimetype='text/plain')
+        # BigWig is binary and fetched via HTTP range requests by the genome
+        # viewer; serve as octet-stream so it is never gzip-compressed (which
+        # would break partial/range fetches).
+        return send_file(completePath, mimetype='application/octet-stream')
     else:
         return jsonify({'error': 'Not allowed to fetch data'}), 403
        
@@ -419,15 +500,18 @@ def getAlignment():
         # write JSON string 
         # write JSON string 
         jsonString = '{"loadConfig": "false",' + '"saveConfig": "false", "loadAlignment": "true",' + '"alignmentFile": "' + alignmentFilename + '"}'
+        print("jsonString: ", jsonString)
         serverLocation = os.getenv('TSSPREDATOR_SERVER_LOCATION', os.getcwd())
         # join server Location to find TSSpredator
         tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
-
+        javaheap = os.getenv('TSSPREDATOR_JAVA_XMX', '2g')
         # call jar file for to extract genome names & ids
-        result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)
+        result = subprocess.run(['java', f'-Xmx{javaheap}', f'-Xms{javaheap}', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)
         if(len(result.stderr) == 0):
+            print("result.stdout: ", result.stdout)
             return {'result': 'success', 'data':json.loads((result.stdout).decode())}
         else:
+            print("result.stderr: ", result.stderr)
             return {'result': 'error', 'data':json.loads((result.stderr).decode())}
         
 
@@ -455,7 +539,8 @@ def loadConfig():
                 # join server Location to find TSSpredator
                 tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
                 # call jar file for to extract genome names & ids
-                result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)        
+                javaHeap = os.getenv('TSSPREDATOR_JAVA_XMX', '2g')
+                result = subprocess.run(['java', f'-Xmx{javaHeap}', f'-Xms{javaHeap}', '-jar', tsspredatorLocation, jsonString], stdout=PIPE, stderr=PIPE)        
             if configFile.filename.endswith('.json'):
                 config = json.loads(configFile.read())
             elif (len(result.stderr) == 0):
@@ -509,7 +594,8 @@ def saveConfig():
         # join server Location to find TSSpredator
         tsspredatorLocation = os.path.join(serverLocation, 'TSSpredator.jar')
         # call jar file for to write config file
-        result = subprocess.run(['java', '-jar', tsspredatorLocation, jsonString],stdout=subprocess.PIPE, 
+        javaheap = os.getenv('TSSPREDATOR_JAVA_XMX', '2g')
+        result = subprocess.run(['java', f'-Xmx{javaheap}', f'-Xms{javaheap}', '-jar', tsspredatorLocation, jsonString],stdout=subprocess.PIPE, 
                                 stderr=subprocess.PIPE, 
                                 text=True)  # Ensures stdout and stderr are strings
         if len(result.stderr) > 0:
